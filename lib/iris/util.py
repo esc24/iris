@@ -413,7 +413,7 @@ class Linear1dExtrapolator(object):
                 
                 r = self._interpolator(requested_x[ok])
                 # Reshape the properly formed array to put the interpolator.axis last i.e. dims 0, 1, 2 -> 0, 2, 1 if axis = 1
-                axes = range(r.ndim)
+                axes = list(range(r.ndim))
                 del axes[self._interpolator.axis]
                 axes.append(self._interpolator.axis)
                                 
@@ -431,7 +431,7 @@ class Linear1dExtrapolator(object):
                 grad = (self.y[..., -1:] - self.y[..., -2:-1]) / (self.x[-1] - self.x[-2])
                 result[interpolator_result_index] = self.y[..., -1:] + (requested_x[gt] - self.x[-1]) * grad
 
-            axes = range(len(interpolator_result_index))
+            axes = list(range(len(interpolator_result_index)))
             axes.insert(self._interpolator.axis, axes.pop(axes[-1]))
             result = result.transpose(axes)
 
@@ -474,7 +474,7 @@ def column_slices_generator(full_slice, ndims):
     tuple_indices = [i for i, key in enumerate(full_slice) if is_tuple_style_index(key)]
 
     # stg1: Take a copy of the full_slice specification, turning all tuples into a full slice
-    if tuple_indices != range(len(full_slice)):
+    if tuple_indices != list(range(len(full_slice))):
         first_slice = list(full_slice)
         for tuple_index in tuple_indices:
             first_slice[tuple_index] = slice(None, None)
@@ -513,7 +513,7 @@ def _build_full_slice_given_keys(keys, ndim):
         keys = tuple([keys])
         
     # catch the case where an extra Ellipsis has been provided which can be discarded iff len(keys)-1 == ndim
-    if len(keys)-1 == ndim and Ellipsis in filter(lambda obj: not isinstance(obj, numpy.ndarray), keys):
+    if len(keys)-1 == ndim and Ellipsis in [obj for obj in keys if not isinstance(obj, numpy.ndarray)]:
         keys = list(keys)
         is_ellipsis = [key is Ellipsis for key in keys]
         keys.pop(is_ellipsis.index(True))
@@ -576,16 +576,16 @@ def _wrap_function_for_method(function, docstring=None):
     var_kw = [] if varkw is None else ['**' + varkw]
     arg_source = ', '.join(basic_args + default_args + var_arg + var_kw)
     simple_arg_source = ', '.join(basic_args + simple_default_args + var_arg + var_kw)
-    source = 'def %s(%s):\n    return function(%s)' % (function.func_name, arg_source, simple_arg_source)
+    source = 'def %s(%s):\n    return function(%s)' % (function.__name__, arg_source, simple_arg_source)
 
     # Compile the wrapper function
     # NB. There's an outstanding bug with "exec" where the locals and globals dictionaries must be the same
     # if we're to get closure behaviour.
     my_locals = {'function': function}
-    exec source in my_locals, my_locals
+    exec(source, my_locals, my_locals)
 
     # Update the docstring if required, and return the modified function
-    wrapper = my_locals[function.func_name]
+    wrapper = my_locals[function.__name__]
     if docstring is None:
         wrapper.__doc__ = function.__doc__
     else:
@@ -618,18 +618,18 @@ class _MetaOrderedHashable(abc.ABCMeta):
             if '__init__' not in namespace:
                 # Create a default __init__ method for the class
                 method_source = 'def __init__(self, %s):\n self._init_from_tuple((%s,))' % (args, args)
-                exec method_source in namespace
+                exec(method_source, namespace)
 
             # Ensure the class has a "helper constructor" with explicit arguments.
             if '_init' not in namespace:
                 # Create a default _init method for the class
                 method_source = 'def _init(self, %s):\n self._init_from_tuple((%s,))' % (args, args)
-                exec method_source in namespace
+                exec(method_source, namespace)
 
         return super(_MetaOrderedHashable, cls).__new__(cls, name, bases, namespace)
 
 
-class _OrderedHashable(collections.Hashable):
+class _OrderedHashable(collections.Hashable, metaclass=_MetaOrderedHashable):
     """
     Convenience class for creating "immutable", hashable, and ordered classes.
     
@@ -646,9 +646,6 @@ class _OrderedHashable(collections.Hashable):
         its attributes are themselves hashable.
     
     """
-
-    # The metaclass adds default __init__ methods when appropriate.
-    __metaclass__ = _MetaOrderedHashable
 
     @abc.abstractproperty
     def _names(self):
@@ -799,7 +796,7 @@ class _Timers(object):
     def get(self, name):
         result = (name, [])
         if name in self.timers:
-            result = (name, ", ".join(["'%s':%8.5f"%(k,v) for k, v in self.timers[name].items() if k != "active_timer_step"]))
+            result = (name, ", ".join(["'%s':%8.5f"%(k,v) for k, v in list(self.timers[name].items()) if k != "active_timer_step"]))
         return result
 
     def reset(self, name):

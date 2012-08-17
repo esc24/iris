@@ -114,7 +114,7 @@ class DataManager(iris.util._OrderedHashable):
                 if isinstance(key, _HashableSlice):
                     len_this_dim = orig_shape[i]
                     (start, stop, step) = key.indices(len_this_dim)
-                    count = len(range(start, stop, step))
+                    count = len(list(range(start, stop, step)))
                     resultant_shape.append(count)
                 elif isinstance(key, tuple):
                     resultant_shape.append(len(key))
@@ -159,7 +159,7 @@ class DataManager(iris.util._OrderedHashable):
             deferred_slice = full_slice[-ds_ndim:]
         
         hashable_conversion = {
-                             types.SliceType: _HashableSlice.from_slice,
+                             slice: _HashableSlice.from_slice,
                              numpy.ndarray: tuple,
                              } 
         new_deferred_slice = tuple([hashable_conversion.get(type(index), lambda index: index)(index)
@@ -237,7 +237,7 @@ class DataManager(iris.util._OrderedHashable):
                         deferred_shape[i] = 0
                     else:
                         # New dimension depth is the length of the sliced dimension.
-                        deferred_shape[i] = len(range(deferred_shape[i])[merged_slice[i]])
+                        deferred_shape[i] = len(list(range(deferred_shape[i]))[merged_slice[i]])
         
         return tuple(merged_slice)
 

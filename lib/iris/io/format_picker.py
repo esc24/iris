@@ -177,11 +177,11 @@ class FormatSpecification(object):
         """The handler function of this FileFormat. (Read only)"""
         return self._handler
 
-    def __cmp__(self, other):
+    def __lt__(self, other):
         if not isinstance(other, FormatSpecification):
             return NotImplemented
-        
-        return cmp( (-self.priority, hash(self)), (-other.priority, hash(self)) )
+
+        return (-self.priority, hash(self)) < (-other.priority, hash(self))
         
     def __repr__(self):
         # N.B. loader is not always going to provide a nice repr if it is a lambda function, hence a prettier version is available in __str__

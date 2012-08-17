@@ -21,7 +21,7 @@ See also: :mod:`NumPy <numpy>`.
 
 """
 
-from __future__ import division
+
 import re
 import warnings
 
@@ -137,7 +137,7 @@ def cube_delta(cube, coord, update_history=True):
     
     """
     # handle the case where a user passes a coordinate name
-    if isinstance(coord, basestring):
+    if isinstance(coord, str):
         coord = cube.coord(coord)
 
     if coord.ndim != 1:
@@ -211,7 +211,7 @@ def differentiate(cube, coord_to_differentiate):
     # This operation results in a copy of the original cube.
     delta_cube = cube_delta(cube, coord_to_differentiate, update_history=False)
     
-    if isinstance(coord_to_differentiate, basestring):
+    if isinstance(coord_to_differentiate, str):
         coord = cube.coord(coord_to_differentiate)
     else:
         coord = coord_to_differentiate
@@ -453,7 +453,7 @@ def curl(i_cube, j_cube, k_cube=None, ignore=None, update_history=True):
     # Get the vector quantity names (i.e. ['easterly', 'northerly', 'vertical'])
     vector_quantity_names, phenomenon_name = spatial_vectors_with_phenom_name(i_cube, j_cube, k_cube)
     
-    cubes = filter(None, [i_cube, j_cube, k_cube])
+    cubes = [_f for _f in [i_cube, j_cube, k_cube] if _f]
     
     # get the names of all coords binned into useful comparison groups
     coord_comparison = iris.analysis.coord_comparison(*cubes)
@@ -634,7 +634,7 @@ def spatial_vectors_with_phenom_name(i_cube, j_cube, k_cube=None):
     vector_qty = re.compile(r'([^\W_]+)[\W_]+(.*)')
     
     # Make a dictionary of {direction: phenomenon quantity}
-    cube_directions, cube_phenomena = zip( *[re.match(vector_qty, std_name).groups() for std_name in cube_standard_names] )
+    cube_directions, cube_phenomena = list(zip( *[re.match(vector_qty, std_name).groups() for std_name in cube_standard_names] ))
     
     # Check that there is only one distinct phenomenon
     if len(set(cube_phenomena)) != 1:

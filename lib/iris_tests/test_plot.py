@@ -401,7 +401,7 @@ class TestPlotCoordinatesGiven(tests.GraphicsTest):
             draw_method(cube, coords=coords)
             try:
                 self.check_graphic()
-            except AssertionError, err:
+            except AssertionError as err:
                 self.fail('Draw method %r failed with coords: %r. Assertion message: %s' % (draw_method, coords, err))
             
     def test_yx(self):
@@ -445,7 +445,7 @@ class TestPlotCoordinatesGiven(tests.GraphicsTest):
 
 class TestSymbols(tests.GraphicsTest):
     def test_cloud_cover(self):
-        iplt.symbols(range(10), [0] * 10, [iris.symbols.CLOUD_COVER[i] for i in range(10)], 0.375)
+        iplt.symbols(list(range(10)), [0] * 10, [iris.symbols.CLOUD_COVER[i] for i in range(10)], 0.375)
         self.check_graphic()
 
 

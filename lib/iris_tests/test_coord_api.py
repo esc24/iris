@@ -16,7 +16,7 @@
 # along with Iris.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from __future__ import division
+
 
 # import iris tests first so that some things can be initialised before importing anything else
 import iris.tests as tests
@@ -186,31 +186,31 @@ class TestCoordRepr(unittest.TestCase):
         
 class TestAuxCoordCreation(unittest.TestCase):
     def test_basic(self):
-        a = iris.coords.AuxCoord(range(10), 'air_temperature', units='kelvin')
+        a = iris.coords.AuxCoord(list(range(10)), 'air_temperature', units='kelvin')
         result = "AuxCoord(array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), standard_name='air_temperature', units=Unit('kelvin'))"
         self.assertEqual(result, str(a))
 
-        b = iris.coords.AuxCoord(range(10), attributes={'monty': 'python'})
+        b = iris.coords.AuxCoord(list(range(10)), attributes={'monty': 'python'})
         result = "AuxCoord(array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), standard_name=None, units=Unit('1'), attributes={'monty': 'python'})"
         self.assertEqual(result, str(b))
         
     def test_excluded_attributes(self):
         with self.assertRaises(ValueError):
-            iris.coords.AuxCoord(range(10), 'air_temperature', units='kelvin', attributes={'standard_name': 'whoopsy'})
+            iris.coords.AuxCoord(list(range(10)), 'air_temperature', units='kelvin', attributes={'standard_name': 'whoopsy'})
         
-        a = iris.coords.AuxCoord(range(10), 'air_temperature', units='kelvin')
+        a = iris.coords.AuxCoord(list(range(10)), 'air_temperature', units='kelvin')
         with self.assertRaises(ValueError):
             a.attributes['standard_name'] = 'whoopsy'
         with self.assertRaises(ValueError):
             a.attributes.update({'standard_name': 'whoopsy'})
 
     def test_coord_system(self):
-        a = iris.coords.AuxCoord(range(10), 'air_temperature', units='kelvin', coord_system=iris.coord_systems.HorizontalCS(None))
+        a = iris.coords.AuxCoord(list(range(10)), 'air_temperature', units='kelvin', coord_system=iris.coord_systems.HorizontalCS(None))
         result = "AuxCoord(array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), standard_name='air_temperature', units=Unit('kelvin'), coord_system=HorizontalCS(None, 'cartesian'))"
         self.assertEqual(result, str(a))
         
     def test_bounded(self):
-        a = iris.coords.AuxCoord(range(10), 'air_temperature', units='kelvin', bounds=numpy.arange(0, 20).reshape(10, 2))
+        a = iris.coords.AuxCoord(list(range(10)), 'air_temperature', units='kelvin', bounds=numpy.arange(0, 20).reshape(10, 2))
         result = ("AuxCoord(array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])"
                   ", bounds=array([[ 0,  1],\n       [ 2,  3],\n       [ 4,  5],\n       [ 6,  7],\n       [ 8,  9],\n       [10, 11],\n       [12, 13],\n       [14, 15],\n       [16, 17],\n       [18, 19]])"
                   ", standard_name='air_temperature', units=Unit('kelvin'))"
@@ -225,31 +225,31 @@ class TestAuxCoordCreation(unittest.TestCase):
   
 class TestDimCoordCreation(unittest.TestCase):
     def test_basic(self):
-        a = iris.coords.DimCoord(range(10), 'air_temperature', units='kelvin')
+        a = iris.coords.DimCoord(list(range(10)), 'air_temperature', units='kelvin')
         result = "DimCoord(array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), standard_name='air_temperature', units=Unit('kelvin'))"
         self.assertEqual(result, str(a))
 
-        b = iris.coords.DimCoord(range(10), attributes={'monty': 'python'})
+        b = iris.coords.DimCoord(list(range(10)), attributes={'monty': 'python'})
         result = "DimCoord(array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), standard_name=None, units=Unit('1'), attributes={'monty': 'python'})"
         self.assertEqual(result, str(b))
         
     def test_excluded_attributes(self):
         with self.assertRaises(ValueError):
-            iris.coords.DimCoord(range(10), 'air_temperature', units='kelvin', attributes={'standard_name': 'whoopsy'})
+            iris.coords.DimCoord(list(range(10)), 'air_temperature', units='kelvin', attributes={'standard_name': 'whoopsy'})
         
-        a = iris.coords.DimCoord(range(10), 'air_temperature', units='kelvin')
+        a = iris.coords.DimCoord(list(range(10)), 'air_temperature', units='kelvin')
         with self.assertRaises(ValueError):
             a.attributes['standard_name'] = 'whoopsy'
         with self.assertRaises(ValueError):
             a.attributes.update({'standard_name': 'whoopsy'})
 
     def test_coord_system(self):
-        a = iris.coords.DimCoord(range(10), 'air_temperature', units='kelvin', coord_system=iris.coord_systems.HorizontalCS(None))
+        a = iris.coords.DimCoord(list(range(10)), 'air_temperature', units='kelvin', coord_system=iris.coord_systems.HorizontalCS(None))
         result = "DimCoord(array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), standard_name='air_temperature', units=Unit('kelvin'), coord_system=HorizontalCS(None, 'cartesian'))"
         self.assertEqual(result, str(a))
         
     def test_bounded(self):
-        a = iris.coords.DimCoord(range(10), 'air_temperature', units='kelvin', bounds=numpy.arange(0, 20).reshape(10, 2))
+        a = iris.coords.DimCoord(list(range(10)), 'air_temperature', units='kelvin', bounds=numpy.arange(0, 20).reshape(10, 2))
         result = ("DimCoord(array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])"
                   ", bounds=array([[ 0,  1],\n       [ 2,  3],\n       [ 4,  5],\n       [ 6,  7],\n       [ 8,  9],\n       [10, 11],\n       [12, 13],\n       [14, 15],\n       [16, 17],\n       [18, 19]])"
                   ", standard_name='air_temperature', units=Unit('kelvin'))"
@@ -279,7 +279,7 @@ class TestDimCoordCreation(unittest.TestCase):
         self.assertNotEqual(b, d)
         
     def test_Dim_to_Aux(self):
-        a = iris.coords.DimCoord(range(10), standard_name='air_temperature', long_name='custom air temp',
+        a = iris.coords.DimCoord(list(range(10)), standard_name='air_temperature', long_name='custom air temp',
                                  units='kelvin', attributes={'monty': 'python'}, 
                                  bounds=numpy.arange(20).reshape(10, 2), circular=True)
         b = iris.coords.AuxCoord.from_coord(a)
@@ -555,7 +555,7 @@ class TestCoordCollapsed(tests.IrisTest):
         return coord
         
     def test_explicit(self):
-        orig_coord = self.create_1d_coord(points=range(10), 
+        orig_coord = self.create_1d_coord(points=list(range(10)), 
                                           bounds=[(b, b+1) for b in range(10)])
         coord_expected = self.create_1d_coord(points=5, bounds=[(0, 10)])
 
@@ -615,7 +615,7 @@ class TestGetterSetter(tests.IrisTest):
         
         # set bounds from non-numpy pairs
         coord._points = None # reset the undelying shape of the coordinate
-        coord.points = range(3)
+        coord.points = list(range(3))
         coord.bounds = [[123, 456], [234, 567], [345, 678]]
         self.assertEqual(coord.shape, (3, ))
         self.assertEqual(coord.bounds.shape, (3, 2))

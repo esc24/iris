@@ -20,7 +20,7 @@ color map meta-data mappings.
 
 """
     
-from __future__ import with_statement
+
 
 from functools import wraps
 import os
@@ -77,7 +77,7 @@ def _default_cmap_norm(args, kwargs):
             
             if len(cmaps) == 0:
                 # Check for a fuzzy match against a keyword.
-                for keyword in _CMAP_BY_KEYWORD.iterkeys():
+                for keyword in _CMAP_BY_KEYWORD.keys():
                     if keyword in std_name:
                         cmaps.update(_CMAP_BY_KEYWORD[keyword])
 
@@ -234,7 +234,7 @@ def _load_palette():
         
         # Read the file header.
         with open(filename) as file_handle:
-            header = filter(lambda line: line.startswith('#'), file_handle.readlines())
+            header = [line for line in file_handle.readlines() if line.startswith('#')]
         
         # Extract the file header metadata.
         for line in header:

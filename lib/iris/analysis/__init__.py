@@ -26,7 +26,7 @@ such as: :meth:`iris.cube.Cube.collapsed` and
            metadata and the data.
 
 """
-from __future__ import division
+
 
 import collections
 from copy import deepcopy
@@ -56,7 +56,7 @@ class _CoordGroup(object):
 
     def _first_coord_w_cube(self):
         """Return the first none None coordinate, and its associated cube as (cube, coord)."""
-        return filter(lambda cube_coord: cube_coord[1] is not None, zip(self.cubes, self.coords))[0]
+        return filter(lambda cube_coord: cube_coord[1] is not None, list(zip(self.cubes, self.coords)))[0]
 
     def __repr__(self):
         # No exact repr, so a helpful string is given instead
@@ -268,7 +268,7 @@ def coord_comparison(*cubes):
     result['transposable'] = result['equal'] & result['non_equal_data_dimension']
 
     # for convenience, turn all of the sets in the dictionary into lists, sorted by the name of the group  
-    for key, groups in result.iteritems():
+    for key, groups in result.items():
         result[key] = sorted(groups, key=lambda group: group.name())
         
     return result
@@ -318,7 +318,7 @@ class Aggregator(object):
             The aggregated data.
             
         """
-        kwargs = dict(self._kwargs.items() + kwargs.items())
+        kwargs = dict(list(self._kwargs.items()) + list(kwargs.items()))
         return self.call_func(data, axis=axis, **kwargs)
         
     def update_metadata(self, cube, coords, **kwargs):
@@ -338,7 +338,7 @@ class Aggregator(object):
           passed the same keywords (for example, the "percent" keyword for a percentile aggregator).
 
         """
-        kwargs = dict(self._kwargs.items() + kwargs.items())
+        kwargs = dict(list(self._kwargs.items()) + list(kwargs.items()))
         
         if not isinstance(coords, (list, tuple)):
             coords = [coords]
@@ -395,7 +395,7 @@ class WeightedAggregator(Aggregator):
     def uses_weighting(self, **kwargs):
         """Does this aggregator use weighting with the given keywords?"""
         result = False 
-        for kwarg in kwargs.keys():
+        for kwarg in list(kwargs.keys()):
             if kwarg in self._weighting_keywords:
                 result = True
                 break
@@ -438,7 +438,7 @@ def _percentile(data, axis, percent, **kwargs):
 
 
 def _count(array, function, axis, **kwargs):
-    if not callable(function):
+    if not isinstance(function, collections.Callable):
         raise ValueError('function must be a callable. Got %s.' % type(function))
     return numpy.ma.sum(function(array), axis=axis, **kwargs)
 
@@ -779,7 +779,7 @@ class _Groupby(object):
                 
                 for coord in self._groupby_coords:
                     groups.append(iris.coords._GroupIterator(coord.points))
-                    items.append(groups[-1].next())
+                    items.append(next(groups[-1]))
                     
                 # Construct the group slice for each group over the group-by coordinates.
                 # Keep constructing until all group-by coordinate groups are exhausted.
@@ -804,7 +804,7 @@ class _Groupby(object):
                             items[item_index] = None
                         elif groupby_slice.stop == stop:
                             # The current group of this coordinate is exhausted, so get the next one.
-                            items[item_index] = groups[item_index].next()
+                            items[item_index] = next(groups[item_index])
                             
                 # Merge multiple slices together into one tuple.
                 self._slice_merge()
@@ -813,7 +813,7 @@ class _Groupby(object):
                 # Calculate the new shared coordinates.
                 self._compute_shared_coords()
             # Generate the group-by slices/groups.
-            for groupby_slice in self._slices_by_key.itervalues():
+            for groupby_slice in self._slices_by_key.values():
                 yield groupby_slice
                 
         return
@@ -824,13 +824,13 @@ class _Groupby(object):
         # Iterate over the ordered dictionary in order to reduce
         # multiple slices into a single tuple and collapse
         # all items from containing list.
-        for key, groupby_slices in self._slices_by_key.iteritems():
+        for key, groupby_slices in self._slices_by_key.items():
             if len(groupby_slices) > 1:
                 # Compress multiple slices into tuple representation.
                 groupby_indicies = []
                 
                 for groupby_slice in groupby_slices:
-                    groupby_indicies.extend(range(groupby_slice.start, groupby_slice.stop))
+                    groupby_indicies.extend(list(range(groupby_slice.start, groupby_slice.stop)))
                     
                 self._slices_by_key[key] = tuple(groupby_indicies)
             else:
@@ -844,7 +844,7 @@ class _Groupby(object):
         
         # Iterate over the ordered dictionary in order to construct
         # a group-by slice that samples the first element from each group.
-        for key_slice in self._slices_by_key.itervalues():
+        for key_slice in self._slices_by_key.values():
             if isinstance(key_slice, tuple):
                 groupby_slice.append(key_slice[0])
             else:
@@ -863,7 +863,7 @@ class _Groupby(object):
         
         # Iterate over the ordered dictionary in order to construct
         # a list of tuple group boundary indexes.
-        for key_slice in self._slices_by_key.itervalues():
+        for key_slice in self._slices_by_key.values():
             if isinstance(key_slice, tuple):
                 groupby_bounds.append((key_slice[0], key_slice[-1]))
             else:

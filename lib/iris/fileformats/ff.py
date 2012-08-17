@@ -26,7 +26,7 @@ import numpy as np
 
 import iris.config
 import iris.fileformats.manager
-import pp
+from . import pp
 
 
 FF_HEADER_DEPTH = 256  # in words (64-bit)

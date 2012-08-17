@@ -97,7 +97,7 @@ class TestPPLoadRules(tests.IrisTest):
         test_values = list(single_bit_values) + multiple_bit_values
         
         for value, _ in test_values:
-            f = iris.fileformats.pp.load(orig_file).next()
+            f = next(iris.fileformats.pp.load(orig_file))
             f.lbproc = value # set value
 
             # Write out pp file
@@ -126,7 +126,7 @@ class TestPPLoadRules(tests.IrisTest):
         
         # Test single flag values
         for value, _ in iris.fileformats.pp.LBPROC_PAIRS:
-            f = iris.fileformats.pp.load(orig_file).next()
+            f = next(iris.fileformats.pp.load(orig_file))
             f.lbproc = value # set value
 
             # Write out pp file
@@ -152,7 +152,7 @@ class TestPPLoadRules(tests.IrisTest):
         multiple_map = {sum(x) : [iris.fileformats.pp.lbproc_map[y] for y in x] for x in multiple_bit_values}
         
         for bit_values in multiple_bit_values:
-            f = iris.fileformats.pp.load(orig_file).next()
+            f = next(iris.fileformats.pp.load(orig_file))
             f.lbproc = sum(bit_values) # set value
 
             # Write out pp file

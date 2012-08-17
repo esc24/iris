@@ -16,7 +16,7 @@
 # along with Iris.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from __future__ import division
+
 # import iris tests first so that some things can be initialised before importing anything else
 import iris.tests as tests
 
@@ -41,7 +41,7 @@ import iris.tests.stock
 class TestAnalysisCubeCoordComparison(tests.IrisTest):
     def assertComparisonDict(self, comarison_dict, reference_filename):
         string = ''
-        for key, coord_groups in comarison_dict.iteritems():
+        for key, coord_groups in comarison_dict.items():
             string += ('%40s  ' % key)
             names = [[coord.name() if coord is not None else 'None' for coord in coords] for coords in coord_groups]
             string += str(sorted(names))

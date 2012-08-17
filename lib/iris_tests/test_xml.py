@@ -52,7 +52,7 @@ class TestXML(tests.IrisTest):
         for ll_dtype in [numpy.float32, numpy.int32]:
             for rotated in [False, True]:
                 for forecast_or_time_mean in ["forecast", "time_mean"]:
-                    for TEST_COMPAT_i in xrange(2): # TODO: remove with TEST_COMPAT purge - 
+                    for TEST_COMPAT_i in range(2): # TODO: remove with TEST_COMPAT purge - 
                                                     # adds two copies of each cube to cube list
                                                     # in line with redundant data first option
                         cube = iris.cube.Cube(data)

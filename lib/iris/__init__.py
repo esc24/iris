@@ -76,7 +76,7 @@ def _load_common(uris, constraints, strict=False, unique=False, callback=None, m
     Returns - :class:`iris.cube.CubeList`
 
     """
-    if isinstance(constraints, basestring) and os.path.exists(constraints):
+    if isinstance(constraints, str) and os.path.exists(constraints):
         msg = 'The second argument %r appears to be a filename, but expected a standard_name or a Constraint.\n' \
             'If the constraint was genuine, then we recommend renaming %r.'
         msg = msg % (constraints, constraints)
@@ -94,7 +94,7 @@ def _load_common(uris, constraints, strict=False, unique=False, callback=None, m
 
 def _load_cubes(uris, callback):
     """Returns a generator of cubes given the URIs and a callback."""
-    if isinstance(uris, basestring):
+    if isinstance(uris, str):
         uris = [uris] 
     
     # Group collections of uris by their iris handler

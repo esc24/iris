@@ -31,7 +31,7 @@ import numpy as np
 import iris
 import iris.std_names
 import iris.util
-import stock
+from . import stock
 
 @iris.tests.skip_data
 class TestNetCDFLoad(tests.IrisTest):
@@ -301,7 +301,7 @@ class TestNetCDFUKmoProcessFlags(tests.IrisTest):
         # Maps lbproc value to the process flags that should be created
         multiple_map = {bits : [iris.fileformats.pp.lbproc_map[bit] for bit in bits] for bits in multiple_bit_values}
 
-        for bits, descriptions in multiple_map.iteritems():
+        for bits, descriptions in multiple_map.items():
         
             ll_cube = stock.lat_lon_cube()
             ll_cube.attributes["ukmo__process_flags"] = descriptions

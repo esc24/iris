@@ -34,7 +34,7 @@ iris.proxy.apply_proxy('gribapi', globals())
 import iris.coords as coords
 import iris.coord_systems as coord_systems
 import iris.unit
-import grib_save_rules
+from . import grib_save_rules
 
 
 # rules for converting a grib message to a cm cube
@@ -438,7 +438,7 @@ def load_cubes(filenames, callback=None):
     
     _ensure_load_rules_loaded()
 
-    if isinstance(filenames, basestring):
+    if isinstance(filenames, str):
         filenames = [filenames]
 
     # try to add each message to the pools
@@ -493,7 +493,7 @@ def save_grib2(cube, target, append=False, **kwargs):
     """
 
     # grib file (this bit is common to the pp and grib savers...)
-    if isinstance(target, basestring):
+    if isinstance(target, str):
         grib_file = open(target, "ab" if append else "wb")
     elif hasattr(target, "write"):
         if hasattr(target, "mode") and "b" not in target.mode:
@@ -503,8 +503,8 @@ def save_grib2(cube, target, append=False, **kwargs):
         raise ValueError("Can only save grib to filename or writable")
 
     # discover the lat and lon coords (this bit is common to the pp and grib savers...)
-    lat_coords = filter(lambda coord: "latitude" in coord.name(), cube.coords())
-    lon_coords = filter(lambda coord: "longitude" in coord.name(), cube.coords())
+    lat_coords = [coord for coord in cube.coords() if "latitude" in coord.name()]
+    lon_coords = [coord for coord in cube.coords() if "longitude" in coord.name()]
     if len(lat_coords) != 1 or len(lon_coords) != 1:
         raise iris.exceptions.TranslationError("Did not find one (and only one) latitude or longitude coord")
 
@@ -518,7 +518,7 @@ def save_grib2(cube, target, append=False, **kwargs):
         gribapi.grib_release(grib_message)
 
     # (this bit is common to the pp and grib savers...)
-    if isinstance(target, basestring):
+    if isinstance(target, str):
         grib_file.close()
 
 

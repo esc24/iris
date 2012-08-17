@@ -18,13 +18,13 @@
 Test pickling of Iris objects.
 
 """
-from __future__ import with_statement
+
 
 # import iris tests first so that some things can be initialised before importing anything else
 import iris.tests as tests
 
-import cPickle
-import StringIO
+import pickle
+import io
 
 
 import iris
@@ -33,13 +33,13 @@ import iris
 class TestPickle(tests.IrisTest):
     def pickle_then_unpickle(self, obj):
         """Returns a generator of ("cpickle protocol number", object) tuples.""" 
-        for protocol in xrange(1 + cPickle.HIGHEST_PROTOCOL):
-            str_buffer = StringIO.StringIO()
-            cPickle.dump(obj, str_buffer, protocol)
+        for protocol in range(1 + pickle.HIGHEST_PROTOCOL):
+            str_buffer = io.StringIO()
+            pickle.dump(obj, str_buffer, protocol)
             
             # move the str_buffer back to the start and reconstruct
             str_buffer.seek(0)
-            reconstructed_obj = cPickle.load(str_buffer)
+            reconstructed_obj = pickle.load(str_buffer)
             
             yield protocol, reconstructed_obj
     

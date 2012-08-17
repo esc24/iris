@@ -271,10 +271,10 @@ class TestCubeStringRepresentations(IrisDotTest):
         cube = self.cube_2d.copy()
         
         # Create a list of values used to create cell methods
-        test_values = ((("mean",), (u'longitude', 'latitude'), (u'6 minutes', '12 minutes'), (u'This is a test comment',)),
-                        (("average",), (u'longitude', 'latitude'), (u'6 minutes', '15 minutes'), (u'This is another test comment','This is another comment')),
-                        (("average",), (u'longitude', 'latitude'), (), ()),
-                        (("percentile",), (u'longitude',), (u'6 minutes',), (u'This is another test comment',)))
+        test_values = ((("mean",), ('longitude', 'latitude'), ('6 minutes', '12 minutes'), ('This is a test comment',)),
+                        (("average",), ('longitude', 'latitude'), ('6 minutes', '15 minutes'), ('This is another test comment','This is another comment')),
+                        (("average",), ('longitude', 'latitude'), (), ()),
+                        (("percentile",), ('longitude',), ('6 minutes',), ('This is another test comment',)))
         
         for x in test_values:
             # Create a cell method
@@ -286,9 +286,9 @@ class TestCubeStringRepresentations(IrisDotTest):
     def test_cube_summary_alignment(self):
         # Test the cube summary dimension alignment and coord name clipping
         cube = iris.tests.stock.simple_1d()
-        aux = iris.coords.AuxCoord(range(11), long_name='This is a really, really, really long long_name that requires to be clipped because it is too long')
+        aux = iris.coords.AuxCoord(list(range(11)), long_name='This is a really, really, really long long_name that requires to be clipped because it is too long')
         cube.add_aux_coord(aux, 0)
-        aux = iris.coords.AuxCoord(range(11), long_name='This is a short long_name')
+        aux = iris.coords.AuxCoord(list(range(11)), long_name='This is a short long_name')
         cube.add_aux_coord(aux, 0)
         self.assertString(str(cube), ('cdm', 'string_representations', 'simple.__str__.txt'))
 
@@ -680,7 +680,7 @@ class TestDataManagerIndexing(TestCube2d):
         self.data_array = self.dm.load(self.pa)
 
     def test_slices(self):
-        lat_cube = self.cube.slices(['grid_latitude', ]).next()
+        lat_cube = next(self.cube.slices(['grid_latitude', ]))
         self.assertIsNotNone(lat_cube._data_manager)
         self.assertIsNotNone(self.cube._data_manager)
  
@@ -955,7 +955,7 @@ class TestConversionToCoordList(tests.IrisTest):
         self.assertEquals(len(cube._as_list_of_coords('grid_longitude')), 1)
         
         # List of string and unicode
-        self.assertEquals(len(cube._as_list_of_coords(['grid_longitude', u'grid_latitude'], )), 2)
+        self.assertEquals(len(cube._as_list_of_coords(['grid_longitude', 'grid_latitude'], )), 2)
         
         # Coord object(s)
         lat = cube.coords("grid_latitude")[0]

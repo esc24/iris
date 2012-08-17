@@ -113,7 +113,7 @@ class TestTrajectory(tests.IrisTest):
         cube.coord('depth').bounds = cube.coord('depth').bounds.astype(numpy.float32)
 
         # define a latitude trajectory (put coords in a different order to the cube, just to be awkward)
-        latitudes = range(-90, 90, 2)
+        latitudes = list(range(-90, 90, 2))
         longitudes = [-90]*len(latitudes)
         sample_points = [('longitude', longitudes), ('latitude', latitudes)]
 

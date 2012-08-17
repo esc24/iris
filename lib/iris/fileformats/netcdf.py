@@ -154,26 +154,26 @@ def _assert_case_specific_facts(engine, cf, cf_group):
     engine.provides['coordinates'] = []
 
     # Assert facts for CF coordinates.
-    for cf_name in cf_group.coordinates.iterkeys():
+    for cf_name in cf_group.coordinates.keys():
         engine.add_case_specific_fact(_PYKE_FACT_BASE, 'coordinate', (cf_name,))
 
     # Assert facts for CF auxiliary coordinates.
-    for cf_name in cf_group.auxiliary_coordinates.iterkeys():
+    for cf_name in cf_group.auxiliary_coordinates.keys():
         engine.add_case_specific_fact(_PYKE_FACT_BASE, 'auxiliary_coordinate', (cf_name,))
 
     # Assert facts for CF grid_mappings.
-    for cf_name in cf_group.grid_mappings.iterkeys():
+    for cf_name in cf_group.grid_mappings.keys():
         engine.add_case_specific_fact(_PYKE_FACT_BASE, 'grid_mapping', (cf_name,))
 
     # Assert facts for CF labels.
-    for cf_name in cf_group.labels.iterkeys():
+    for cf_name in cf_group.labels.keys():
         engine.add_case_specific_fact(_PYKE_FACT_BASE, 'label', (cf_name,))
         
     # Assert facts for CF formula terms associated with the cf_group
     # of the CF data variable.
     formula_root = set()
-    for cf_var in cf.cf_group.formula_terms.itervalues():
-        for cf_root, cf_term in cf_var.cf_terms_by_root.iteritems():
+    for cf_var in cf.cf_group.formula_terms.values():
+        for cf_root, cf_term in cf_var.cf_terms_by_root.items():
             # Only assert this fact if the formula root variable is
             # defined in the CF group of the CF data variable.
             if cf_root in cf_group:
@@ -186,28 +186,28 @@ def _assert_case_specific_facts(engine, cf, cf_group):
 
 def _pyke_stats(engine, cf_name):
     if DEBUG:
-        print '-'*80
-        print 'CF Data Variable: %r' % cf_name
+        print('-'*80)
+        print('CF Data Variable: %r' % cf_name)
         
         engine.print_stats()
 
-        print 'Rules Triggered:'
+        print('Rules Triggered:')
 
         for rule in sorted(list(engine.rule_triggered)):
-            print '\t%s' % rule
+            print('\t%s' % rule)
 
-        print 'Case Specific Facts:'
+        print('Case Specific Facts:')
         kb_facts = engine.get_kb(_PYKE_FACT_BASE)
 
-        for key in kb_facts.entity_lists.iterkeys():
+        for key in kb_facts.entity_lists.keys():
             for arg in kb_facts.entity_lists[key].case_specific_facts:
-                print '\t%s%s' % (key, arg)
+                print('\t%s%s' % (key, arg))
 
 
 def _set_attributes(attributes, key, value):
     """Set the attributes dictionary, converting unicode strings appropriately."""
 
-    if isinstance(value, unicode):
+    if isinstance(value, str):
         try:
             attributes[str(key)] = str(value)
         except UnicodeEncodeError:
@@ -252,11 +252,11 @@ def _load_cube(engine, cf, cf_var, filename):
     attribute_predicate = lambda item: item[0] not in _CF_ATTRS
  
     for coord, cf_var_name in coordinates:
-        for attr_name, attr_value in itertools.ifilter(attribute_predicate, cf.cf_group[cf_var_name].cf_attrs_unused()):
+        for attr_name, attr_value in filter(attribute_predicate, cf.cf_group[cf_var_name].cf_attrs_unused()):
             _set_attributes(coord.attributes, attr_name, attr_value)
                 
     # Attach untouched attributes of the associated CF-netCDF data variable to the cube.
-    for attr_name, attr_value in itertools.ifilter(attribute_predicate, cf_var.cf_attrs_unused()):
+    for attr_name, attr_value in filter(attribute_predicate, cf_var.cf_attrs_unused()):
         _set_attributes(cube.attributes, attr_name, attr_value)
 
     # Show pyke session statistics.
@@ -309,7 +309,7 @@ def load_cubes(filenames, callback=None):
     # Initialise the pyke inference engine.
     engine = _pyke_kb_engine()
 
-    if isinstance(filenames, basestring):
+    if isinstance(filenames, str):
         filenames = [filenames]
 
     for filename in filenames:
@@ -317,7 +317,7 @@ def load_cubes(filenames, callback=None):
         cf = iris.fileformats.cf.CFReader(filename)
 
         # Process each CF data variable.
-        for cf_var in cf.cf_group.data_variables.itervalues():
+        for cf_var in cf.cf_group.data_variables.values():
             # Only process CF data variables that do not participate in a formula term.
             if not cf_var.has_formula_terms():
                 cube = _load_cube(engine, cf, cf_var, filename)
@@ -469,7 +469,7 @@ def _create_cf_variable(dataset, cube, dimension_names, coord, factory_defn):
 
             fmt = factory_defn.formula_terms_format
             names = {key: coord.name() for key, coord in
-                            dependencies.iteritems()}
+                            dependencies.items()}
             formula_terms = fmt.format(**names)
             cf_var.formula_terms = formula_terms
 
@@ -662,7 +662,7 @@ def save(cube, filename, netcdf_format='NETCDF4'):
     
     # Create the CF-netCDF data dimension names.
     dimension_names = []
-    for dim in xrange(cube.ndim):
+    for dim in range(cube.ndim):
         coords = cube.coords(dimensions=dim, dim_coords=True)
         if coords is not None:
             if len(coords) != 1:

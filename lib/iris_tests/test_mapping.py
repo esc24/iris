@@ -145,7 +145,7 @@ class TestLowLevel(tests.IrisTest):
     def setUp(self):
         self.cube = iris.tests.stock.global_pp()
         self.few = 4
-        self.few_levels = range(280, 300, 5)
+        self.few_levels = list(range(280, 300, 5))
         self.many_levels = numpy.linspace(self.cube.data.min(), self.cube.data.max(), 40)
 
     def test_simple(self):

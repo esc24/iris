@@ -50,12 +50,12 @@ PlotDefn = collections.namedtuple('PlotDefn', ('coords', 'transpose'))
 
 def _get_plot_defn_custom_coords_picked(cube, coords, mode, ndims=2):
     def as_coord(coord):
-        if isinstance(coord, basestring):
+        if isinstance(coord, str):
             coord = cube.coord(name=coord)
         else:
             coord = cube.coord(coord=coord)
         return coord
-    coords = map(as_coord, coords)
+    coords = list(map(as_coord, coords))
 
     # Check that we were given the right number of coordinates
     if len(coords) != ndims:
@@ -67,7 +67,7 @@ def _get_plot_defn_custom_coords_picked(cube, coords, mode, ndims=2):
 
     # Check which dimensions are spanned by each coordinate.
     get_span = lambda coord: set(cube.coord_dims(coord))
-    spans = map(get_span, coords)
+    spans = list(map(get_span, coords))
     for span, coord in zip(spans, coords):
         if not span:
             msg = 'The coordinate {!r} doesn\'t span a data dimension.'
@@ -88,7 +88,7 @@ def _get_plot_defn_custom_coords_picked(cube, coords, mode, ndims=2):
     # If we have 2-dimensional data, and one or more 1-dimensional
     # coordinates, check if we need to transpose.
     transpose = False
-    if ndims == 2 and min(map(len, spans)) == 1:
+    if ndims == 2 and min(list(map(len, spans))) == 1:
         for i, span in enumerate(spans):
             if len(span) == 1:
                 if list(span)[0] == i:
@@ -127,7 +127,7 @@ def _get_plot_defn(cube, mode, ndims=2):
 
     # When appropriate, restrict to 1D with bounds.
     if mode == iris.coords.BOUND_MODE:
-        coords = map(_valid_bound_coord, coords)
+        coords = list(map(_valid_bound_coord, coords))
 
     def guess_axis(coord):
         axis = None
@@ -139,7 +139,7 @@ def _get_plot_defn(cube, mode, ndims=2):
     for dim, coord in enumerate(coords):
         if coord is None:
             aux_coords = cube.coords(dimensions=dim)
-            aux_coords = filter(lambda coord: isinstance(coord, iris.coords.DimCoord), aux_coords)
+            aux_coords = [coord for coord in aux_coords if isinstance(coord, iris.coords.DimCoord)]
             if aux_coords:
                 key_func = lambda coord: coord._as_defn()
                 aux_coords.sort(key=key_func)
@@ -148,7 +148,7 @@ def _get_plot_defn(cube, mode, ndims=2):
     if mode == iris.coords.POINT_MODE:
         # Allow multi-dimensional aux_coords to override the dim_coords. (things like
         # grid_latitude will be overriden by latitude etc.)
-        axes = map(guess_axis, coords)
+        axes = list(map(guess_axis, coords))
         for coord in cube.coords(dim_coords=False):
             if max(coord.shape) > 1 and (mode == iris.coords.POINT_MODE or
                                          coord.nbounds):
@@ -524,10 +524,10 @@ def map_setup(cube=None, mode=None, lon_range=None, lat_range=None, **kwargs):
     
     # support basemap's keywords urcrnrlat, llcrnrlat, llcrnrlat & llcrnrlat
     # but also provide an improved interface using lon_range, lat_range
-    if (kwargs.has_key('urcrnrlat') or kwargs.has_key('llcrnrlat')) and lat_range is not None:
+    if ('urcrnrlat' in kwargs or 'llcrnrlat' in kwargs) and lat_range is not None:
         raise ValueError('Do not specify lat_range when "llcrnrlat" or "urcrnrlat" are set.')
     
-    if (kwargs.has_key('urcrnrlon') or kwargs.has_key('llcrnrlon')) and lon_range is not None:
+    if ('urcrnrlon' in kwargs or 'llcrnrlon' in kwargs) and lon_range is not None:
         raise ValueError('Do not specify lon_range when "llcrnrlon" or "urcrnrlon" are set.')
     
     # decompose lat_range & lon_range into lat/lon_min/max elements
@@ -777,7 +777,7 @@ def symbols(x, y, symbols, size, axes=None, units='inches'):
     if axes is None:
         axes = plt.gca()
         
-    offsets = numpy.array(zip(x, y))
+    offsets = numpy.array(list(zip(x, y)))
     
     # XXX "match_original" doesn't work ... so brute-force it instead.
     #   PatchCollection constructor ignores all non-style keywords when using match_original

@@ -92,7 +92,7 @@ class LazyArray(object):
         return self._cached_array().view(*args, **kwargs)
 
 
-class AuxCoordFactory(CFVariableMixin):
+class AuxCoordFactory(CFVariableMixin, metaclass=ABCMeta):
     """
     Represents a "factory" which can manufacture an additional auxiliary
     coordinate on demand, by combining the values of other coordinates.
@@ -105,7 +105,6 @@ class AuxCoordFactory(CFVariableMixin):
     properties of the resulting auxiliary coordinates.
     
     """
-    __metaclass__ = ABCMeta
 
     def __init__(self):
         self.long_name = None
@@ -243,7 +242,7 @@ class HybridHeightFactory(AuxCoordFactory):
 
     def __repr__(self):
         def safe_name(coord):
-            return str(coord and `coord.name()`)
+            return str(coord and repr(coord.name()))
         return "<HybridHeightFactory(%s, %s, %s)>" % (safe_name(self.delta),
                                                       safe_name(self.sigma),
                                                       safe_name(self.orography))
@@ -259,7 +258,7 @@ class HybridHeightFactory(AuxCoordFactory):
 
     def _dependency_dims(self, coord_dims_func):
         dependency_dims = {}
-        for key, coord in self.dependencies.iteritems():
+        for key, coord in self.dependencies.items():
             if coord:
                 dependency_dims[key] = coord_dims_func(coord)
         return dependency_dims
@@ -326,7 +325,7 @@ class HybridHeightFactory(AuxCoordFactory):
             ndim = 1
 
         nd_points_by_key = {}
-        for key, coord in self.dependencies.iteritems():
+        for key, coord in self.dependencies.items():
             if coord:
                 # Get the points as consistent with the Cube.
                 nd_points = self._nd_points(coord, dependency_dims[key], ndim)
@@ -357,7 +356,7 @@ class HybridHeightFactory(AuxCoordFactory):
             ndim = 1
 
         nd_values_by_key = {}
-        for key, coord in self.dependencies.iteritems():
+        for key, coord in self.dependencies.items():
             if coord:
                 # Get the bounds or points as consistent with the Cube.
                 if coord.nbounds:
@@ -422,7 +421,7 @@ class HybridHeightFactory(AuxCoordFactory):
         # Which dimensions are relevant?
         # e.g. If sigma -> [1] and orog -> [2, 3] then result = [1, 2, 3]
         derived_dims = set()
-        for coord in self.dependencies.itervalues():
+        for coord in self.dependencies.values():
             if coord:
                 derived_dims |= set(coord_dims_func(coord))
 

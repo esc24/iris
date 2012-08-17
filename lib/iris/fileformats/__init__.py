@@ -20,10 +20,10 @@ A package for converting cubes to and from specific file formats.
 """
 
 import iris.io.format_picker as fp
-import pp
-import ff
-import grib
-import netcdf
+from . import pp
+from . import ff
+from . import grib
+from . import netcdf
 
 
 __all__ = ['FORMAT_AGENT']

@@ -26,7 +26,6 @@ import datetime
 import itertools
 import operator
 import re
-import UserDict
 import warnings
 import zlib
 
@@ -46,6 +45,7 @@ import iris.fileformats.rules
 import iris.util
 
 from iris._cube_coord_common import CFVariableMixin, LimitedAttributeDict
+from functools import reduce
 
 
 __all__ = ['Cube', 'CubeList', 'CubeMetadata']
@@ -146,13 +146,13 @@ class CubeList(list):
         # group the resultant cubes by constraints in a dictionary
         constraint_groups = dict([(constraint, CubeList()) for constraint in constraints])
         for cube in cubes:
-            for constraint, cube_list in constraint_groups.iteritems():
+            for constraint, cube_list in constraint_groups.items():
                 sub_cube = constraint.extract(cube)
                 if sub_cube is not None:
                     cube_list.append(sub_cube)
 
         if merge_unique is not None:
-            for constraint, cubelist in constraint_groups.iteritems():
+            for constraint, cubelist in constraint_groups.items():
                 constraint_groups[constraint] = cubelist.merge(merge_unique)
 
         result = CubeList()
@@ -290,7 +290,7 @@ class Cube(CFVariableMixin):
 
         """
         # Temporary error while we transition the API.
-        if isinstance(data, basestring):
+        if isinstance(data, str):
             raise TypeError('Invalid data type: {!r}.'.format(data))
 
         if data_manager is not None:
@@ -358,7 +358,7 @@ class Cube(CFVariableMixin):
                 value = CubeMetadata(*value)
             except TypeError:
                 attr_check = lambda name: not hasattr(value, name)
-                missing_attrs = filter(attr_check, CubeMetadata._fields)
+                missing_attrs = list(filter(attr_check, CubeMetadata._fields))
                 if missing_attrs:
                     raise TypeError('Invalid/incomplete metadata')
         for name in CubeMetadata._fields:
@@ -497,7 +497,7 @@ class Cube(CFVariableMixin):
         See also :meth:`Cube.add_coord()<iris.cube.Cube.add_coord>`.
 
         """
-        if isinstance(coord, basestring):
+        if isinstance(coord, str):
             coord = self.coord(name=coord)
         else:
             coord = self.coord(coord=coord)
@@ -549,7 +549,7 @@ class Cube(CFVariableMixin):
         # Search derived aux coords
         if not matches:
             match = lambda factory: factory._as_defn() == target_defn
-            factories = filter(match, self._aux_factories)
+            factories = list(filter(match, self._aux_factories))
             matches = [factory.derived_dims(self.coord_dims) for factory in factories]
 
         ### Search by coord name, if have no match
@@ -599,19 +599,19 @@ class Cube(CFVariableMixin):
         factories = self.aux_factories
 
         if name is not None:
-            if not isinstance(name, basestring):
+            if not isinstance(name, str):
                 raise ValueError('The name keyword is expecting a string type only. Got %s.' % type(name))
-            factories = filter(lambda factory: factory.name() == name, factories)
+            factories = [factory for factory in factories if factory.name() == name]
 
         if standard_name is not None:
-            if not isinstance(standard_name, basestring):
+            if not isinstance(standard_name, str):
                 raise ValueError('The standard_name keyword is expecting a string type only. Got %s.' % type(standard_name))
-            factories = filter(lambda factory: factory.standard_name == standard_name, factories)
+            factories = [factory for factory in factories if factory.standard_name == standard_name]
 
         if long_name is not None:
-            if not isinstance(long_name, basestring):
+            if not isinstance(long_name, str):
                 raise ValueError('The long_name keyword is expecting a string type only. Got %s.' % type(long_name))
-            factories = filter(lambda factory: factory.long_name == long_name, factories)
+            factories = [factory for factory in factories if factory.long_name == long_name]
 
         if len(factories) > 1:
             msg = 'Expected to find exactly 1 coordinate factory, but found %s. They were: %s.' \
@@ -672,41 +672,41 @@ class Cube(CFVariableMixin):
             coords_and_factories += list(self.aux_factories)
 
         if name is not None:
-            coords_and_factories = filter(lambda coord_: coord_.name() == name, coords_and_factories)
+            coords_and_factories = [coord_ for coord_ in coords_and_factories if coord_.name() == name]
 
         if standard_name is not None:
-            coords_and_factories = filter(lambda coord_: coord_.standard_name == standard_name, coords_and_factories)
+            coords_and_factories = [coord_ for coord_ in coords_and_factories if coord_.standard_name == standard_name]
 
         if long_name is not None:
-            coords_and_factories = filter(lambda coord_: coord_.long_name == long_name, coords_and_factories)
+            coords_and_factories = [coord_ for coord_ in coords_and_factories if coord_.long_name == long_name]
 
         if axis is not None:
             axis = axis.upper()
-            coords_and_factories = filter(lambda coord_: iris.util.guess_coord_axis(coord_) == axis, coords_and_factories)
+            coords_and_factories = [coord_ for coord_ in coords_and_factories if iris.util.guess_coord_axis(coord_) == axis]
 
         if attributes is not None:
             if not isinstance(attributes, collections.Mapping):
                 raise ValueError('The attributes keyword was expecting a dictionary type, but got a %s instead.' % type(attributes))
-            filter_func = lambda coord_: all(k in coord_.attributes and coord_.attributes[k] == v for k, v in attributes.iteritems())
-            coords_and_factories = filter(filter_func, coords_and_factories)
+            filter_func = lambda coord_: all(k in coord_.attributes and coord_.attributes[k] == v for k, v in attributes.items())
+            coords_and_factories = list(filter(filter_func, coords_and_factories))
 
         if coord_system is not None:
-            coords_and_factories = filter(lambda coord_: coord_.coord_system == coord_system, coords_and_factories)
+            coords_and_factories = [coord_ for coord_ in coords_and_factories if coord_.coord_system == coord_system]
         
         if coord is not None:
             if isinstance(coord, iris.coords.CoordDefn):
                 defn = coord
             else:
                 defn = coord._as_defn()
-            coords_and_factories = filter(lambda coord_: coord_._as_defn() == defn, coords_and_factories)
+            coords_and_factories = [coord_ for coord_ in coords_and_factories if coord_._as_defn() == defn]
         
         if contains_dimension is not None:
-            coords_and_factories = filter(lambda coord_: contains_dimension in self.coord_dims(coord_), coords_and_factories)
+            coords_and_factories = [coord_ for coord_ in coords_and_factories if contains_dimension in self.coord_dims(coord_)]
 
         if dimensions is not None:
             if not isinstance(dimensions, collections.Container):
                 dimensions = [dimensions]
-            coords_and_factories = filter(lambda coord_: dimensions == self.coord_dims(coord_), coords_and_factories)
+            coords_and_factories = [coord_ for coord_ in coords_and_factories if dimensions == self.coord_dims(coord_)]
 
         # If any factories remain after the above filters we have to make the coords so they can be returned
         def extract_coord(coord_or_factory):
@@ -763,7 +763,7 @@ class Cube(CFVariableMixin):
 
         """
         # Was a string or a type provided?
-        if isinstance(spec, basestring):
+        if isinstance(spec, str):
             spec_name = spec
         else:
             assert issubclass(spec, iris.coord_systems.CoordSystem), "type %s is not a subclass of CoordSystem" % spec 
@@ -830,7 +830,7 @@ class Cube(CFVariableMixin):
             try:
                 self._data = self._data_manager.load(self._data)
 
-            except (MemoryError, self._data_manager.ArrayTooBigForAddressSpace), error:
+            except (MemoryError, self._data_manager.ArrayTooBigForAddressSpace) as error:
                 dm_shape = self._data_manager.pre_slice_array_shape(self._data)
                 # if the data manager shape is not the same as the cube's shape, it is because there must be deferred
                 # indexing pending once the data has been read into memory. Make the error message for this nice.
@@ -873,12 +873,12 @@ class Cube(CFVariableMixin):
     @property
     def dim_coords(self):
         """Return a tuple of all the dim_coords, ordered by dimension"""
-        return tuple((coord for coord, dim in sorted(self._dim_coords_and_dims, key=lambda (coord, dim): (dim, coord.name()))))
+        return tuple((coord for coord, dim in sorted(self._dim_coords_and_dims, key=lambda coord_dim: (coord_dim[1], coord_dim[0].name()))))
 
     @property
     def aux_coords(self):
         """Return a tuple of all the aux_coords, ordered by dimension(s)"""
-        return tuple((coord for coord, dims in sorted(self._aux_coords_and_dims, key=lambda (coord, dims): (dims, coord.name()))))
+        return tuple((coord for coord, dims in sorted(self._aux_coords_and_dims, key=lambda coord_dims1: (coord_dims1[1], coord_dims1[0].name()))))
 
     @property
     def derived_coords(self):
@@ -899,7 +899,7 @@ class Cube(CFVariableMixin):
             # Find all the attribute keys
             keys = set()
             for similar_coord in similar_coords:
-                keys.update(similar_coord.attributes.iterkeys())
+                keys.update(iter(similar_coord.attributes.keys()))
             # Look for any attributes that vary
             vary = set()
             attributes = {}
@@ -912,7 +912,7 @@ class Cube(CFVariableMixin):
                     if attributes.setdefault(key, value) != value:
                         vary.add(key)
                         break
-            keys = sorted(vary & coord.attributes.viewkeys())
+            keys = sorted(vary & coord.attributes.keys())
             bits = ['{}={!r}'.format(key, coord.attributes[key]) for key in keys]
             if bits:
                 extra = indent + ', '.join(bits)
@@ -936,10 +936,10 @@ class Cube(CFVariableMixin):
         
         """
         # Create a set to contain the axis names for each data dimension.
-        dim_names = [set() for dim in xrange(len(self.shape))]
+        dim_names = [set() for dim in range(len(self.shape))]
         
         # Add the dim_coord names that participate in the associated data dimensions. 
-        for dim in xrange(len(self.shape)):
+        for dim in range(len(self.shape)):
             for coord in self.coords(contains_dimension=dim, dim_coords=True):
                 dim_names[dim].add(coord.name())
 
@@ -1021,7 +1021,7 @@ class Cube(CFVariableMixin):
         
                     # Generate full textual summary for each vector coordinate - WITH dimension markers.
                     for index, coord in enumerate(vector_coords):
-                        for dim in xrange(len(self.shape)):
+                        for dim in range(len(self.shape)):
                             format = '%*sx' if dim in self.coord_dims(coord) else '%*s-'
                             vector_summary[index] += format % (int(alignment[dim] - len(vector_summary[index])), ' ')
 
@@ -1061,7 +1061,7 @@ class Cube(CFVariableMixin):
                     coord_cell = coord.cell(0)
 
                     # indent string type coordinates
-                    if isinstance(coord_cell.point, basestring):
+                    if isinstance(coord_cell.point, str):
                         coord_cell_split = [iris.util.clip_string(str(item)) for item in coord_cell.point.split('\n')]
                         coord_cell = ('\n%*s%*s' % (indent, ' ', len(coord.name()) + 2, ' ')).join(coord_cell_split)
 
@@ -1091,7 +1091,7 @@ class Cube(CFVariableMixin):
             #
             if self.attributes:
                 attribute_summary = []
-                for name, value in sorted(self.attributes.iteritems()):
+                for name, value in sorted(self.attributes.items()):
                     if name == 'history':
                         value = re.sub("[\d\/]{8} [\d\:]{8} Iris\: ", '', str(value))
                     else:
@@ -1142,7 +1142,7 @@ class Cube(CFVariableMixin):
         new_coord_dims = lambda coord_: [dimension_mapping[d] for d in self.coord_dims(coord_) if dimension_mapping[d] is not None]
 
         try:
-            first_slice = slice_gen.next()
+            first_slice = next(slice_gen)
         except StopIteration:
             first_slice = None
         
@@ -1276,14 +1276,14 @@ class Cube(CFVariableMixin):
             points = points.sampled_points
         else:
             # Do all points have matching coord names?
-            coord_names = points[0].viewkeys()
+            coord_names = points[0].keys()
             for point in points[1:]:
-                if point.viewkeys() ^ coord_names:
+                if point.keys() ^ coord_names:
                     raise ValueError('Point coordinates are inconsistent.')
 
         # Re-write as a sequence of coordinate-values pairs.
         sample_points = []
-        for coord_name in points[0].keys():
+        for coord_name in list(points[0].keys()):
             coord = self.coord(coord_name)
             values = [point[coord_name] for point in points]
             sample_points.append((coord, values))
@@ -1301,7 +1301,7 @@ class Cube(CFVariableMixin):
             
         coords = []
         for name_or_coord in names_or_coords:
-            if isinstance(name_or_coord, basestring):
+            if isinstance(name_or_coord, str):
                 coords.append(self.coord(name_or_coord))
             elif isinstance(name_or_coord, iris.coords.Coord):
                 coords.append(self.coord(coord=name_or_coord))
@@ -1419,7 +1419,7 @@ class Cube(CFVariableMixin):
         def remap_dim_coord(coord_and_dim):
             coord, dim = coord_and_dim
             return coord, dim_mapping[dim]
-        self._dim_coords_and_dims = map(remap_dim_coord, self._dim_coords_and_dims)
+        self._dim_coords_and_dims = list(map(remap_dim_coord, self._dim_coords_and_dims))
 
         for coord, dims in self._aux_coords_and_dims:
             for i, dim in enumerate(dims):
@@ -1450,7 +1450,7 @@ class Cube(CFVariableMixin):
 
         if self.attributes:
             attributes_element = doc.createElement('attributes')
-            for name in sorted(self.attributes.iterkeys()):
+            for name in sorted(self.attributes.keys()):
                 attribute_element = doc.createElement('attribute')
                 attribute_element.setAttribute('name', name)
                 if name == 'history':
@@ -1816,7 +1816,7 @@ class Cube(CFVariableMixin):
             groupby_coords.append(coord)
 
         # Determine the other coordinates that share the same group-by coordinate dimension.
-        shared_coords = filter(lambda coord_: coord_ not in groupby_coords, self.coords(dimensions=dimension_to_groupby))
+        shared_coords = [coord_ for coord_ in self.coords(dimensions=dimension_to_groupby) if coord_ not in groupby_coords]
 
         # Create the aggregation group-by instance.
         groupby = iris.analysis._Groupby(groupby_coords, shared_coords)
@@ -1993,7 +1993,7 @@ class Cube(CFVariableMixin):
         return new_cube
     
 
-class ClassDict(object, UserDict.DictMixin):
+class ClassDict(collections.MutableMapping):
     """
     A mapping that stores objects keyed on their superclasses and their names.
 
@@ -2038,7 +2038,7 @@ class ClassDict(object, UserDict.DictMixin):
 
     def __delitem__(self, class_):
         cs = self[class_]
-        keys = [k for k, v in self._retrieval_map.iteritems() if v == cs]
+        keys = [k for k, v in self._retrieval_map.items() if v == cs]
         for key in keys:
             del self._retrieval_map[key]
         del self._basic_map[type(cs)]
@@ -2046,7 +2046,7 @@ class ClassDict(object, UserDict.DictMixin):
 
     def keys(self):
         '''Return the keys of the dictionary mapping.'''
-        return self._basic_map.keys()
+        return list(self._basic_map.keys())
 
 
 def sorted_axes(axes):
@@ -2069,9 +2069,9 @@ class _SliceIterator(collections.Iterator):
         self._ordered = ordered
         self._coords = coords
 
-    def next(self):
+    def __next__(self):
         # NB. When self._ndindex runs out it will raise StopIteration for us.
-        index_tuple = self._ndindex.next()
+        index_tuple = next(self._ndindex)
 
         # Turn the given tuple into a list so that we can do something with it
         index_list = list(index_tuple)
@@ -2087,7 +2087,7 @@ class _SliceIterator(collections.Iterator):
             transpose_order = []
             for coord in self._coords:
                 transpose_order += sorted(cube.coord_dims(coord))
-            if transpose_order != range(len(cube.shape)):
+            if transpose_order != list(range(len(cube.shape))):
                 cube.transpose(transpose_order)
 
         return cube

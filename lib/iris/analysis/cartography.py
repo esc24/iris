@@ -19,10 +19,13 @@ Various utilities and numeric transformations relevant to cartography.
 
 """
 
+NO_MPL = True
+
 import math
 import warnings
 
-from mpl_toolkits.basemap import pyproj
+if NO_MPL is not True:
+    from mpl_toolkits.basemap import pyproj
 import numpy
 
 import iris.analysis
@@ -52,7 +55,10 @@ def _proj4(pole_lon, pole_lat):
     proj4_params = {'proj': 'ob_tran', 'o_proj': 'latlon', 'o_lon_p': 0,
         'o_lat_p': pole_lat, 'lon_0': 180 + pole_lon,
         'to_meter': math.degrees(1)}
-    proj = pyproj.Proj(proj4_params)
+    if NO_MPL:
+        raise irisError('No mpl')
+    else:
+        proj = pyproj.Proj(proj4_params)
     return proj
 
 
@@ -91,8 +97,8 @@ def rotate_pole(lons, lats, pole_lon, pole_lat):
 
 
 def _get_lat_lon_coords(cube):
-    lat_coords = filter(lambda coord: "latitude" in coord.name(), cube.coords())
-    lon_coords = filter(lambda coord: "longitude" in coord.name(), cube.coords())
+    lat_coords = [coord for coord in cube.coords() if "latitude" in coord.name()]
+    lon_coords = [coord for coord in cube.coords() if "longitude" in coord.name()]
     if len(lat_coords) > 1 or len(lon_coords) > 1:
         raise ValueError("Calling lat_lon_range() with multiple lat or lon coords is currently disallowed")
     lat_coord = lat_coords[0]

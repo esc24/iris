@@ -18,12 +18,12 @@
 Definitions of coordinates.
 
 """
-from __future__ import division
+
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 from copy import deepcopy
 import collections
-from itertools import izip, chain, izip_longest
+from itertools import chain, zip_longest
 import operator
 import re
 import warnings
@@ -162,7 +162,7 @@ class Cell(iris.util._OrderedHashable):
                 return self.point == other
         elif isinstance(other, Cell):
             return self._as_tuple() == other._as_tuple()
-        elif isinstance(other, basestring) and self.bound is None and isinstance(self.point, basestring):
+        elif isinstance(other, str) and self.bound is None and isinstance(self.point, str):
             return self.point == other
         else:
             return NotImplemented
@@ -245,12 +245,11 @@ class Cell(iris.util._OrderedHashable):
         return numpy.min(self.bound) <= point <= numpy.max(self.bound)
 
 
-class Coord(CFVariableMixin):
+class Coord(CFVariableMixin, metaclass=ABCMeta):
     """
     Abstract superclass for coordinates.
 
     """
-    __metaclass__ = ABCMeta
 
     _MODE_ADD = 1
     _MODE_SUB = 2
@@ -566,7 +565,7 @@ class Coord(CFVariableMixin):
                 return False  
 
         if self.bounds is not None:
-            for b_index in xrange(self.nbounds):
+            for b_index in range(self.nbounds):
                 if not iris.util.monotonic(self.bounds[..., b_index], strict=True):
                     return False
                 
@@ -828,7 +827,7 @@ class Coord(CFVariableMixin):
 
         if self.attributes:
             attributes_element = doc.createElement('attributes')
-            for name in sorted(self.attributes.iterkeys()):
+            for name in sorted(self.attributes.keys()):
                 attribute_element = doc.createElement('attribute')
                 attribute_element.setAttribute('name', name)
                 attribute_element.setAttribute('value', str(self.attributes[name]))
@@ -859,7 +858,7 @@ class Coord(CFVariableMixin):
         # Returns a consistent, unique string identifier for this coordinate.
         # NB. `None` does not have a reliable hash value.
         unique_value = (self.standard_name or 0, str(self.units),
-                        tuple(self.attributes.iteritems()))
+                        tuple(self.attributes.items()))
         return str(hex(hash(unique_value))).lstrip('-0x')
 
     def _value_type_name(self):
@@ -986,7 +985,7 @@ class DimCoord(Coord):
             if n_points > 1:
                 
                 directions = set()
-                for b_index in xrange(n_bounds):
+                for b_index in range(n_bounds):
                     monotonic, direction = iris.util.monotonic(bounds[:, b_index], 
                                                                strict=True, return_direction=True)
                     if not monotonic:
@@ -1119,7 +1118,7 @@ class CellMethod(iris.util._OrderedHashable):
             A single string, or a sequence strings, containing any additional comments.
 
         """
-        if not isinstance(method, basestring):
+        if not isinstance(method, str):
             raise TypeError("'method' must be a string - got a '%s'" % type(method))
 
         _coords = []
@@ -1127,7 +1126,7 @@ class CellMethod(iris.util._OrderedHashable):
             pass
         elif isinstance(coords, Coord):
             _coords.append(coords.name())
-        elif isinstance(coords, basestring):
+        elif isinstance(coords, str):
             _coords.append(coords)
         else:
             normalise = lambda coord: coord.name() if isinstance(coord, Coord) else coord
@@ -1136,7 +1135,7 @@ class CellMethod(iris.util._OrderedHashable):
         _intervals = []
         if intervals is None:
             pass
-        elif isinstance(intervals, basestring):
+        elif isinstance(intervals, str):
             _intervals = [intervals]
         else:
             _intervals.extend(intervals)
@@ -1144,7 +1143,7 @@ class CellMethod(iris.util._OrderedHashable):
         _comments = []
         if comments is None:
             pass
-        elif isinstance(comments, basestring):
+        elif isinstance(comments, str):
             _comments = [comments]
         else:
             _comments.extend(comments)
@@ -1154,13 +1153,13 @@ class CellMethod(iris.util._OrderedHashable):
     def __str__(self):
         """Return a custom string representation of CellMethod"""
         # Group related coord names intervals and comments together 
-        cell_components = izip_longest(self.coord_names, self.intervals, self.comments, fillvalue="")
+        cell_components = zip_longest(self.coord_names, self.intervals, self.comments, fillvalue="")
         
         collection_summaries = []
         cm_summary = "%s: " % self.method
         
         for coord_name, interval, comment in cell_components:
-            other_info = ", ".join(filter(None, chain((interval, comment))))
+            other_info = ", ".join([_f for _f in chain((interval, comment)) if _f])
             if other_info:
                 coord_summary = "%s (%s)" % (coord_name, other_info)
             else:
@@ -1201,11 +1200,11 @@ class _CellIterator(collections.Iterator):
         self._coord = coord
         if coord.ndim != 1:
             raise iris.exceptions.CoordinateMultiDimError(coord)
-        self._indices = iter(xrange(coord.shape[0]))
+        self._indices = iter(range(coord.shape[0]))
 
-    def next(self):
+    def __next__(self):
         # NB. When self._indices runs out it will raise StopIteration for us.
-        i = self._indices.next()
+        i = next(self._indices)
         return self._coord.cell(i)
 
 
@@ -1215,7 +1214,7 @@ class _GroupIterator(collections.Iterator):
         self._points = points
         self._start = 0
 
-    def next(self):
+    def __next__(self):
         num_points = len(self._points)
         if self._start >= num_points:
             raise StopIteration

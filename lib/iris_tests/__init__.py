@@ -34,7 +34,7 @@ import os.path
 import platform
 import re
 import shutil
-import StringIO
+import io
 import subprocess
 import sys
 import unittest
@@ -60,7 +60,7 @@ _RESULT_PATH = os.path.join(iris.config.ROOT_PATH, 'tests', 'results')
 if '--data-files-used' in sys.argv:
     sys.argv.remove('--data-files-used')
     fname = '/var/tmp/all_iris_test_resource_paths.txt'
-    print 'saving list of files used by tests to %s' % fname
+    print('saving list of files used by tests to %s' % fname)
     _EXPORT_DATAPATHS_FILE = open(fname, 'w')
 else:
     _EXPORT_DATAPATHS_FILE = None
@@ -97,7 +97,7 @@ def main():
     """A wrapper for unittest.main() which adds iris.test specific options to the help (-h) output."""
     if '-h' in sys.argv or '--help' in sys.argv:
         stdout = sys.stdout
-        buff = StringIO.StringIO()
+        buff = io.StringIO()
         # NB. unittest.main() raises an exception after it's shown the help text
         try:
             sys.stdout = buff
@@ -110,7 +110,7 @@ def main():
             lines.insert(11, '  -sf                  Save matplotlib figures to subfolder "image_results"')
             lines.insert(12, '                       Note: Compare branches with iris_tests/idiff.py')
             lines.insert(13, '  --data-files-used    Save a list of files used to a temporary file')
-            print '\n'.join(lines)
+            print('\n'.join(lines))
     else:
         unittest.main()
 
@@ -130,7 +130,7 @@ def get_data_path(relative_path):
 def get_result_path(relative_path):
     """Returns the absolute path to a result file when given the relative path
     as a string, or sequence of strings."""
-    if not isinstance(relative_path, basestring):
+    if not isinstance(relative_path, str):
         relative_path = os.path.join(*relative_path)
     return os.path.abspath(os.path.join(_RESULT_PATH, relative_path))
 
@@ -285,7 +285,7 @@ class IrisTest(unittest.TestCase):
         """
         def attr_filter(attr):
             result = {}
-            for key, value in attr.iteritems():
+            for key, value in attr.items():
                 if key == 'history':
                     value = re.sub("[\d\/]{8} [\d\:]{8} Iris\: ", '', str(value))
                 else:
@@ -381,7 +381,7 @@ class IrisTest(unittest.TestCase):
 
             if _DISPLAY_FIGURES:
                 if resultant_checksum != checksum:
-                    print 'Test would have failed (new checksum: %s ; old checksum: %s)' % (resultant_checksum, checksum)
+                    print('Test would have failed (new checksum: %s ; old checksum: %s)' % (resultant_checksum, checksum))
                 plt.show()
             else:
                 self.assertEqual(resultant_checksum, checksum, 'Image checksums not equal for %s' % unique_id)

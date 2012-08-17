@@ -238,7 +238,7 @@ class TestOffset(TestUnit):
 
     def test_offset_pass_2(self):
         u = Unit("meter")
-        self.assertEqual(u + 1000L, "m @ 1000")
+        self.assertEqual(u + 1000, "m @ 1000")
 
 
 class TestOffsetByTime(TestUnit):
@@ -368,7 +368,7 @@ class TestMultiply(TestUnit):
 
     def test_multiply_pass_2(self):
         u = Unit("amp")
-        self.assertEqual((u * 1000L).format(), "1000 A")
+        self.assertEqual((u * 1000).format(), "1000 A")
 
     def test_multiply_pass_3(self):
         u = Unit("amp")
@@ -409,7 +409,7 @@ class TestDivide(TestUnit):
 
     def test_divide_pass_2(self):
         u = Unit("watts")
-        self.assertEqual((u / 1000L).format(), "0.001 W")
+        self.assertEqual((u / 1000).format(), "0.001 W")
 
     def test_divide_pass_3(self):
         u = Unit("watts")
@@ -426,7 +426,7 @@ class TestPower(TestUnit):
         self.assertRaises(TypeError, operator.pow, u, Unit('no unit'))
         self.assertEqual(u ** 2, Unit('A^2'))
         self.assertEqual(u ** 3.0, Unit('A^3'))
-        self.assertEqual(u ** 4L, Unit('A^4'))
+        self.assertEqual(u ** 4, Unit('A^4'))
         self.assertRaises(ValueError, operator.pow, u, 2.4)
 
         u = Unit("m^2")
@@ -439,7 +439,7 @@ class TestPower(TestUnit):
         self.assertRaises(TypeError, operator.pow, u, Unit('m'))
         self.assertEqual(u ** 2, Unit('unknown'))
         self.assertEqual(u ** 3.0, Unit('unknown'))
-        self.assertEqual(u ** 4L, Unit('unknown'))
+        self.assertEqual(u ** 4, Unit('unknown'))
         
     def test_power_nounit(self):
         u = Unit('no unit')

@@ -19,7 +19,7 @@ Definitions of coordinate systems.
 
 """
 
-from __future__ import division
+
 from abc import ABCMeta
 
 import numpy
@@ -132,14 +132,13 @@ class GeoPosition(iris.util._OrderedHashable):
     """The longitude of the position in degrees."""
 
 
-class CoordSystem(object):
+class CoordSystem(object, metaclass=ABCMeta):
     """Abstract base class for coordinate systems.
 
     A Coord holds an optional CoordSystem, which can be used to indicate
     several Coords are defined to be 'in the same system'.
     E.g lat and lon coords will hold a shared or identical LatLonCS.
     """
-    __metaclass__ = ABCMeta
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
@@ -161,7 +160,7 @@ class CoordSystem(object):
         coord_system_xml_element = doc.createElement(xml_element_name)
         
         attrs = []
-        for k, v in self.__dict__.iteritems():
+        for k, v in self.__dict__.items():
             if isinstance(v, iris.cube.Cube):
                 attrs.append([k, 'defined'])
             else:

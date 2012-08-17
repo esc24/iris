@@ -309,7 +309,7 @@ class TestClipString(unittest.TestCase):
     def test_default_values(self):
         # Get the default values specified in the function
         argspec = inspect.getargspec(iris.util.clip_string)
-        arg_dict = dict(zip(argspec.args[-2:], argspec.defaults))
+        arg_dict = dict(list(zip(argspec.args[-2:], argspec.defaults)))
 
         result = iris.util.clip_string(self.test_string, arg_dict["clip_length"], arg_dict["rider"])
         

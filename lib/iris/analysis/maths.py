@@ -18,7 +18,7 @@
 Basic mathematical and statistical operations.
 
 """
-from __future__ import division
+
 import warnings
 import math
 
@@ -109,7 +109,7 @@ def _assert_compatible(cube, other):
     
     try:
         data_view, other_view = numpy.broadcast_arrays(cube.data, other)
-    except ValueError, err:
+    except ValueError as err:
         # re-raise
         raise ValueError("The array was not broadcastable to the cube's data shape. The error message from numpy when broadcasting:\n%s\n"
                          "The cube's shape was %s and the array's shape was %s" % (err, cube.shape, other.shape))
@@ -295,7 +295,7 @@ def _add_subtract_common(operation_function, operation_symbol, operation_noun, o
             new_cube = cube.copy(data=operation_function(cube.data, other.data))
 
         # If a coordinate is to be ignored - remove it
-        ignore = filter(None, [coord_grp[0] for coord_grp in coord_comp['ignorable']])
+        ignore = [_f for _f in [coord_grp[0] for coord_grp in coord_comp['ignorable']] if _f]
         if not ignore:
             ignore_string = ''
         else:

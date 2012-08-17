@@ -89,7 +89,7 @@ def compare_dirs(dir_path1, dir_path2):
     diffs = pool.map(map_compare_files, args)
     for diff in diffs:
         if diff is not None:
-            print diff
+            print(diff)
             pass
     pool.close()
     pool.join()
@@ -99,7 +99,7 @@ def step_over_diffs(d_path1, d_path2):
     import matplotlib.image as mimg
 
     for fname in os.listdir(DIFF_DIR):
-        print fname
+        print(fname)
         plt.figure(figsize=(16, 16))
         plt.suptitle(fname)
         ax = plt.subplot(221)

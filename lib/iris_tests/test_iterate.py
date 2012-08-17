@@ -31,6 +31,7 @@ import iris
 import iris.analysis
 import iris.fileformats.pp
 import iris.iterate
+from functools import reduce
 
 
 @iris.tests.skip_data
@@ -73,7 +74,7 @@ class TestIterateFunctions(tests.IrisTest):
     def test_izip_unequal_slice_coords(self):
         # Has latitude and longitude coords, but they differ from airtemp's
         other_cube = iris.load_strict(iris.tests.get_data_path(('PP', 'ocean_rle', 'ocean_rle.pp')), 
-                                      iris.AttributeConstraint(STASH=iris.fileformats.pp.STASH(02, 30, 248)))
+                                      iris.AttributeConstraint(STASH=iris.fileformats.pp.STASH(0o2, 30, 248)))
         nslices = self.airtemp.shape[0]
         i = 0
         for air_slice, cube_slice in iris.iterate.izip(self.airtemp, other_cube, coords=['latitude', 'longitude']):
@@ -106,7 +107,7 @@ class TestIterateFunctions(tests.IrisTest):
             zip_slice = zip_iterator.next()[0]    # First element of tuple: (extractedcube, )
             self.assertEqual(cube_slice, zip_slice)
         with self.assertRaises(StopIteration):
-            zip_iterator.next()    # Should raise exception if we continue to try to iterate
+            next(zip_iterator)    # Should raise exception if we continue to try to iterate
         # Two coords
         slice_iterator = self.humidity.slices(['latitude', 'longitude'])
         zip_iterator = iris.iterate.izip(self.humidity, coords=['latitude', 'longitude'])
@@ -114,7 +115,7 @@ class TestIterateFunctions(tests.IrisTest):
             zip_slice = zip_iterator.next()[0]    # First element of tuple: (extractedcube, )
             self.assertEqual(cube_slice, zip_slice)
         with self.assertRaises(StopIteration):
-            zip_iterator.next()    # Should raise exception if we continue to try to iterate
+            next(zip_iterator)    # Should raise exception if we continue to try to iterate
         # One coord
         slice_iterator = self.humidity.slices('latitude')
         zip_iterator = iris.iterate.izip(self.humidity, coords='latitude')
@@ -122,7 +123,7 @@ class TestIterateFunctions(tests.IrisTest):
             zip_slice = zip_iterator.next()[0]    # First element of tuple: (extractedcube, )
             self.assertEqual(cube_slice, zip_slice)
         with self.assertRaises(StopIteration):
-            zip_iterator.next()    # Should raise exception if we continue to try to iterate
+            next(zip_iterator)    # Should raise exception if we continue to try to iterate
         # All coords
         slice_iterator = self.humidity.slices(['level_height', 'latitude', 'longitude'])
         zip_iterator = iris.iterate.izip(self.humidity, coords=['level_height', 'latitude', 'longitude'])
@@ -130,7 +131,7 @@ class TestIterateFunctions(tests.IrisTest):
             zip_slice = zip_iterator.next()[0]    # First element of tuple: (extractedcube, )
             self.assertEqual(cube_slice, zip_slice)
         with self.assertRaises(StopIteration):
-            zip_iterator.next()    # Should raise exception if we continue to try to iterate
+            next(zip_iterator)    # Should raise exception if we continue to try to iterate
 
     def test_izip_same_cube(self):
         nslices = self.humidity.shape[0]
@@ -138,7 +139,7 @@ class TestIterateFunctions(tests.IrisTest):
         count = 0
         for slice_first, slice_second in iris.iterate.izip(self.humidity, self.humidity, coords=['latitude', 'longitude']):
             self.assertEqual(slice_first, slice_second)  # Equal to each other
-            self.assertEqual(slice_first, slice_iterator.next()) # Equal to the truth (from slice())
+            self.assertEqual(slice_first, next(slice_iterator)) # Equal to the truth (from slice())
             count += 1
         self.assertEqual(count, nslices)
         # Another case
@@ -147,7 +148,7 @@ class TestIterateFunctions(tests.IrisTest):
         count = 0
         for slice_first, slice_second in iris.iterate.izip(self.airtemp, self.airtemp, coords=['latitude']):
             self.assertEqual(slice_first, slice_second)
-            self.assertEqual(slice_first, slice_iterator.next()) # Equal to the truth (from slice())
+            self.assertEqual(slice_first, next(slice_iterator)) # Equal to the truth (from slice())
             count += 1
         self.assertEqual(count, nslices)
         # third case - full iteration
@@ -156,12 +157,12 @@ class TestIterateFunctions(tests.IrisTest):
         count = 0
         for slice_first, slice_second in iris.iterate.izip(self.humidity, self.humidity, coords=[]):
             self.assertEqual(slice_first, slice_second)
-            self.assertEqual(slice_first, slice_iterator.next()) # Equal to the truth (from slice())
+            self.assertEqual(slice_first, next(slice_iterator)) # Equal to the truth (from slice())
             count += 1
         self.assertEqual(count, nslices)
 
     def test_izip_subcube_of_same(self):
-        for _ in xrange(3):
+        for _ in range(3):
             super_cube = self.airtemp
             k = random.randint(0, super_cube.shape[0]-1)   # Random int to pick coord value to calc subcube
             sub_cube = super_cube[k, :, :]
@@ -170,7 +171,7 @@ class TestIterateFunctions(tests.IrisTest):
             for super_slice, sub_slice in iris.iterate.izip(super_cube, sub_cube , coords=['latitude', 'longitude']):
                 self.assertEqual(sub_slice, sub_cube)    # This cube should not change as lat and long are 
                                                          # the only data dimensions in this cube)
-                self.assertEqual(super_slice, super_slice_iterator.next())
+                self.assertEqual(super_slice, next(super_slice_iterator))
                 if j == k:
                     self.assertEqual(super_slice, sub_slice)
                 else:
@@ -187,7 +188,7 @@ class TestIterateFunctions(tests.IrisTest):
         ij_iterator = numpy.ndindex(self.airtemp.shape[1], self.airtemp.shape[2])
         count = 0
         for air_slice, hum_slice in iris.iterate.izip(self.airtemp, self.humidity, coords='level_height'):
-            i, j = ij_iterator.next()
+            i, j = next(ij_iterator)
             if random.random() <  check_eq_probability:     # Check these slices
                 air_slice_truth = self.airtemp[:, i, j]
                 hum_slice_truth = self.humidity[:, i, j]
@@ -197,10 +198,10 @@ class TestIterateFunctions(tests.IrisTest):
         self.assertEqual(count, nslices)
         # Two coords
         nslices = self.airtemp.shape[0]        
-        i_iterator = iter(xrange(self.airtemp.shape[0]))
+        i_iterator = iter(range(self.airtemp.shape[0]))
         count = 0
         for air_slice, hum_slice in iris.iterate.izip(self.airtemp, self.humidity, coords=['latitude', 'longitude']):
-            i = i_iterator.next()
+            i = next(i_iterator)
             air_slice_truth = self.airtemp[i, :, :]
             hum_slice_truth = self.humidity[i, :, :]
             self.assertEqual(air_slice_truth, air_slice)
@@ -256,7 +257,7 @@ class TestIterateFunctions(tests.IrisTest):
         ij_iterator = numpy.ndindex(big_cube.shape[0], big_cube.shape[2])
         count = 0
         for big_slice, little_slice in iris.iterate.izip(big_cube, little_cube, coords='latitude'):
-            i, j = ij_iterator.next()
+            i, j = next(ij_iterator)
             if random.random() <  check_eq_probability:
                 big_slice_truth = big_cube[i, :, j]
                 little_slice_truth = little_cube    # Just 1d so slice is entire cube

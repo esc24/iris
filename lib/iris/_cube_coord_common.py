@@ -35,7 +35,7 @@ class LimitedAttributeDict(dict):
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
         # Check validity of keys
-        for key in self.iterkeys():
+        for key in self.keys():
             if key in self._forbidden_keys:
                 raise ValueError('%r is not a permitted attribute' % key)
     
@@ -48,11 +48,11 @@ class LimitedAttributeDict(dict):
         # Gather incoming keys
         keys = []
         if hasattr(other, "keys"):
-            keys += other.keys()
+            keys += list(other.keys())
         else:
             keys += [k for k,v in other]
         
-        keys += kwargs.keys()
+        keys += list(kwargs.keys())
         
         # Check validity of keys
         for key in keys:
@@ -80,7 +80,7 @@ class CFVariableMixin(object):
             self.long_name = None
         except ValueError:
             self.standard_name = None
-            self.long_name = unicode(name)
+            self.long_name = str(name)
 
     @property
     def unit(self):

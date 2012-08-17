@@ -183,7 +183,7 @@ class TestLoad(tests.IrisTest):
     def test_cell_methods(self):
         filename = tests.get_data_path(('NetCDF', 'global', 'xyt', 'SMALL_hires_wind_u_for_ipcc4.nc'))
         cube = iris.load_strict(filename)
-        self.assertEquals(cube.cell_methods, (iris.coords.CellMethod(method=u'mean', coords=(u'time',), intervals=(u'6 minutes',), comments=()),))
+        self.assertEquals(cube.cell_methods, (iris.coords.CellMethod(method='mean', coords=('time',), intervals=('6 minutes',), comments=()),))
 
 
 @iris.tests.skip_data
@@ -196,7 +196,7 @@ class TestClimatology(tests.IrisTest):
         time = self.cfr.cf_group['temp_dmax_tmean_abs'].cf_group.coordinates['time']
         climatology = time.cf_group.climatology
         self.assertEqual(len(climatology), 1)
-        self.assertEqual(climatology.keys(), ['climatology_bounds'])
+        self.assertEqual(list(climatology.keys()), ['climatology_bounds'])
 
         climatology_var = climatology['climatology_bounds']
         self.assertEqual(climatology_var.ndim, 2)
@@ -215,33 +215,33 @@ class TestLabels(tests.IrisTest):
     def test_label_dim_start(self):
         cf_data_var = self.cfr_start.cf_group['temp_dmax_tmean_abs']
 
-        self.assertEqual(sorted(self.cfr_start.cf_group.labels.keys()), [u'region_name'])
-        self.assertEqual(sorted(cf_data_var.cf_group.labels.keys()), [u'region_name'])
+        self.assertEqual(sorted(self.cfr_start.cf_group.labels.keys()), ['region_name'])
+        self.assertEqual(sorted(cf_data_var.cf_group.labels.keys()), ['region_name'])
 
-        self.assertEqual(self.cfr_start.cf_group.labels['region_name'].cf_label_dimensions(cf_data_var), (u'georegion',))
+        self.assertEqual(self.cfr_start.cf_group.labels['region_name'].cf_label_dimensions(cf_data_var), ('georegion',))
         self.assertEqual(self.cfr_start.cf_group.labels['region_name'].cf_label_data(cf_data_var)[0], 'Anglian')
 
         cf_data_var = self.cfr_start.cf_group['cdf_temp_dmax_tmean_abs']
 
-        self.assertEqual(sorted(self.cfr_start.cf_group.labels.keys()), [u'region_name'])
-        self.assertEqual(sorted(cf_data_var.cf_group.labels.keys()), [u'region_name'])
+        self.assertEqual(sorted(self.cfr_start.cf_group.labels.keys()), ['region_name'])
+        self.assertEqual(sorted(cf_data_var.cf_group.labels.keys()), ['region_name'])
 
-        self.assertEqual(self.cfr_start.cf_group.labels['region_name'].cf_label_dimensions(cf_data_var), (u'georegion',))
+        self.assertEqual(self.cfr_start.cf_group.labels['region_name'].cf_label_dimensions(cf_data_var), ('georegion',))
         self.assertEqual(self.cfr_start.cf_group.labels['region_name'].cf_label_data(cf_data_var)[0], 'Anglian') 
 
     def test_label_dim_end(self):
         cf_data_var = self.cfr_end.cf_group['tas']
 
-        self.assertEqual(sorted(self.cfr_end.cf_group.labels.keys()), [u'experiment_id', u'institution', u'source'])
-        self.assertEqual(sorted(cf_data_var.cf_group.labels.keys()), [u'experiment_id', u'institution', u'source'])
+        self.assertEqual(sorted(self.cfr_end.cf_group.labels.keys()), ['experiment_id', 'institution', 'source'])
+        self.assertEqual(sorted(cf_data_var.cf_group.labels.keys()), ['experiment_id', 'institution', 'source'])
 
-        self.assertEqual(self.cfr_end.cf_group.labels['experiment_id'].cf_label_dimensions(cf_data_var), (u'ensemble',))
+        self.assertEqual(self.cfr_end.cf_group.labels['experiment_id'].cf_label_dimensions(cf_data_var), ('ensemble',))
         self.assertEqual(self.cfr_end.cf_group.labels['experiment_id'].cf_label_data(cf_data_var)[0], '2005')
 
-        self.assertEqual(self.cfr_end.cf_group.labels['institution'].cf_label_dimensions(cf_data_var), (u'ensemble',))
+        self.assertEqual(self.cfr_end.cf_group.labels['institution'].cf_label_dimensions(cf_data_var), ('ensemble',))
         self.assertEqual(self.cfr_end.cf_group.labels['institution'].cf_label_data(cf_data_var)[0], 'ECMWF')
 
-        self.assertEqual(self.cfr_end.cf_group.labels['source'].cf_label_dimensions(cf_data_var), (u'ensemble',))
+        self.assertEqual(self.cfr_end.cf_group.labels['source'].cf_label_dimensions(cf_data_var), ('ensemble',))
         self.assertEqual(self.cfr_end.cf_group.labels['source'].cf_label_data(cf_data_var)[0], 'IFS33R1/HOPE-E, Sys 1, Met 1, ENSEMBLES')
 
 

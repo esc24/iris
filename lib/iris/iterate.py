@@ -76,7 +76,7 @@ def izip(*cubes, **kwargs):
 
     # For each input cube, generate the union of all describing dimensions for the resulting subcube 
     requested_dims_by_cube = []
-    for coords, cube in itertools.izip(coords_by_cube, cubes):
+    for coords, cube in zip(coords_by_cube, cubes):
         requested_dims = set()
         for coord in coords:
             requested_dims.update(cube.coord_dims(coord))
@@ -92,9 +92,9 @@ def izip(*cubes, **kwargs):
     # Create a list of sets (one set per cube), with each set containing the 
     # dimensioned coordinates that will be iterated over (i.e exclude slice coords)
     dimensioned_iter_coords_by_cube = []
-    for requested_dims, cube in itertools.izip(requested_dims_by_cube, cubes):
+    for requested_dims, cube in zip(requested_dims_by_cube, cubes):
         dimensioned_iter_coords = set()
-        for dim in xrange(len(cube.shape)):        # loop over dimensioned coords in each cube
+        for dim in range(len(cube.shape)):        # loop over dimensioned coords in each cube
             if dim not in requested_dims:
                 dimensioned_iter_coords.update(cube.coords(contains_dimension=dim))
         dimensioned_iter_coords_by_cube.append(dimensioned_iter_coords)
@@ -125,8 +125,8 @@ def izip(*cubes, **kwargs):
         common = coords_by_def_a & coords_by_def_b
         for definition_coord in common:
             # Extract matching coord from dimensioned_iter_coords_a and dimensioned_iter_coords_b to access shape
-            coord_a = (coord for coord in dimensioned_iter_coords_a if definition_coord == coord).next()
-            coord_b = (coord for coord in dimensioned_iter_coords_b if definition_coord == coord).next()
+            coord_a = next((coord for coord in dimensioned_iter_coords_a if definition_coord == coord))
+            coord_b = next((coord for coord in dimensioned_iter_coords_b if definition_coord == coord))
             if coord_a.shape != coord_b.shape:
                 raise ValueError("Shape of common dimensioned coordinate '%s' does not match across all "\
                                  "cubes. Unable to iterate over this coordinate in step." % coord_a.name)
@@ -161,13 +161,13 @@ class _ZipSlicesIterator(collections.Iterator):
         master_dimensioned_coord_list = []
         master_dims_index = []
         self._offsets_by_cube = []
-        for requested_dims, cube in itertools.izip(requested_dims_by_cube, cubes):
+        for requested_dims, cube in zip(requested_dims_by_cube, cubes):
             # Create a list of the shape of each cube, and set the dimensions which have been requested to length 1
             dims_index = list(cube.shape)
             for dim in requested_dims:
                 dims_index[dim] = 1
             offsets = []
-            for i in xrange(len(cube.shape)):           # loop over dimensions in each cube
+            for i in range(len(cube.shape)):           # loop over dimensions in each cube
                 cube_coords = cube.coords(dimensions=i)    # obtain the coordinates for this dimension
                 found = False
                 for coord in cube_coords:               # loop over coords in this dimension (could be just one)
@@ -195,12 +195,12 @@ class _ZipSlicesIterator(collections.Iterator):
         # ndindex(2, 1, 3) -> [(0, 0, 0), (0, 0, 1), (0, 0, 2), (1, 0, 0), (1, 0, 1), (1, 0, 2)]
         self._ndindex = numpy.ndindex(*master_dims_index)
 
-    def next(self):
+    def __next__(self):
         # When self._ndindex runs out it will raise StopIteration for us.
-        master_index_tuple = self._ndindex.next()
+        master_index_tuple = next(self._ndindex)
 
         subcubes = []
-        for offsets, requested_dims, coords, cube in itertools.izip(self._offsets_by_cube, 
+        for offsets, requested_dims, coords, cube in zip(self._offsets_by_cube, 
                 self._requested_dims_by_cube, self._coords_by_cube, self._cubes):
             # Extract the index_list for each cube from the master index using the offsets and
             # for each of the spanning dimensions requested, replace the index_list value 
@@ -215,7 +215,7 @@ class _ZipSlicesIterator(collections.Iterator):
                 transpose_order = []
                 for coord in coords:
                     transpose_order += sorted(subcube.coord_dims(coord))
-                if transpose_order != range(subcube.ndim):
+                if transpose_order != list(range(subcube.ndim)):
                     subcube.transpose(transpose_order)
             subcubes.append(subcube)
         

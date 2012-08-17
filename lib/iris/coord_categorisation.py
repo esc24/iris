@@ -52,7 +52,7 @@ def add_categorised_coord(cube, name, from_coord, category_function, units='1'):
         units of the category value, typically 'no_unit' or '1'.
     """
     #interpret coord, if given as a name
-    if isinstance(from_coord, basestring):
+    if isinstance(from_coord, str):
         from_coord = cube.coord(from_coord)
     
     if len(cube.coords(name)) > 0:

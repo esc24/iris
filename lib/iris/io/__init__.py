@@ -41,11 +41,11 @@ CALLBACK_DEPRECATION_MSG = "Callback functions with a return value are deprecate
 class SaversDict(dict):
     """A dictionary that can only have string keys with no overlap."""
     def __setitem__(self, key, value):
-        if not isinstance(key, basestring):
+        if not isinstance(key, str):
             raise ValueError("key is not a string")
-        if key in self.keys():
+        if key in list(self.keys()):
             raise ValueError("A saver already exists for", key)
-        for k in self.keys():
+        for k in list(self.keys()):
             if k.endswith(key) or key.endswith(k):
                 raise ValueError("key %s conflicts with existing key %s" % (key, k))
         dict.__setitem__(self, key, value)
@@ -91,17 +91,17 @@ def select_data_path(resources_subdir, rel_path):
             for file_in_master_not_in_slave in (all_files - slave_files):
                 master_file = os.path.join(MASTER_REPO, file_in_master_not_in_slave)
                 slave_file = os.path.join(DATA_REPO, file_in_master_not_in_slave)
-                print '; File exists at %s which does not exist at %s' % (master_file, slave_file)
+                print('; File exists at %s which does not exist at %s' % (master_file, slave_file))
                 if DATA_REPO.startswith(MASTER_REPO):
-                    print 'ln -s %s %s' % (master_file, slave_file)
+                    print('ln -s %s %s' % (master_file, slave_file))
                 else:
-                    print 'cp %s %s' % (master_file, slave_file)
+                    print('cp %s %s' % (master_file, slave_file))
                 
             for file_in_slave_not_in_master in (all_files - master_files):
                 master_file = os.path.join(MASTER_REPO, file_in_slave_not_in_master)
                 slave_file = os.path.join(DATA_REPO, file_in_slave_not_in_master)
-                print '; File exists at %s which does not exist at %s' % (slave_file, master_file)
-                print 'rm -rf %s' % os.path.join(DATA_REPO, file_in_slave_not_in_master)
+                print('; File exists at %s which does not exist at %s' % (slave_file, master_file))
+                print('rm -rf %s' % os.path.join(DATA_REPO, file_in_slave_not_in_master))
 
     return path_on_slave
 
@@ -210,19 +210,19 @@ def load_files(filenames, callback):
     glob_expanded = {fn : sorted(glob.glob(fn)) for fn in filenames}
     
     # If any of the filenames or globs expanded to an empty list then raise an error
-    if not all(glob_expanded.viewvalues()):
+    if not all(glob_expanded.values()):
         raise IOError("One or more of the files specified did not exist %s." % 
-        ["%s expanded to %s" % (pattern, expanded if expanded else "empty") for pattern, expanded in glob_expanded.iteritems()])
+        ["%s expanded to %s" % (pattern, expanded if expanded else "empty") for pattern, expanded in glob_expanded.items()])
     
     # Create default dict mapping iris format handler to its associated filenames
     handler_map = collections.defaultdict(list)
-    for fn in sum([x for x in glob_expanded.viewvalues()], []):
-        with open(fn) as fh:         
+    for fn in sum([x for x in glob_expanded.values()], []):
+        with open(fn, 'rb') as fh:         
             handling_format_spec = iris.fileformats.FORMAT_AGENT.get_spec(os.path.basename(fn), fh)
             handler_map[handling_format_spec].append(fn)
     
     # Call each iris format handler with the approriate filenames
-    for handling_format_spec, fnames in handler_map.iteritems():
+    for handling_format_spec, fnames in handler_map.items():
         for cube in handling_format_spec.handler(fnames, callback):
             yield cube
 
@@ -337,7 +337,7 @@ def save(source, target, saver=None, **kwargs):
 
     """ 
     # Determine format from filename
-    if isinstance(target, basestring) and saver is None:
+    if isinstance(target, str) and saver is None:
         saver = find_saver(target)
     elif isinstance(target, types.FileType):
         saver = find_saver(target.name)

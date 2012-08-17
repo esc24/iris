@@ -268,7 +268,7 @@ class Rule(object):
         # NB. This creates the name '_exec_conditions' in the local
         # namespace, which is then used below.
         code = 'def _exec_conditions(self, field, f, pp, grib, cm): return %s'
-        exec compile(code % conditions, '<string>', 'exec')
+        exec(compile(code % conditions, '<string>', 'exec'))
         # Make it a method of ours.
         self._exec_conditions = types.MethodType(_exec_conditions, self, type(self))
     
@@ -297,8 +297,8 @@ class Rule(object):
         
         try:
             result = self._exec_conditions(field, f, pp, grib, cm)
-        except Exception, err:
-            print >> sys.stderr, 'Condition failed to run conditions: %s : %s' % (self._conditions, err)
+        except Exception as err:
+            print('Condition failed to run conditions: %s : %s' % (self._conditions, err), file=sys.stderr)
             raise err
                                
         return result
@@ -338,12 +338,12 @@ class Rule(object):
                 if action_factory:
                     factories.append(action_factory)
 
-            except iris.exceptions.CoordinateNotFoundError, err:
-                print >> sys.stderr, 'Failed (msg:%(error)s) to find coordinate, perhaps consider running last: %(command)s' % {'command':action, 'error': err}
-            except AttributeError, err:
-                print >> sys.stderr, 'Failed to get value (%(error)s) to execute: %(command)s' % {'command':action, 'error': err}
-            except Exception, err:
-                print >> sys.stderr, 'Failed (msg:%(error)s) to run: %(command)s\nFrom the rule:%(me)r' % {'me':self, 'command':action, 'error': err}
+            except iris.exceptions.CoordinateNotFoundError as err:
+                print('Failed (msg:%(error)s) to find coordinate, perhaps consider running last: %(command)s' % {'command':action, 'error': err}, file=sys.stderr)
+            except AttributeError as err:
+                print('Failed to get value (%(error)s) to execute: %(command)s' % {'command':action, 'error': err}, file=sys.stderr)
+            except Exception as err:
+                print('Failed (msg:%(error)s) to run: %(command)s\nFrom the rule:%(me)r' % {'me':self, 'command':action, 'error': err}, file=sys.stderr)
                 raise err
         return factories
 
@@ -352,11 +352,11 @@ class FunctionRule(Rule):
     """A Rule with values returned by its actions."""
     def _create_action_method(self, i, action):
         # CM loading style action. Returns an object, such as a coord.
-        exec compile('def _exec_action_%d(self, field, f, pp, grib, cm): return %s' % (i, action), '<string>', 'exec')
+        exec(compile('def _exec_action_%d(self, field, f, pp, grib, cm): return %s' % (i, action), '<string>', 'exec'))
         # Make it a method of ours.
-        exec 'self._exec_action_%d = types.MethodType(_exec_action_%d, self, type(self))' % (i, i)
+        exec('self._exec_action_%d = types.MethodType(_exec_action_%d, self, type(self))' % (i, i))
         # Add to our list of actions.
-        exec 'self._exec_actions.append(self._exec_action_%d)' % i
+        exec('self._exec_actions.append(self._exec_action_%d)' % i)
 
     def _process_action_result(self, obj, cube):
         """Process the result of an action."""
@@ -379,7 +379,7 @@ class FunctionRule(Rule):
             cube.add_cell_method(obj)
             
         elif isinstance(obj, DebugString):
-            print obj
+            print(obj)
 
         elif isinstance(obj, CMAttribute):
             # Temporary code to deal with invalid standard names from the translation table.
@@ -414,11 +414,11 @@ class ProcedureRule(Rule):
     """A Rule with nothing returned by its actions."""
     def _create_action_method(self, i, action):
         # PP saving style action. No return value, e.g. "pp.lbft = 3".
-        exec compile('def _exec_action_%d(self, field, f, pp, grib, cm): %s' % (i, action), '<string>', 'exec')
+        exec(compile('def _exec_action_%d(self, field, f, pp, grib, cm): %s' % (i, action), '<string>', 'exec'))
         # Make it a method of ours.
-        exec 'self._exec_action_%d = types.MethodType(_exec_action_%d, self, type(self))' % (i, i)
+        exec('self._exec_action_%d = types.MethodType(_exec_action_%d, self, type(self))' % (i, i))
         # Add to our list of actions.
-        exec 'self._exec_actions.append(self._exec_action_%d)' % i
+        exec('self._exec_actions.append(self._exec_action_%d)' % i)
 
     def _process_action_result(self, obj, cube):
         # This should always be None, as our rules won't create anything.
@@ -523,7 +523,7 @@ class RulesContainer(object):
         Returns: list of Rule instances
         
         """
-        return filter(lambda rule: rule._matches_field(field), self._rules)
+        return [rule for rule in self._rules if rule._matches_field(field)]
         
     def verify(self, cube, field):
         """

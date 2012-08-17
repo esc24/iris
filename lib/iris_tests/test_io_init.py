@@ -44,7 +44,7 @@ class TestDecodeUri(unittest.TestCase):
                 'http', '//www.somehost.com:8080/resource/thing.grib'
             ),
         }
-        for uri, pair in tests.items():
+        for uri, pair in list(tests.items()):
             self.assertEqual(pair, iris.io.decode_uri(uri))
 
 

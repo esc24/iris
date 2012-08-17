@@ -22,7 +22,7 @@ Test the file saving mechanism.
 # import iris tests first so that some things can be initialised before importing anything else
 import iris.tests as tests
 
-import cStringIO
+import io
 import os
 
 import iris
@@ -115,7 +115,7 @@ class TestSaveDot(TestSaveMethods):
             save_by_filehandle(self.temp_filename1, self.temp_filename2, self.cube1, dot.save, binary_mode = True)
 
     def test_cstringio(self):
-        string_io = cStringIO.StringIO()
+        string_io = io.StringIO()
     
         # Save from dot direct
         dot.save(self.cube1, self.temp_filename1)

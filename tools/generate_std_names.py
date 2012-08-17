@@ -101,7 +101,7 @@ def to_dict(infile, outfile):
     for section in process_name_table(tree, 'alias', 'entry_id'):
         aliases.update(section)
 
-    for key, valued in aliases.iteritems():
+    for key, valued in aliases.items():
         values.update({
                 key : {'canonical_units' : values.get(valued['entry_id']).get('canonical_units')}
             })

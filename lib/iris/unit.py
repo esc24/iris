@@ -24,7 +24,7 @@ See also: `UDUNITS-2 <http://www.unidata.ucar.edu/software/udunits/udunits-2/udu
 
 """
 
-from __future__ import division
+
 
 import copy
 import ctypes
@@ -58,7 +58,7 @@ _NO_UNIT_SYMBOL = '-'
 _NO_UNIT = [_NO_UNIT_STRING, _NO_UNIT_SYMBOL, 'no unit', 'no-unit', 'nounit']
 _UNIT_DIMENSIONLESS = '1'
 _OP_SINCE = ' since '
-_CATEGORY_UNKNOWN, _CATEGORY_NO_UNIT, _CATEGORY_UDUNIT = range(3)
+_CATEGORY_UNKNOWN, _CATEGORY_NO_UNIT, _CATEGORY_UDUNIT = list(range(3))
 
 #
 # shared library constants
@@ -747,7 +747,7 @@ class Unit(iris.util._OrderedHashable):
             unit = _NO_UNIT_STRING
         else:
             category = _CATEGORY_UDUNIT
-            ut_unit = _ut_parse(_ud_system, unit, UT_ASCII)
+            ut_unit = _ut_parse(_ud_system, unit.encode('ascii'), UT_ASCII)
             # _ut_parse returns 0 on failure
             if ut_unit == 0:
                 self._raise_error('Failed to parse unit "%s"' % unit)
@@ -1173,7 +1173,7 @@ class Unit(iris.util._OrderedHashable):
             
         """
 
-        if not isinstance(origin, (int, float, long)):
+        if not isinstance(origin, (int, float)):
             raise TypeError('a numeric type for the origin argument is required')
         ut_unit = _ut_offset_by_time(self.ut_unit, ctypes.c_double(origin))
         if not ut_unit:
@@ -1620,14 +1620,14 @@ class Unit(iris.util._OrderedHashable):
         if self.convertible(other):
             ut_converter = _ut_get_converter(self.ut_unit, other.ut_unit)
             if ut_converter:
-                if isinstance(value_copy, (int, float, long)):
-                    if ctype not in _cv_convert_scalar.keys():
+                if isinstance(value_copy, (int, float)):
+                    if ctype not in list(_cv_convert_scalar.keys()):
                         raise ValueError('Invalid target type. Can only convert to float or double')
                     # utilise global convenience dictionary _cv_convert_scalar
                     result = _cv_convert_scalar[ctype](ut_converter, ctype(value_copy))
                 else:
                     # strict type check of numpy array
-                    if value_copy.dtype.type not in _numpy2ctypes.keys():
+                    if value_copy.dtype.type not in list(_numpy2ctypes.keys()):
                         raise TypeError("Expect a numpy array of '%s' or '%s'" % tuple(sorted(_numpy2ctypes.keys())))
                     ctype = _numpy2ctypes[value_copy.dtype.type]
                     pointer = value_copy.ctypes.data_as(ctypes.POINTER(ctype))

@@ -40,7 +40,7 @@ class _Segment(object):
 
         #calculate our length
         squares = 0
-        for key in self.pts[0].keys():
+        for key in list(self.pts[0].keys()):
             delta = self.pts[1][key] - self.pts[0][key]
             squares += delta * delta
         self.length = math.sqrt(squares)
@@ -105,7 +105,7 @@ class Trajectory(object):
 
             # sample each coordinate in this segment, to create a new sampled point
             new_sampled_point = {}
-            for key in cur_seg.pts[0].keys():
+            for key in list(cur_seg.pts[0].keys()):
                 seg_coord_delta = cur_seg.pts[1][key] - cur_seg.pts[0][key]
                 new_sampled_point.update({key: cur_seg.pts[0][key] + seg_frac*seg_coord_delta})
         
@@ -146,7 +146,7 @@ def interpolate(cube, sample_points, method=None):
     # Convert any coordinate names to coords
     points = []
     for coord, values in sample_points:
-        if isinstance(coord, basestring):
+        if isinstance(coord, str):
             coord = cube.coord(coord)
         points.append((coord, values))
     sample_points = points

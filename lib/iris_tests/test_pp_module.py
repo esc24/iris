@@ -88,10 +88,10 @@ class TestPPHeaderDerived(unittest.TestCase):
        
     def test_lbproc_bad_access(self):
         try:
-            print self.pp.lbproc.flag65537
+            print(self.pp.lbproc.flag65537)
         except AttributeError:
             pass
-        except Exception, err:
+        except Exception as err:
             self.fail("Should return a better error: " + str(err))
 
 
@@ -127,7 +127,7 @@ class TestPPField_GlobalTemperature(IrisPPTest):
     def test_save_api(self):
         filepath = self.original_pp_filepath
         
-        f = pp.load(filepath).next()
+        f = next(pp.load(filepath))
 
         temp_filename = iris.util.create_temp_filename(".pp")
         
@@ -190,12 +190,12 @@ class TestPPFileExtraXData(IrisPPTest):
 
     def test_save_single(self):
         filepath = tests.get_data_path(('PP', 'ukV1', 'ukVpmslont_first_field.pp'))
-        f = pp.load(filepath).next()
+        f = next(pp.load(filepath))
 
         temp_filename = iris.util.create_temp_filename(".pp")
         f.save(open(temp_filename, 'wb'))
         
-        s = pp.load(temp_filename).next()
+        s = next(pp.load(temp_filename))
         
         # force the data to be loaded (this was done for f when save was run)
         s.data
@@ -229,12 +229,12 @@ class TestPPFileWithExtraCharacterData(IrisPPTest):
     
     def test_save_single(self):
         filepath = tests.get_data_path(('PP', 'model_comp', 'dec_first_field.pp'))
-        f = pp.load(filepath).next()
+        f = next(pp.load(filepath))
 
         temp_filename = iris.util.create_temp_filename(".pp")
         f.save(open(temp_filename, 'wb'))
         
-        s = pp.load(temp_filename).next()
+        s = next(pp.load(temp_filename))
         
         # force the data to be loaded (this was done for f when save was run)
         s.data
@@ -322,7 +322,7 @@ class TestBitwiseInt(unittest.TestCase):
     def test_negative_number(self):
         try:
             _ = pp.BitwiseInt(-5)
-        except ValueError, err:
+        except ValueError as err:
             self.assertEqual(str(err), 'Negative numbers not supported with splittable integers object')
 
     def test_128(self):
@@ -432,7 +432,7 @@ class TestSplittableInt(unittest.TestCase):
         self.assertRaises(ValueError, pp.SplittableInt, -5)
         try:
             _ = pp.SplittableInt(-5)
-        except ValueError, err:
+        except ValueError as err:
             self.assertEqual(str(err), 'Negative numbers not supported with splittable integers object')
 
 

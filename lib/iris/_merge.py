@@ -346,11 +346,11 @@ def build_indexes(positions):
         The cross-reference dictionary for each candidate dimension.
 
     """
-    names = positions[0].keys()
+    names = list(positions[0].keys())
     scalar_index_by_name = {name: {} for name in names}
 
     for position in positions:
-        for name, value in position.iteritems():
+        for name, value in position.items():
             name_index_by_scalar = scalar_index_by_name[name]
 
             if value in name_index_by_scalar:
@@ -387,7 +387,7 @@ def _separable_pair(name, index):
         Boolean.
 
     """
-    items = index.itervalues()
+    items = iter(index.values())
     reference = next(items)[name]
 
     return all([item[name] == reference for item in items])
@@ -916,8 +916,8 @@ class ProtoCube(object):
 
         # Determine the largest group of source-cubes that want to occupy
         # the same nd-index in the final merged cube.
-        group_depth = max([len(group) for group in group_by_nd_index.values()])
-        nd_indexes = group_by_nd_index.keys()
+        group_depth = max([len(group) for group in list(group_by_nd_index.values())])
+        nd_indexes = list(group_by_nd_index.keys())
         nd_indexes.sort()
         
         # Check for unique data.
@@ -931,7 +931,7 @@ class ProtoCube(object):
             raise iris.exceptions.DuplicateDataError('Duplicate %r cube, with scalar coordinates %s' % (name, ', '.join(scalars)))
 
         # Generate group-depth merged cubes from the source-cubes.
-        for level in xrange(group_depth):
+        for level in range(group_depth):
             # The merged cube's data will be an array of data proxies for deferred loading.
             merged_cube = self._get_cube()
 
@@ -1069,11 +1069,11 @@ class ProtoCube(object):
                     cells = sorted(indexes[name])
                     points = numpy.array([cell.point for cell in cells], dtype=metadata[name].points_dtype)
                     bounds = numpy.array([cell.bound for cell in cells], dtype=metadata[name].bounds_dtype) if cells[0].bound is not None else None
-                    kwargs = dict(zip(iris.coords.CoordDefn._fields, defns[name]))
+                    kwargs = dict(list(zip(iris.coords.CoordDefn._fields, defns[name])))
                     kwargs.update(metadata[name].kwargs)
 
                     if len(cells) == 1 and not any([name in independents for independents in 
-                                                    space.itervalues() if independents is not None]):
+                                                    space.values() if independents is not None]):
                         # A scalar coordinate not participating in a function dependency.
                         self._aux_templates.append(_Template((), points, bounds, kwargs))
                     else:
@@ -1101,7 +1101,7 @@ class ProtoCube(object):
                 bounds = numpy.empty(aux_shape + [len(positions[0][name].bound)], dtype=metadata[name].bounds_dtype) if positions[0][name].bound is not None else None
 
                 # Populate the points and bounds based on the appropriate function mapping.
-                for function_independents, name_value in function_matrix[name].iteritems():
+                for function_independents, name_value in function_matrix[name].items():
                     # Build the index (and cache it) for the auxiliary coordinate based on the 
                     # associated independent dimension coordinate/s.
                     index = []
@@ -1116,7 +1116,7 @@ class ProtoCube(object):
                     if bounds is not None:
                         bounds[index] = name_value.bound
                         
-                kwargs = dict(zip(iris.coords.CoordDefn._fields, defns[name]))
+                kwargs = dict(list(zip(iris.coords.CoordDefn._fields, defns[name])))
                 self._aux_templates.append(_Template(dims, points, bounds, kwargs))
                 
         # Calculate the dimension mapping for each vector within the space. 
@@ -1139,7 +1139,7 @@ class ProtoCube(object):
         signature = self._cube_signature
         dim_coords_and_dims = [(deepcopy(coord), dim) for coord, dim in self._dim_coords_and_dims]
         aux_coords_and_dims = [(deepcopy(coord), dims) for coord, dims in self._aux_coords_and_dims]
-        kwargs = dict(zip(iris.cube.CubeMetadata._fields, signature.defn))
+        kwargs = dict(list(zip(iris.cube.CubeMetadata._fields, signature.defn)))
 
         # Create fully masked data i.e. all missing.
         if signature.data_manager is None:
@@ -1272,7 +1272,7 @@ class ProtoCube(object):
         
         # Coordinate hint ordering dictionary - from most preferred to least.
         # Copes with duplicate hint entries, where the most preferred is king.
-        hint_dict = {name: i for i, name in zip(range(len(self._hints), 0, -1), self._hints[::-1])}
+        hint_dict = {name: i for i, name in zip(list(range(len(self._hints), 0, -1)), self._hints[::-1])}
         # Coordinate axis ordering dictionary.
         axis_dict = {'T': 0, 'Z': 1, 'Y': 2, 'X': 3}
         # Coordinate sort function - by coordinate hint, then by guessed coordinate axis, then

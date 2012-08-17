@@ -83,7 +83,7 @@ class TestAbstract(tests.GraphicsTest):
 
         # Check the factory now only has surface_altitude and delta dependencies.
         factory = cube.aux_factory(name='altitude')
-        t = [key for key, coord in factory.dependencies.iteritems() if coord is not None]
+        t = [key for key, coord in factory.dependencies.items() if coord is not None]
         self.assertItemsEqual(t, ['orography', 'delta'])
 
     def test_removing_orography(self):
@@ -95,7 +95,7 @@ class TestAbstract(tests.GraphicsTest):
 
         # Check the factory now only has sigma and delta dependencies.
         factory = cube.aux_factory(name='altitude')
-        t = [key for key, coord in factory.dependencies.iteritems() if coord is not None]
+        t = [key for key, coord in factory.dependencies.items() if coord is not None]
         self.assertItemsEqual(t, ['sigma', 'delta'])
 
     def test_derived_coords(self):

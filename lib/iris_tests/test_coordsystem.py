@@ -16,7 +16,7 @@
 # along with Iris.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from __future__ import division
+
 
 # import iris tests first so that some things can be initialised before importing anything else
 import iris.tests as tests

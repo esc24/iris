@@ -68,13 +68,13 @@ class TestRunner(setuptools.Command):
     
     def finalize_options(self):
         if self.no_data:
-            print "Running tests in no-data mode..."
+            print("Running tests in no-data mode...")
             
             # This enviroment variable will be propagated to all the processes that
             # nose.run creates allowing us to simluate the absence of test data
             os.environ["override_data_repository"] = "true"
         if self.system_tests:
-            print "Running only system tests..."
+            print("Running only system tests...")
 
     def run(self):
         if self.distribution.tests_require:
@@ -99,8 +99,8 @@ class TestRunner(setuptools.Command):
         n_processors = max(multiprocessing.cpu_count() - 1, 1)
         
         for test in tests:
-            print
-            print 'Running test discovery on %s with %s processors.' % (test, n_processors)
+            print()
+            print('Running test discovery on %s with %s processors.' % (test, n_processors))
             # run the tests at module level i.e. my_module.tests 
             # - test must start with test/Test and must not contain the word Mixin.
             nose.run(argv=['', test, '--processes=%s' % n_processors,
@@ -161,6 +161,8 @@ class PostBuildExtRunner(build_ext.build_ext):
             sys.path.insert(0, 'lib')
         else:
             sys.path.insert(0, self.build_lib)
+
+        print(sys.path)
         
         # Compile the pyke rules
         from pyke import knowledge_engine

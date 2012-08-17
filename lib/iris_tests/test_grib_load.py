@@ -183,4 +183,4 @@ class TestGribLoad(tests.GraphicsTest):
 
 if __name__ == "__main__":
     tests.main()
-    print "finished"
+    print("finished")

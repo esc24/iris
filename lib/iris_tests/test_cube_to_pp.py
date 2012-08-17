@@ -29,7 +29,7 @@ import iris.coord_systems
 import iris.unit
 import iris.tests.pp as pp
 import iris.util
-import stock
+from . import stock
 
 
 def itab_callback(cube, field, filename):
@@ -192,7 +192,7 @@ class TestPPSaveRules(tests.IrisTest):
     def lbproc_from_pp(self, filename):
         # Gets the lbproc field from the ppfile
         pp_file = iris.fileformats.pp.load(filename)
-        field = pp_file.next()
+        field = next(pp_file)
         return field.lbproc
 
     def test_pp_save_rules(self):
@@ -217,7 +217,7 @@ class TestPPSaveRules(tests.IrisTest):
         # Maps lbproc value to the process flags that should be created
         multiple_map = {sum(bits) : [iris.fileformats.pp.lbproc_map[bit] for bit in bits] for bits in multiple_bit_values}
 
-        for lbproc, descriptions in multiple_map.iteritems():
+        for lbproc, descriptions in multiple_map.items():
             ll_cube = stock.lat_lon_cube()
             ll_cube.attributes["ukmo__process_flags"] = descriptions
             

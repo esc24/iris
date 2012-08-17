@@ -277,7 +277,7 @@ class STASH(collections.namedtuple('STASH', 'model section item')):
     @staticmethod
     def from_msi(msi):
         """Convert a STASH code MSI string to a STASH instance."""
-        if not isinstance(msi, basestring):
+        if not isinstance(msi, str):
             raise TypeError('Expected STASH code MSI string, got %r' % msi)
 
         msi_match = re.match('^\s*m(.*)s(.*)i(.*)\s*$', msi, re.IGNORECASE)
@@ -317,7 +317,7 @@ class STASH(collections.namedtuple('STASH', 'model section item')):
         return '?' not in str(self)
 
     def __eq__(self, other):
-        if isinstance(other, basestring):
+        if isinstance(other, str):
             return super(STASH, self).__eq__(STASH.from_msi(other))
         else:
             return super(STASH, self).__eq__(other)
@@ -379,7 +379,7 @@ class SplittableInt(object):
         self._strvalue = [int(c) for c in str(self._value)[::-1]]
         
         # Associate the names in the lookup table to attributes
-        for name, index in self._name_lookup.items():
+        for name, index in list(self._name_lookup.items()):
             object.__setattr__(self, name, self[index])
         
     def _calculate_value_from_str_value(self):
@@ -414,10 +414,10 @@ class SplittableInt(object):
                 raise ValueError('Cannot assign a value with slice objects containing negative indices.')
             
             # calculate the current length of the value of this string
-            current_length = len(range(*key.indices(len(self))))
+            current_length = len(list(range(*key.indices(len(self)))))
             
             # get indices for as many digits as have been requested. Putting the upper limit on the number of digits at 100.
-            indices = range(*key.indices(100))
+            indices = list(range(*key.indices(100)))
             if len(indices) < len(str(value)):
                 raise ValueError('Cannot put %s into %s as it has too many digits.' % (value, key))
             
@@ -436,7 +436,7 @@ class SplittableInt(object):
             
             self._strvalue[key] = value
             
-            for name, index in self._name_lookup.items():
+            for name, index in list(self._name_lookup.items()):
                 if index == key:
                     object.__setattr__(self, name, value)
                 
@@ -444,7 +444,7 @@ class SplittableInt(object):
         
     def __setattr__(self, name, value):
         # if the attribute is a special value, update the index value which will in turn update the attribute value
-        if (name != '_name_lookup' and name in self._name_lookup.keys()):
+        if (name != '_name_lookup' and name in list(self._name_lookup.keys())):
             self[self._name_lookup[name]] = value
         else:
             object.__setattr__(self, name, value)
@@ -594,7 +594,7 @@ class PPDataProxy(object):
     def __setstate__(self, state):
         # object reconstruction method for Pickle.load()
         # reinitialise the object state from the serialised values (using setattr, as there is no object dictionary)
-        for (key, val) in state.items():
+        for (key, val) in list(state.items()):
             setattr(self, key, val)
 
     def __repr__(self):
@@ -650,7 +650,7 @@ class PPDataProxy(object):
             for dim in tuple_dims[1:]:
                 # Identify all those pre-sliced collapsed dimensions less than
                 # the dimension of the current slice tuple index item.
-                ndims_collapsed = len(filter(lambda x: x < dim, collapsed_dims))
+                ndims_collapsed = len([x for x in collapsed_dims if x < dim])
                 # Construct the single tuple slice.
                 tuple_slice = [slice(None)] * payload.ndim
                 tuple_slice[dim - ndims_collapsed] = deferred_slice[dim]
@@ -715,11 +715,11 @@ def _pp_attribute_names(header_defn):
     """
     normal_headers = list(name for name, positions in header_defn if name not in _SPECIAL_HEADERS)
     special_headers = list('_' + name for name in _SPECIAL_HEADERS)
-    extra_data = EXTRA_DATA.values()
+    extra_data = list(EXTRA_DATA.values())
     return normal_headers + special_headers + extra_data
 
 
-class PPField(object):
+class PPField(object, metaclass=abc.ABCMeta):
     """
     A generic class for PP fields - not specific to a particular header release number.
 
@@ -734,11 +734,6 @@ class PPField(object):
             print field.t1
     
     """
-
-    # NB. Subclasses must define the attribute HEADER_DEFN to be their
-    # zero-based header definition. See PPField2 and PPField3 for examples.
-
-    __metaclass__ = abc.ABCMeta
 
     __slots__ = ()
 
@@ -766,9 +761,9 @@ class PPField(object):
         attribute_priority_lookup = {name: loc[0] for name, loc in self.HEADER_DEFN}
         
         # With the attributes sorted the order will remain stable if extra attributes are added.
-        public_attribute_names =  attribute_priority_lookup.keys() + EXTRA_DATA.values()
+        public_attribute_names =  list(attribute_priority_lookup.keys()) + list(EXTRA_DATA.values())
         self_attrs = [(name, getattr(self, name, None)) for name in public_attribute_names]
-        self_attrs = filter(lambda pair: pair[1] is not None, self_attrs)
+        self_attrs = [pair for pair in self_attrs if pair[1] is not None]
 
         if hasattr(self, '_data_manager'):
             if self._data_manager is None:
@@ -911,7 +906,7 @@ class PPField(object):
         for name, pos in self.HEADER_DEFN:
             try:
                 header_elem = getattr(self, name)
-            except AttributeError, err:
+            except AttributeError as err:
                 raise AttributeError("PPField.save() could not find %s" % name)
             if pos[0] <= NUM_LONG_HEADERS - UM_TO_PP_HEADER_OFFSET:
                 index = slice(pos[0], pos[-1] + 1)
@@ -931,12 +926,12 @@ class PPField(object):
         # set up a list to hold the extra data which will need to be encoded at the end of the data
         extra_items = []
         # iterate through all of the possible extra data fields
-        for ib, extra_data_attr_name in EXTRA_DATA.iteritems():
+        for ib, extra_data_attr_name in EXTRA_DATA.items():
             # try to get the extra data field, returning None if it doesn't exist
             extra_elem = getattr(self, extra_data_attr_name, None)
             if extra_elem is not None:
                 # The special case of character extra data must be caught
-                if isinstance(extra_elem, basestring):
+                if isinstance(extra_elem, str):
                     ia = len(extra_elem)
                     # pad any strings up to a multiple of PP_WORD_DEPTH (this length is # of bytes)
                     ia = (PP_WORD_DEPTH - (ia-1) % PP_WORD_DEPTH) + (ia-1)
@@ -1017,7 +1012,7 @@ class PPField(object):
         # extra data elements
         for int_code, extra_data in extra_items:
             pp_file.write(struct.pack(">L", int(int_code)))
-            if isinstance(extra_data, basestring):
+            if isinstance(extra_data, str):
                 pp_file.write(struct.pack(">%sc" % len(extra_data), *extra_data))
             else:
                 extra_data = extra_data.astype(numpy.dtype('>f4'))
@@ -1388,7 +1383,7 @@ def _load_cubes_variable_loader(filenames, callback, loading_function):
     reference_cubes = {}
     results_needing_reference = []
 
-    if isinstance(filenames, basestring):
+    if isinstance(filenames, str):
         filenames = [filenames]
 
     for filename in filenames:
@@ -1579,7 +1574,7 @@ def save(cube, target, append=False, field_coords=None):
     _ensure_save_rules_loaded()
 
     # pp file
-    if isinstance(target, basestring):
+    if isinstance(target, str):
         pp_file = open(target, "ab" if append else "wb")
     elif hasattr(target, "write"):
         if hasattr(target, "mode") and "b" not in target.mode:
@@ -1633,10 +1628,10 @@ def save(cube, target, append=False, field_coords=None):
         verify_rules_ran = rules_result.matching_rules
         
         # Log the rules used
-        iris.fileformats.rules.log('PP_SAVE', target if isinstance(target, basestring) else target.name, verify_rules_ran)
+        iris.fileformats.rules.log('PP_SAVE', target if isinstance(target, str) else target.name, verify_rules_ran)
 
         # Write to file
         pp_field.save(pp_file)
 
-    if isinstance(target, basestring):
+    if isinstance(target, str):
         pp_file.close()

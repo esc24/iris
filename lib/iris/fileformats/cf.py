@@ -26,9 +26,9 @@ References:
 """
 
 from abc import ABCMeta, abstractmethod
+import collections
 import os
 import re
-import UserDict
 import warnings
 
 import netCDF4
@@ -54,10 +54,8 @@ _CF_ATTRS_IGNORE = set(['_FillValue', 'add_offset', 'missing_value', 'scale_fact
 
 
 ################################################################################
-class CFVariable(object):
+class CFVariable(object, metaclass=ABCMeta):
     """Abstract base class wrapper for a CF-netCDF variable."""
-
-    __metaclass__ = ABCMeta
 
     cf_identity = None
     '''Name of the netCDF variable attribute that identifies this CF-netCDF variable'''
@@ -82,7 +80,7 @@ class CFVariable(object):
             
         if target is None:
             target = variables
-        elif isinstance(target, basestring):
+        elif isinstance(target, str):
             if target not in variables:
                 raise ValueError('Cannot identify unknown target CF-netCDF variable %r' % target)
             target = {target: variables[target]}
@@ -202,10 +200,10 @@ class CFAncillaryDataVariable(CFVariable):
     def identify(cls, variables, ignore=None, target=None, warn=True):
         result = {}
         ignore, target = cls._identify_common(variables, ignore, target)
-        netcdf_variable_names = variables.keys()
+        netcdf_variable_names = list(variables.keys())
 
         # Identify all CF ancillary data variables.
-        for nc_var_name, nc_var in target.iteritems():
+        for nc_var_name, nc_var in target.items():
             # Check for ancillary data variable references.
             nc_var_att = getattr(nc_var, cls.cf_identity, None)
 
@@ -243,10 +241,10 @@ class CFAuxiliaryCoordinateVariable(CFVariable):
     def identify(cls, variables, ignore=None, target=None, warn=True):
         result = {}
         ignore, target = cls._identify_common(variables, ignore, target)
-        netcdf_variable_names = variables.keys()
+        netcdf_variable_names = list(variables.keys())
 
         # Identify all CF auxiliary coordinate variables.
-        for nc_var_name, nc_var in target.iteritems():
+        for nc_var_name, nc_var in target.items():
             # Check for auxiliary coordinate variable references.
             nc_var_att = getattr(nc_var, cls.cf_identity, None)
 
@@ -286,10 +284,10 @@ class CFBoundaryVariable(CFVariable):
     def identify(cls, variables, ignore=None, target=None, warn=True):
         result = {}
         ignore, target = cls._identify_common(variables, ignore, target)
-        netcdf_variable_names = variables.keys()
+        netcdf_variable_names = list(variables.keys())
 
         # Identify all CF boundary variables.
-        for nc_var_name, nc_var in target.iteritems():
+        for nc_var_name, nc_var in target.items():
             # Check for a boundary variable reference.
             nc_var_att = getattr(nc_var, cls.cf_identity, None)
 
@@ -328,10 +326,10 @@ class CFClimatologyVariable(CFVariable):
     def identify(cls, variables, ignore=None, target=None, warn=True):
         result = {}
         ignore, target = cls._identify_common(variables, ignore, target)
-        netcdf_variable_names = variables.keys()
+        netcdf_variable_names = list(variables.keys())
 
         # Identify all CF climatology variables.
-        for nc_var_name, nc_var in target.iteritems():
+        for nc_var_name, nc_var in target.items():
             # Check for a climatology variable reference.
             nc_var_att = getattr(nc_var, cls.cf_identity, None)
 
@@ -368,7 +366,7 @@ class CFCoordinateVariable(CFVariable):
         ignore, target = cls._identify_common(variables, ignore, target)
 
         # Identify all CF coordinate variables.
-        for nc_var_name, nc_var in target.iteritems():
+        for nc_var_name, nc_var in target.items():
             if nc_var_name in ignore:
                 continue
             # String variables can't be coordinates
@@ -419,10 +417,10 @@ class _CFFormulaTermsVariable(CFVariable):
     def identify(cls, variables, ignore=None, target=None, warn=True):
         result = {}
         ignore, target = cls._identify_common(variables, ignore, target)
-        netcdf_variable_names = variables.keys()
+        netcdf_variable_names = list(variables.keys())
 
         # Identify all CF formula terms variables.
-        for nc_var_name, nc_var in target.iteritems():
+        for nc_var_name, nc_var in target.items():
             # Check for formula terms variable references.
             nc_var_att = getattr(nc_var, cls.cf_identity, None)
 
@@ -472,10 +470,10 @@ class CFGridMappingVariable(CFVariable):
     def identify(cls, variables, ignore=None, target=None, warn=True):
         result = {}
         ignore, target = cls._identify_common(variables, ignore, target)
-        netcdf_variable_names = variables.keys()
+        netcdf_variable_names = list(variables.keys())
 
         # Identify all grid mapping variables.
-        for nc_var_name, nc_var in target.iteritems():
+        for nc_var_name, nc_var in target.items():
             # Check for a grid mapping variable reference.
             nc_var_att = getattr(nc_var, cls.cf_identity, None)
 
@@ -510,10 +508,10 @@ class CFLabelVariable(CFVariable):
     def identify(cls, variables, ignore=None, target=None, warn=True):
         result = {}
         ignore, target = cls._identify_common(variables, ignore, target)
-        netcdf_variable_names = variables.keys()
+        netcdf_variable_names = list(variables.keys())
 
         # Identify all CF label variables.
-        for nc_var_name, nc_var in target.iteritems():
+        for nc_var_name, nc_var in target.items():
             # Check for label variable references.
             nc_var_att = getattr(nc_var, cls.cf_identity, None)
 
@@ -624,10 +622,10 @@ class CFMeasureVariable(CFVariable):
     def identify(cls, variables, ignore=None, target=None, warn=True):
         result = {}
         ignore, target = cls._identify_common(variables, ignore, target)
-        netcdf_variable_names = variables.keys()
+        netcdf_variable_names = list(variables.keys())
 
         # Identify all CF measure variables.
-        for nc_var_name, nc_var in target.iteritems():
+        for nc_var_name, nc_var in target.items():
             # Check for measure variable references.
             nc_var_att = getattr(nc_var, cls.cf_identity, None)
             
@@ -649,7 +647,7 @@ class CFMeasureVariable(CFVariable):
             
             
 ################################################################################
-class CFGroup(object, UserDict.DictMixin):
+class CFGroup(collections.MutableMapping):
     """
     Represents a collection of 'NetCDF Climate and Forecast (CF) Metadata
     Conventions' variables and netCDF global attributes.
@@ -663,7 +661,7 @@ class CFGroup(object, UserDict.DictMixin):
 
     def _cf_getter(self, cls):
         # Generate dictionary with dictionary comprehension.
-        return {cf_name:cf_var for cf_name, cf_var in self._cf_variables.iteritems() if isinstance(cf_var, cls)}
+        return {cf_name:cf_var for cf_name, cf_var in self._cf_variables.items() if isinstance(cf_var, cls)}
 
     @property
     def ancillary_variables(self):
@@ -698,7 +696,7 @@ class CFGroup(object, UserDict.DictMixin):
     @property
     def formula_terms(self):
         """Collection of CF-netCDF variables that participate in a CF-netCDF formula term."""
-        return {cf_name:cf_var for cf_name, cf_var in self._cf_variables.iteritems() if cf_var.has_formula_terms()}
+        return {cf_name:cf_var for cf_name, cf_var in self._cf_variables.items() if cf_var.has_formula_terms()}
     
     @property
     def grid_mappings(self):
@@ -717,7 +715,7 @@ class CFGroup(object, UserDict.DictMixin):
 
     def keys(self):
         """Return the names of all the CF-netCDF variables in the group."""
-        return self._cf_variables.keys()
+        return list(self._cf_variables.keys())
 
     def __setitem__(self, name, variable):
         if not isinstance(variable, CFVariable):
@@ -746,6 +744,12 @@ class CFGroup(object, UserDict.DictMixin):
         result.append('global_attributes:%d' % len(self.global_attributes))
             
         return '<%s of %s>' % (self.__class__.__name__, ', '.join(result))
+
+    def __len__(self):
+        return len(self._cf_variables)
+
+    def __iter__(self):
+        return iter(self._cf_variables)
 
 
 ################################################################################
@@ -784,14 +788,14 @@ class CFReader(object):
     def _translate(self):
         """Classify the netCDF variables into CF-netCDF variables."""
         
-        netcdf_variable_names = self.dataset.variables.keys()
+        netcdf_variable_names = list(self.dataset.variables.keys())
 
         # Identify all CF coordinate variables first. This must be done
         # first as, by CF convention, the definition of a CF auxiliary
         # coordinate variable may include a scalar CF coordinate variable,
         # whereas we want these two types of variables to be mutually exclusive.
         self.cf_group.update(CFCoordinateVariable.identify(self.dataset.variables))
-        coordinate_names = self.cf_group.coordinates.keys()
+        coordinate_names = list(self.cf_group.coordinates.keys())
 
         # Identify all CF variables EXCEPT for the "special cases".
         for variable_type in self._variable_types:
@@ -815,16 +819,16 @@ class CFReader(object):
 
         # Identify and register all CF formula terms with the relevant CF variables.
         formula_terms = _CFFormulaTermsVariable.identify(self.dataset.variables)
-        for cf_var in formula_terms.itervalues():
+        for cf_var in formula_terms.values():
             if cf_var.cf_name in self.cf_group:
                 self.cf_group[cf_var.cf_name].add_formula_term(cf_var.cf_root, cf_var.cf_term)
 
     def _build_cf_groups(self):
         """Build the first order relationships between CF-netCDF variables."""
         
-        coordinate_names = self.cf_group.coordinates.keys()
+        coordinate_names = list(self.cf_group.coordinates.keys())
 
-        for cf_variable in self.cf_group.itervalues():
+        for cf_variable in self.cf_group.values():
             cf_group = CFGroup()
 
             # Build CF variable relationships.
@@ -832,7 +836,7 @@ class CFReader(object):
                 # Prevent grid mapping variables being mis-identified as CF coordinate variables.
                 ignore = None if issubclass(variable_type, CFGridMappingVariable) else coordinate_names
                 match = variable_type.identify(self.dataset.variables, ignore=ignore, target=cf_variable.cf_name, warn=False)
-                cf_group.update({name: self.cf_group[name] for name in match.iterkeys()})
+                cf_group.update({name: self.cf_group[name] for name in match.keys()})
 
             # Build CF data variable relationships.
             if isinstance(cf_variable, CFDataVariable):
@@ -850,7 +854,7 @@ class CFReader(object):
     def _reset(self):
         """Reset the attribute touch history of each variable."""
         
-        for nc_var_name in self.dataset.variables.iterkeys():
+        for nc_var_name in self.dataset.variables.keys():
             self.cf_group[nc_var_name].cf_attrs_reset()
 
 

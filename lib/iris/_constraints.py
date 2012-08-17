@@ -78,15 +78,15 @@ class Constraint(object):
         
         
         """
-        if not (name is None or isinstance(name, basestring)):
+        if not (name is None or isinstance(name, str)):
             raise TypeError('name must be None or string, got %r' % name)
-        if not (cube_func is None or callable(cube_func)):
+        if not (cube_func is None or isinstance(cube_func, collections.Callable)):
             raise TypeError('cube_func must be None or callable, got %r' % cube_func)
         if not (coord_values is None or isinstance(coord_values, collections.Mapping)):
             raise TypeError('coord_values must be None or a collections.Mapping, got %r' % coord_values)
 
         coord_values = coord_values or {}
-        duplicate_keys = coord_values.viewkeys() & kwargs.viewkeys()
+        duplicate_keys = coord_values.keys() & kwargs.keys()
         if duplicate_keys:
             raise ValueError('Duplicate coordinate conditions specified for: %s' % list(duplicate_keys))
 
@@ -97,7 +97,7 @@ class Constraint(object):
         self._coord_values.update(kwargs)
 
         self._coord_constraints = []
-        for coord_name, coord_thing in self._coord_values.items():
+        for coord_name, coord_thing in list(self._coord_values.items()):
             self._coord_constraints.append(_CoordConstraint(coord_name, coord_thing))
         
     def __repr__(self):
@@ -191,9 +191,9 @@ class _CoordConstraint(object):
     
     def _cast_coord_thing(self):
         """Turn the coord thing into a function where appropriate."""
-        if callable(self._coord_thing):
+        if isinstance(self._coord_thing, collections.Callable):
             result = self._coord_thing
-        elif isinstance(self._coord_thing, collections.Iterable) and not isinstance(self._coord_thing, basestring):
+        elif isinstance(self._coord_thing, collections.Iterable) and not isinstance(self._coord_thing, str):
             result = lambda cell: cell in list(self._coord_thing)
         else:
             result = lambda c: c == self._coord_thing
@@ -256,7 +256,7 @@ class _ColumnIndexManager(object):
             raise ValueError('Cannot do %s for %r and %r as they have a different number of dimensions.' % operator)
         r = _ColumnIndexManager(self.ndims)
         # iterate over each dimension an combine appropriately
-        for i, (lhs, rhs) in enumerate(zip(self, other)):
+        for i, (lhs, rhs) in enumerate(list(zip(self, other))):
             r[i] = operator(lhs, rhs)
         return r
     
@@ -338,7 +338,7 @@ def as_constraint(thing):
         return thing
     elif thing is None:
         return Constraint()
-    elif isinstance(thing, basestring):
+    elif isinstance(thing, str):
         return Constraint(thing)
     else:
         raise TypeError('%r cannot be cast to a constraint.' % thing)
@@ -362,11 +362,11 @@ class AttributeConstraint(Constraint):
     
     def _cube_func(self, cube): 
         match = True 
-        for name, value in self._attributes.iteritems():
+        for name, value in self._attributes.items():
             if name in cube.attributes:
                 cube_attr = cube.attributes.get(name)
                 # if we have a callable, then call it with the value, otherwise, assert equality
-                if callable(value):
+                if isinstance(value, collections.Callable):
                     if not value(cube_attr):
                         match = False
                         break
