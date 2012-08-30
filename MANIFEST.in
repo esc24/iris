@@ -1,3 +1,6 @@
+# Top-level files
 include CHANGES COPYING COPYING.LESSER
-# Additonal files from package_data not automatically added to source distributions
+
+# Files from setup.py package_data that are not automatically added to source distributions
 include lib/iris/fileformats/_pyke_rules/*.k?b
+include lib/iris/tests/stock*.npz

@@ -1,3 +1,4 @@
+import contextlib
 from distutils.command import build_ext, build_py
 from distutils.core import setup, Command
 from distutils.sysconfig import get_config_var
@@ -117,9 +118,12 @@ def std_name_cmd(target_dir):
 
 
 class MakeStdNames(Command):
-
+    """
+    Generates the CF standard name module containing mappings from
+    CF standard name to associated metadata.
+    
+    """
     description = "generate CF standard name module"
-
     user_options = []
 
     def initialize_options(self):
@@ -133,12 +137,25 @@ class MakeStdNames(Command):
         self.spawn(cmd)
 
 
-class BuildPyWithStdNames(build_py.build_py):
+class BuildPyWithExtras(build_py.build_py):
     """
-    Adds the creation of the CF standard names module to the standard
-    "build_py" command.
+    Adds the creation of the CF standard names module and compilation
+    of the pyke rules to the standard "build_py" command.
 
     """
+    @contextlib.contextmanager
+    def temporary_path(self):
+        """
+        Context manager that adds and subsequently removes the build
+        directory to the beginning of the module search path.
+
+        """
+        sys.path.insert(0, self.build_lib)
+        try:
+            yield
+        finally:
+            del sys.path[0]
+
     def run(self):
         # Run the main build command first to make sure all the target
         # directories are in place.
@@ -148,32 +165,18 @@ class BuildPyWithStdNames(build_py.build_py):
         cmd = std_name_cmd(self.build_lib)
         self.spawn(cmd)
 
-
-class PostBuildExtRunner(build_ext.build_ext):
-    """Runs after a standard "build_ext" to compile the PyKE rules."""
-    def run(self):
-        # Call parent
-        build_ext.build_ext.run(self)
-
-        # Temporarily add our new build dir to the start of the path to 
-        # pick up the KE rules
-        if self.inplace == 1:
-            sys.path.insert(0, 'lib')
-        else:
-            sys.path.insert(0, self.build_lib)
-        
         # Compile the pyke rules
-        from pyke import knowledge_engine
-        import iris.fileformats._pyke_rules
-        e = knowledge_engine.engine(iris.fileformats._pyke_rules)
+        with self.temporary_path():
+            # Compile the pyke rules
+            from pyke import knowledge_engine
+            import iris.fileformats._pyke_rules
+            e = knowledge_engine.engine(iris.fileformats._pyke_rules)
 
-        # Remove temporary addition to path
-        del sys.path[0]
 
 setup(
     name='Iris',
     version='0.9-dev',
-    url='http://SciTools.github.com/iris',
+    url='http://scitools.github.com/iris',
     author='UK Met Office',
 
     packages=find_package_tree('lib/iris', 'iris'),
@@ -188,10 +191,7 @@ setup(
     tests_require=['nose'],
     features={
         'unpack': setuptools.Feature(
-            ("UKMO unpack library: \n"
-            "    To append custom include paths and library dirs from the commandline,\n"
-            "    python setup.py build_ext -I <custom include path> \n"
-            "        -L <custom static libdir> -R <custom runtime libdir>"),
+            "use of UKMO unpack library",
             standard=False,
             ext_modules=[
                 setuptools.Extension(
@@ -203,6 +203,6 @@ setup(
             ]
         )
     },
-    cmdclass={'build_ext': PostBuildExtRunner, 'test': TestRunner,
-              'build_py': BuildPyWithStdNames, 'std_names': MakeStdNames},
+    cmdclass={'test': TestRunner, 'build_py': BuildPyWithExtras, 
+              'std_names': MakeStdNames},
 )
