@@ -15,6 +15,6 @@ include tools/generate_std_names.py
 include etc/cf-standard-name-table.xml
 
 # Extension src
-src *.c *.cc *.cpp *.h
+recursive-include src *.c *.cc *.cpp *.h
 
 
