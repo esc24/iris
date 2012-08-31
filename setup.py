@@ -23,7 +23,6 @@ def is_package(path):
 
 exclude_dirs = ['compiled_krb']
 
-
 # Returns the package and all its sub-packages
 def find_package_tree(root_path, root_package):
     packages = [root_package]
@@ -48,6 +47,14 @@ def file_walk_relative(top, remove=''):
            dirs.remove('.svn')
        for file in files:
            yield os.path.join(root, file).replace(remove, '')
+
+
+def std_name_cmd(target_dir):
+    script_path = os.path.join('tools', 'generate_std_names.py')
+    xml_path = os.path.join('etc', 'cf-standard-name-table.xml')
+    module_path = os.path.join(target_dir, 'iris', 'std_names.py')
+    cmd = (sys.executable, script_path, xml_path, module_path)
+    return cmd
 
 
 class TestRunner(setuptools.Command):
@@ -107,14 +114,6 @@ class TestRunner(setuptools.Command):
             nose.run(argv=['', test, '--processes=%s' % n_processors,
                                '--verbosity=2', regexp_pat,
                                '--process-timeout=250'])
-
-
-def std_name_cmd(target_dir):
-    script_path = os.path.join('tools', 'generate_std_names.py')
-    xml_path = os.path.join('etc', 'cf-standard-name-table.xml')
-    module_path = os.path.join(target_dir, 'iris', 'std_names.py')
-    cmd = (sys.executable, script_path, xml_path, module_path)
-    return cmd
 
 
 class MakeStdNames(Command):
