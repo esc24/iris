@@ -12,15 +12,6 @@ import numpy as np
 import setuptools
 
 
-# Automated package discovery - extracted/modified from Distutils Cookbook:
-#   http://wiki.python.org/moin/Distutils/Cookbook/AutoPackageDiscovery
-def is_package(path):
-    return (
-        os.path.isdir(path) and
-        os.path.isfile(os.path.join(path, '__init__.py'))
-    )
-
-
 exclude_dirs = ['compiled_krb']
 
 # Returns the package and all its sub-packages
@@ -30,18 +21,24 @@ def find_package_tree(root_path, root_package):
     for (dir_path, dir_names, file_names) in os.walk(convert_path(root_path)):
         # Prune dir_names *in-place* to prevent unwanted directory recursion
         for dir_name in list(dir_names):
-            if not os.path.isfile(os.path.join(dir_path, dir_name, '__init__.py')):
-                dir_names.remove(dir_name)
-            if dir_name in exclude_dirs:
+            contains_init_file = os.path.isfile(os.path.join(dir_path, 
+                                                             dir_name, 
+                                                             '__init__.py'))
+            if dir_name in exclude_dirs or not contains_init_file:
                 dir_names.remove(dir_name)
         if dir_names:
             prefix = dir_path.split('/')[root_count:]
-            packages.extend(['.'.join([root_package] + prefix + [dir_name]) for dir_name in dir_names])
+            packages.extend(['.'.join([root_package] + prefix + [dir_name]) 
+                                for dir_name in dir_names])
     return packages
 
 
 def file_walk_relative(top, remove=''):
-    """Returns a generator of files from the top of the tree. Removing the given prefix from the root/file result."""
+    """
+    Returns a generator of files from the top of the tree, removing 
+    the given prefix from the root/file result.
+
+    """
     for root, dirs, files in os.walk(top):
        if '.svn' in dirs:
            dirs.remove('.svn')
@@ -60,15 +57,14 @@ def std_name_cmd(target_dir):
 class TestRunner(setuptools.Command):
     """Run the Iris tests under nose and multiprocessor for performance"""
     description = "run tests under nose and multiprocessor for performance"
-    user_options = [
-        ('no-data', 'n', 'Override the paths to the data repositorys so it appears to the tests that it does not exist.'),
-        ('system-tests', 's', 'Run only the limited subset of system tests.')
-    ]
+    user_options = [('no-data', 'n', 'Override the paths to the data ' 
+                                     'repositories so it appears to the '
+                                     'tests that it does not exist.'),
+                    ('system-tests', 's', 'Run only the limited subset of '
+                                          'system tests.')
+                   ]
     
-    boolean_options = [
-        'no-data',
-        'system-tests'
-    ]
+    boolean_options = ['no-data', 'system-tests']
     
     def initialize_options(self):
         self.no_data = False
@@ -82,7 +78,7 @@ class TestRunner(setuptools.Command):
             # nose.run creates allowing us to simluate the absence of test data
             os.environ["override_data_repository"] = "true"
         if self.system_tests:
-            print "Running only system tests..."
+            print "Running system tests..."
 
     def run(self):
         if self.distribution.tests_require:
@@ -182,7 +178,8 @@ setup(
     package_dir={'': 'lib'},
     package_data={
         'iris': list(file_walk_relative('lib/iris/etc', remove='lib/iris/')) + \
-                list(file_walk_relative('lib/iris/tests/results', remove='lib/iris/')) + \
+                list(file_walk_relative('lib/iris/tests/results', 
+                                        remove='lib/iris/')) + \
                 ['fileformats/_pyke_rules/*.k?b'] + \
                 ['tests/stock*.npz']
         },
