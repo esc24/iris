@@ -14,7 +14,7 @@ recursive-exclude docs/iris/build *
 include tools/generate_std_names.py
 include etc/cf-standard-name-table.xml
 
-# Extension src
+# Extension source
 recursive-include src *.c *.cc *.cpp *.h
 
 
