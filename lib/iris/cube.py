@@ -460,7 +460,7 @@ class Cube(CFVariableMixin):
         if isinstance(data_dim, collections.Container) and len(data_dim) != 1:
             raise ValueError('The supplied data dimension must be a single number')            
         if self.coords(dimensions=data_dim, dim_coords=True):
-            raise ValueError('A dim_coord is already associated with dimension %d.' % data_dim)
+            raise ValueError('A dim_coord is already associated with dimension %r.' % data_dim)
 
         #TODO tidy this up
         # Convert data_dim to a single integer
