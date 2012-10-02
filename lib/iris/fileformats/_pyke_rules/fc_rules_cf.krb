@@ -373,8 +373,6 @@ fc_build_coordinate_longitude_rotated
         python engine.rule_triggered.add(rule.name)        
 
 
-        
-
 #
 # Context:
 #   This rule will trigger iff a CF latitude coordinate exists and
