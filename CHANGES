@@ -18,10 +18,14 @@ Incompatible changes
 --------------------
 * The "source" and "history" metadata are now represented as Cube
   attributes, where previously they used coordinates.
+* Cube.coord_dims() now returns a tuple instead of a list.
 
 Deprecations
 ------------
 * The methods `Coord.cos()` and `Coord.sin()` have been deprecated.
+* The :func:`iris.load_strict()` function has been deprecated. Code
+  should now use the :func:`iris.load_cube()` and
+  :func:`iris.load_cubes()` functions instead.
 
 
 ----------------------------
