@@ -385,7 +385,7 @@ class TestQueryCoord(tests.IrisTest):
         self.assertEqual([coord.name() for coord in coords], [])
         # Change units to "hours since ..." as it's the presence of a
         # time unit that identifies a time axis.
-        cube.coord("time").replace_units('hours since 1970-01-01 00:00:00')
+        cube.coord("time").units = 'hours since 1970-01-01 00:00:00'
         coords = cube.coords(axis='t')
         self.assertEqual([coord.name() for coord in coords], ['time'])
         
@@ -609,31 +609,21 @@ class TestCubeAPI(TestCube2d):
 
     def test_setting_units(self):
         self.assertEqual(self.t.units, iris.unit.Unit('meters'))
-        with self.assertRaises(iris.exceptions.ExistingUnitsError):
-            self.t.units = 'kelvin'
+        self.t.units = 'kelvin'
+        self.assertEqual(self.t.units, iris.unit.Unit('kelvin'))
 
     def test_clearing_units(self):
         self.t.units = None
         self.assertEqual(str(self.t.units), 'unknown')
 
-    def test_change_units(self):
-        # Clear existing units.
-        self.t.units = None
+    def test_convert_units(self):
         # Set to 'volt'
         self.t.units = iris.unit.Unit('volt')
-        self.assertEqual(str(self.t.units), 'volt')
         data = self.t.data.copy()
         # Change to 'kV' - data should be scaled automatically.
-        self.t.change_units('kV')
+        self.t.convert_units('kV')
         self.assertEqual(str(self.t.units), 'kV')
         self.assertArrayAlmostEqual(self.t.data, data / 1000.0)
-
-    def test_replace_units(self):
-        data = self.t.data.copy()
-        self.t.replace_units('volt')
-        self.assertEqual(str(self.t.units), 'volt')
-        # Data should be unchanged.
-        self.assertArrayEqual(self.t.data, data)
 
     def test_coords_are_copies(self):
         self.assertIsNot(self.t.coord('dim1'), self.t.copy().coord('dim1'))

@@ -613,6 +613,6 @@ def _math_op_common(cube, math_op, new_unit, history, update_history, in_place):
     if update_history:
         copy_cube.add_history(history)
 
-    copy_cube.replace_units(new_unit)
+    copy_cube.units = new_unit
     
     return copy_cube

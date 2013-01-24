@@ -542,21 +542,7 @@ class Coord(CFVariableMixin):
     def __neg__(self):
         return self.copy(-self.points, -self.bounds if self.bounds is not None else None)
 
-    def replace_units(self, unit):
-        """
-        Changes the coordinate's units without modifying its points or
-        bounds.
-
-        .. note::
-
-            To convert a coordinate from one unit to another (e.g. degrees
-            to radians) use use
-            :meth:`~iris.coords.Coord.replace_units`.
-
-        """
-        super(Coord, self).replace_units(unit)
-
-    def change_units(self, unit):
+    def convert_units(self, unit):
         """
         Changes the coordinate's units, converting the values in its points
         and bounds arrays.
@@ -564,33 +550,29 @@ class Coord(CFVariableMixin):
         For example, if a coordinate's :attr:`units <iris.coords.Coord.units>`
         attribute is set to radians then::
 
-            coord.change_units('degrees')
+            coord.convert_units('degrees')
 
         will change the coordinate's
         :attr:`~iris.coords.Coord.units` attribute to degrees and
         multiply each value in :attr:`~iris.coords.Coord.points` and
         :attr:`~iris.coords.Coord.bounds` by 180.0/pi.
 
-        .. note::
-
-            To change a coordinate from one unit to another without modifying
-            its values use
-            :meth:`~iris.coords.Coord.replace_units`.
-
         """
-        unit = iris.unit.as_unit(unit)
         # If the coord has units convert the values in points (and bounds if
         # present).
         if self.units is not None and not self.units.unknown:
             self.points = self.units.convert(self.points, unit)
             if self.bounds is not None:
                 self.bounds = self.units.convert(self.bounds, unit)
-        self.replace_units(unit)
+        self.units = unit
 
     def unit_converted(self, new_unit):
         """Return a coordinate converted to a given unit."""
+        msg = "The 'unit_converted' method is deprecated. Please make a copy"\
+              " of the coordinate and use the 'convert_units' method."
+        warnings.warn(msg, UserWarning, stacklevel=2)
         new_coord = self.copy()
-        new_coord.change_units(new_unit)
+        new_coord.convert_units(new_unit)
         return new_coord
 
     def cells(self):

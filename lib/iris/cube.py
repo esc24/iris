@@ -463,48 +463,23 @@ class Cube(CFVariableMixin):
         for name in CubeMetadata._fields:
             setattr(self, name, getattr(value, name))
 
-    def replace_units(self, unit):
-        """
-        Changes the cube's units without modifying the data array.
-
-        .. note::
-
-            To convert a cube from one unit to another (e.g. kelvin
-            to celsius) use
-            :meth:`~iris.cube.Cube.change_units`.
-
-        """
-        super(Cube, self).replace_units(unit)
-
-    def change_units(self, unit):
+    def convert_units(self, unit):
         """
         Changes the cube's units, converting the values in the data array.
 
         For example, if a cube's :attr:`~iris.cube.Cube.units` is
         kelvin then::
 
-            cube.change_units('celsius')
+            cube.convert_units('celsius')
 
         will change the cube's :attr:`~iris.cube.Cube.units` attribute to
         celsius and add 273.15 to each value in :attr:`~iris.cube.Cube.data`.
 
-        .. note::
-
-            To change a cube from one unit to another without modifying its
-            values use :meth:`~iris.cube.Cube.replace_units`.
-
         """
-        unit = iris.unit.as_unit(unit)
         # If the cube has units convert the data.
         if self.units is not None and not self.units.unknown:
             self.data = self.units.convert(self.data, unit)
-        self.replace_units(unit)
-
-    def unit_converted(self, new_unit):
-        """Return a cube converted to a given unit."""
-        new_cube = self.copy()
-        new_cube.change_units(new_unit)
-        return new_cube
+        self.units = unit
 
     def add_cell_method(self, cell_method):
         """Add a CellMethod to the Cube."""
