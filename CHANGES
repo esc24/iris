@@ -4,7 +4,7 @@ Release 1.2 (unreleased)
 
 Features added
 --------------
-* Added a change_units() method to cubes and coordinates for straighforward
+* Added a change_units() method to cubes and coordinates for straightforward
   conversion of a cube or coordinate from one unit to another. To replace the
   units without modifying the data values use the new replace_units() method.
 
@@ -18,6 +18,8 @@ Incompatible changes
   ExistingUnitsError if the cube or coordinate already has units. The units
   can be replaced leaving the data untouched using the new replace_units()
   method.
+
+* The deprecated Cube.unit and Coord.unit attributes has been removed.
 
 Deprecations
 ------------

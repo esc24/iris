@@ -13,7 +13,7 @@ the cube is no longer what was intended. This example could be rectified by repl
    cube.replace_units('C')
 
 .. note::
-    :meth:`Cube.change_units <iris.cube.Cube.units>` can be used to automatically convert the underlying data so the two steps above
+    :meth:`iris.cube.Cube.change_units` can be used to automatically convert the underlying data so the two steps above
     can be achieved by::
 
         cube.change_units('C')

@@ -471,7 +471,7 @@ class Cube(CFVariableMixin):
 
             To convert a cube from one unit to another (e.g. kelvin
             to celsius) use
-            :meth:`change_units <iris.cube.Cube.change_units>`.
+            :meth:`~iris.cube.Cube.change_units`.
 
         """
         super(Cube, self).replace_units(unit)
@@ -480,24 +480,22 @@ class Cube(CFVariableMixin):
         """
         Changes the cube's units, converting the values in the data array.
 
-        For example, if a cube's :attr:`units <iris.cube.Cube.units>` is
-        kelvin, it can be converted into celsius by::
+        For example, if a cube's :attr:`~iris.cube.Cube.units` is
+        kelvin then::
 
             cube.change_units('celsius')
 
-        This will change the cube's :attr:`units <iris.cube.Cube.units>` to
-        celsius and add 273.15 to each value in
-        :attr:`data <iris.cube.Cube.data>`
+        will change the cube's :attr:`~iris.cube.Cube.units` attribute to
+        celsius and add 273.15 to each value in :attr:`~iris.cube.Cube.data`.
 
         .. note::
 
             To change a cube from one unit to another without modifying its
-            values use :meth:`replace_units <iris.cube.Cube.replace_units>`.
+            values use :meth:`~iris.cube.Cube.replace_units`.
 
         """
         unit = iris.unit.as_unit(unit)
-        # If the cube has units and the desired unit is valid convert
-        # the data.
+        # If the cube has units convert the data.
         if self.units is not None and not self.units.unknown:
             self.data = self.units.convert(self.data, unit)
         self.replace_units(unit)

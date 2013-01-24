@@ -132,7 +132,7 @@ class CFVariableMixin(object):
     @units.setter
     def units(self, unit):
         unit = iris.unit.as_unit(unit)
-        # Allow assignment if the current units attrinute is None/unknown,
+        # Allow assignment if the current units attribute is None/unknown,
         # or assigning None/unknown to clear the units. Also allow
         # assignment of an equal unit e.g. 'degC' to 'Celsius'.
         if (unit.unknown or self.units is None or self.units.unknown or

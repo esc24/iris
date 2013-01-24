@@ -551,7 +551,7 @@ class Coord(CFVariableMixin):
 
             To convert a coordinate from one unit to another (e.g. degrees
             to radians) use use
-            :meth:`replace_units <iris.coords.Coord.replace_units>`.
+            :meth:`~iris.coords.Coord.replace_units`.
 
         """
         super(Coord, self).replace_units(unit)
@@ -562,25 +562,25 @@ class Coord(CFVariableMixin):
         and bounds arrays.
 
         For example, if a coordinate's :attr:`units <iris.coords.Coord.units>`
-        attribute is set to radians, it can be converted into degrees by::
+        attribute is set to radians then::
 
             coord.change_units('degrees')
 
-        This will change the coordinate's
-        :attr:`units <iris.coords.Coord.units>` attribute to degrees and
-        multiply each value in :attr:`points <iris.coords.Coord.points>` and
-        :attr:`bounds <iris.coords.Coord.bounds>` by 180.0/pi.
+        will change the coordinate's
+        :attr:`~iris.coords.Coord.units` attribute to degrees and
+        multiply each value in :attr:`~iris.coords.Coord.points` and
+        :attr:`~iris.coords.Coord.bounds` by 180.0/pi.
 
         .. note::
 
             To change a coordinate from one unit to another without modifying
             its values use
-            :meth:`replace_units <iris.coords.Coord.replace_units>`.
+            :meth:`~iris.coords.Coord.replace_units`.
 
         """
         unit = iris.unit.as_unit(unit)
-        # If the coord has units and the desired unit is valid convert
-        # the values in points (and bounds if present).
+        # If the coord has units convert the values in points (and bounds if
+        # present).
         if self.units is not None and not self.units.unknown:
             self.points = self.units.convert(self.points, unit)
             if self.bounds is not None:

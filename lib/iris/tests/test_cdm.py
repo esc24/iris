@@ -617,9 +617,9 @@ class TestCubeAPI(TestCube2d):
         self.assertEqual(str(self.t.units), 'unknown')
 
     def test_change_units(self):
+        # Clear existing units.
         self.t.units = None
-        self.assertEqual(str(self.t.units), 'unknown')
-        # Set to 'volts'
+        # Set to 'volt'
         self.t.units = iris.unit.Unit('volt')
         self.assertEqual(str(self.t.units), 'volt')
         data = self.t.data.copy()
