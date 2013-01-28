@@ -10,13 +10,13 @@ The section :doc:`navigating_a_cube` highlighted that every cube has a data attr
 The problem with manipulating the data directly is that other metadata may become inconsistent; in this case the units of
 the cube are no longer what was intended. This example could be rectified by changing the units attribute::
 
-   cube.units = 'C'
+   cube.units = 'celsius'
 
 .. note::
     :meth:`iris.cube.Cube.convert_units` can be used to automatically convert a cube's data and update its units attribute
     so the two steps above can be achieved by::
 
-        cube.convert_units('C')
+        cube.convert_units('celsius')
 
 In order to reduce the amount of metadata which becomes inconsistent, fundamental arithmetic operations such as addition, 
 subtraction, division, and multiplication can be applied directly to any cube.
