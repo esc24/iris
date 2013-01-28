@@ -458,8 +458,6 @@ class Cube(CFVariableMixin):
                 missing_attrs = filter(attr_check, CubeMetadata._fields)
                 if missing_attrs:
                     raise TypeError('Invalid/incomplete metadata')
-        # Clear existing units to allow new value to be assigned.
-        self.units = None
         for name in CubeMetadata._fields:
             setattr(self, name, getattr(value, name))
 
@@ -477,7 +475,7 @@ class Cube(CFVariableMixin):
 
         """
         # If the cube has units convert the data.
-        if self.units is not None and not self.units.unknown:
+        if not self.units.unknown:
             self.data = self.units.convert(self.data, unit)
         self.units = unit
 

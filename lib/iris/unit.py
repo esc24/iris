@@ -1696,11 +1696,13 @@ class Unit(iris.util._OrderedHashable):
             if ut_converter:
                 if isinstance(value_copy, (int, float, long)):
                     if ctype not in _cv_convert_scalar.keys():
-                        raise ValueError('Invalid target type. Can only convert to float or double')
+                        raise ValueError('Invalid target type. Can only convert'
+                                         ' to float or double.')
                     # utilise global convenience dictionary _cv_convert_scalar
                     result = _cv_convert_scalar[ctype](ut_converter, ctype(value_copy))
                 else:
-                    # Implicit cast from array of ints to array of float
+                    # Can only handle array of np.float32 or np.float64 so cast
+                    # array of ints to array of floats of requested precision.
                     if issubclass(value_copy.dtype.type, np.integer):
                         value_copy = value_copy.astype(_ctypes2numpy[ctype])
                     # strict type check of numpy array

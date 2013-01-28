@@ -547,7 +547,7 @@ class Coord(CFVariableMixin):
         Changes the coordinate's units, converting the values in its points
         and bounds arrays.
 
-        For example, if a coordinate's :attr:`units <iris.coords.Coord.units>`
+        For example, if a coordinate's :attr:`~iris.coords.Coord.units`
         attribute is set to radians then::
 
             coord.convert_units('degrees')
@@ -560,7 +560,7 @@ class Coord(CFVariableMixin):
         """
         # If the coord has units convert the values in points (and bounds if
         # present).
-        if self.units is not None and not self.units.unknown:
+        if not self.units.unknown:
             self.points = self.units.convert(self.points, unit)
             if self.bounds is not None:
                 self.bounds = self.units.convert(self.bounds, unit)

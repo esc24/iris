@@ -456,7 +456,6 @@ def _multiply_divide_common(operation_function, operation_symbol, operation_noun
         
         if update_history:
             history = '%s %s %s' % (cube.name(), operation_symbol, other.name())
-            
     elif isinstance(other, iris.cube.Cube):
         # Deal with cube multiplication/division by cube
         # Convert to common unit e.g. m * km to m * m
@@ -472,10 +471,6 @@ def _multiply_divide_common(operation_function, operation_symbol, operation_noun
         if update_history:
             history = '%s %s %s' % (cube.name() or 'unknown', operation_symbol, 
                                     other.name() or 'unknown')
-
-    elif isinstance(other, iris.unit.Unit):
-        copy_cube = cube.copy()
-        other_unit = other
     else:
         return NotImplemented
    
