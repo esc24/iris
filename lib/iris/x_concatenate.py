@@ -19,7 +19,9 @@ Automatic concatenation of multiple cubes over one or more common and
 already existing dimensions.
 
 .. warning::
-    Currently, the :func:`concatenate` routine will load all cube data.
+    Currently, the :func:`concatenate` routine will load the data payload
+    of all cubes passed to it.
+
     This restriction will be relaxed in future revisions.
 
 """
@@ -31,6 +33,10 @@ import numpy
 import iris.coords
 import iris.cube
 from iris.util import guess_coord_axis, array_equal
+
+
+# Restrict the names imported from this namespace.
+__all__ = ['concatenate']
 
 
 #
@@ -167,24 +173,27 @@ def concatenate(cubes):
 
     """
     proto_cubes_by_name = {}
+    axis = None
 
     # Register each cube with its appropriate proto-cube.
     for cube in cubes:
         # Avoid deferred data/data manager issues, and load the cube data!!
         cube.data
+
         name = cube.standard_name
         proto_cubes = proto_cubes_by_name.setdefault(name, [])
         registered = False
 
         # Register cube with an existing proto-cube.
         for proto_cube in proto_cubes:
-            registered = proto_cube.register(cube)
+            registered = proto_cube.register(cube, axis)
             if registered:
+                axis = proto_cube.axis
                 break
 
         # Create a new proto-cube for an unregistered cube.
         if not registered:
-            proto_cubes.append(ProtoCube(cube))
+            proto_cubes.append(ProtoCube(cube, axis))
 
     # Construct a concatenated cube from each of the proto-cubes.
     concatenated_cubes = iris.cube.CubeList()
@@ -204,12 +213,25 @@ def concatenate(cubes):
 
 class CubeSignature(object):
     """
-    blah
+    Template for identifying a specific type of :class:`iris.cube.Cube` based
+    on its metadata and coordinates.
 
     """
     def __init__(self, cube):
+        """
+        Represents the cube metadata and associated coordinate metadata that
+        allows suitable cubes for concatenation to be identified.
+
+        Args:
+
+        * cube:
+            The :class:`iris.cube.Cube` source-cube.
+
+        """
         self.dim_coords = cube.dim_coords
         self.ndim = cube.ndim
+        self.dim_metadata = []
+        self.aux_coords_and_dims = []
 
         # Determine whether there are any anonymous cube dimensions.
         covered = set([cube.coord_dims(coord)[0] for coord in self.dim_coords])
@@ -225,7 +247,6 @@ class CubeSignature(object):
                 self.mdi = cube.data.fill_value
 
             # Collate the dimension coordinate metadata.
-            self.dim_metadata = []
             for coord in self.dim_coords:
                 defn = coord._as_defn()
                 points_dtype = coord.points.dtype
@@ -245,7 +266,6 @@ class CubeSignature(object):
                 self.dim_metadata.append(metadata)
 
             # Collate the auxiliary coordinate metadata and scalar coordinates.
-            self.aux_coords_and_dims = []
             self.scalar_coords = []
 
             # Coordinate axis ordering dictionary.
@@ -266,6 +286,8 @@ class CubeSignature(object):
                     bounds_dtype = coord.bounds.dtype \
                         if coord.bounds is not None else None
                     kwargs = dict(dims=dims)
+                    # Factor the coordinate dimensional mapping into
+                    # the metadata criterion.
                     metadata = _CoordMetaData(defn, points_dtype,
                                               bounds_dtype, kwargs)
                     self.aux_metadata.append(metadata)
@@ -278,6 +300,7 @@ class CubeSignature(object):
         result = NotImplemented
 
         if isinstance(other, CubeSignature):
+            # Only concatenate with fully described cubes.
             if self.anonymous or other.anonymous:
                 result = False
             else:
@@ -295,15 +318,33 @@ class CubeSignature(object):
 
 
 class CoordSignature(object):
+    """
+    Template for identifying a specific type of :class:`iris.cube.Cube` based
+    on its coordinates.
+
+    """
     def __init__(self, cube_signature):
-        self.axis = None  # The nominated dimension of concatenation.
+        """
+        Represents the coordinate metadata required to identify suitable
+        non-overlapping :class:`iris.cube.Cube` source-cubes for concatenation
+        over a common single dimension.
+
+        Args:
+
+        * cube_signature:
+            The :class:`CubeSignature` that defines the source-cube.
+
+        """
+        # The nominated dimension of concatenation.
+        self.axis = None
+        # Controls whether axis can be negotiated.
+        self.axis_lock = False
         self.dim_coords = cube_signature.dim_coords
         self.dim_order = [metadata.kwargs['order']
                           for metadata in cube_signature.dim_metadata]
         self.dim_extents = None
         self._cache = []
         self.aux_coords_and_dims = cube_signature.aux_coords_and_dims
-        self.scalar_coords = cube_signature.scalar_coords
 
     @property
     def axis_order(self):
@@ -317,11 +358,6 @@ class CoordSignature(object):
             result = self.dim_order[self.axis]
 
         return result
-
-    def axis_reset(self):
-        """Revert the nominated dimension of concatenation."""
-
-        self.axis = None
 
     def calculate_extents(self):
         """
@@ -361,12 +397,41 @@ class CoordSignature(object):
                                             self.dim_order[self.axis])
 
     def has_bounds(self):
+        """
+        Determine whether the nominated dimension of concatenation
+        has a dimension coordinate with bounds.
+
+        Returns:
+            Boolean.
+
+        """
         result = None
 
         if self.dim_extents is not None:
             result = self.dim_extents.bounds is not None
 
         return result
+
+    def lock_axis(self, axis):
+        """
+        Attempt to lock the axis down to the given dimension.
+
+        Args:
+
+        * axis:
+            The dimension of concatenation.
+
+        """
+        if axis is not None and not self.axis_lock:
+            if axis < len(self.dim_coords):
+                self.axis = axis
+                self.axis_lock = True
+
+    def reset_axis(self):
+        """Revert the nominated dimension of concatenation."""
+
+        self.axis = None
+        self.axis_lock = False
 
     def _cmp(self, coord, other_coord):
         # Points comparison.
@@ -427,7 +492,7 @@ class ProtoCube(object):
     common dimension.
 
     """
-    def __init__(self, cube):
+    def __init__(self, cube, axis=None):
         """
         Create a new ProtoCube from the given cube and record the cube
         as a source-cube.
@@ -437,20 +502,39 @@ class ProtoCube(object):
         * cube:
             Source :class:`iris.cube.Cube` of the :class:`ProtoCube`.
 
+        Kwargs:
+
+        * axis:
+            Seed the dimension of concatenation for the :class:`ProtoCube`
+            rather than rely on negotiation with source-cubes.
+
         """
+        # Cache the source-cube of this proto-cube.
+        self._cube = cube
+
         # The cube signature is a combination of cube and coordinate
         # metadata that defines this proto-cube.
         self._cube_signature = CubeSignature(cube)
 
-        #
+        # The coordinate signature allows suitable non-overlapping
+        # source-cubes to be identified.
         self._coord_signature = CoordSignature(self._cube_signature)
 
-        #
+        # Calculate the extents of the proto-cube dimension coordinates.
         self._coord_signature.calculate_extents()
+
+        # Attempt to lock the axis, if appropriate ...
+        self._coord_signature.lock_axis(axis)
 
         # The list of source-cubes relevant to this proto-cube.
         self._skeletons = []
         self._add_cube(cube, self._coord_signature)
+
+    @property
+    def axis(self):
+        """Return the dimension of concatenation."""
+
+        return self._coord_signature.axis
 
     def concatenate(self):
         """
@@ -461,33 +545,63 @@ class ProtoCube(object):
             The concatenated :class:`iris.cube.Cube`.
 
         """
-        skeletons = self._skeletons
-        order = self._coord_signature.axis_order
-        cube_signature = self._cube_signature
+        if len(self._skeletons) > 1:
+            skeletons = self._skeletons
+            order = self._coord_signature.axis_order
+            cube_signature = self._cube_signature
 
-        # Sequence the segments into the correct order pending concatenation.
-        key_func = lambda skeleton: skeleton.signature.dim_extents
-        skeletons.sort(key=key_func, reverse=order == _DECREASING)
+            # Sequence the skeleton segments into the correct order
+            # pending concatenation.
+            key_func = lambda skeleton: skeleton.signature.dim_extents
+            skeletons.sort(key=key_func, reverse=order == _DECREASING)
 
-        # Concatenate the new dimension coordinate.
-        dim_coords_and_dims = self._build_dim_coordinates()
+            # Concatenate the new dimension coordinate.
+            dim_coords_and_dims = self._build_dim_coordinates()
 
-        # Concatenate the new auxiliary coordinates.
-        aux_coords_and_dims = self._build_aux_coordinates()
+            # Concatenate the new auxiliary coordinates.
+            aux_coords_and_dims = self._build_aux_coordinates()
 
-        # Concatenate the new data payload.
-        data = self._build_data()
+            # Concatenate the new data payload.
+            data = self._build_data()
 
-        # Build the new cube.
-        kwargs = dict(zip(iris.cube.CubeMetadata._fields, cube_signature.defn))
-        cube = iris.cube.Cube(data,
-                              dim_coords_and_dims=dim_coords_and_dims,
-                              aux_coords_and_dims=aux_coords_and_dims,
-                              **kwargs)
+            # Build the new cube.
+            kwargs = dict(zip(iris.cube.CubeMetadata._fields,
+                              cube_signature.defn))
+            cube = iris.cube.Cube(data,
+                                  dim_coords_and_dims=dim_coords_and_dims,
+                                  aux_coords_and_dims=aux_coords_and_dims,
+                                  **kwargs)
+        else:
+            # There is nothing else to concatenate with the source-cube
+            # of this proto-cube
+            cube = self._cube
 
         return cube
 
-    def register(self, cube):
+    def register(self, cube, axis=None):
+        """
+        Determine whether the given source-cube is suitable for concatenation
+        with this :class:`ProtoCube`.
+
+        Args:
+
+        * cube:
+            The :class:`iris.cube.Cube` source-cube candidate for
+            concatenation.
+
+        Kwargs:
+
+        * axis:
+            Seed the dimension of concatenation for the :class:`ProtoCube`
+            rather than rely on negotiation with source-cubes.
+
+        Returns:
+            Boolean.
+
+        """
+        # Attempt to lock the axis, if appropriate ...
+        self._coord_signature.lock_axis(axis)
+
         # Check for compatible cube signatures.
         cube_signature = CubeSignature(cube)
         match = self._cube_signature == cube_signature
@@ -506,10 +620,13 @@ class ProtoCube(object):
         if match:
             # Register the cube as a source-cube for this proto-cube.
             self._add_cube(cube, coord_signature)
+            # Prevent further axis negotiation.
+            self._coord_signature.axis_lock = True
         else:
-            if len(self._skeletons) == 1:
+            if len(self._skeletons) == 1 and \
+                    not self._coord_signature.axis_lock:
                 # Ensure dimension of concatenation is renegotiated.
-                self._coord_signature.axis_reset()
+                self._coord_signature.reset_axis()
 
         return match
 
@@ -553,7 +670,7 @@ class ProtoCube(object):
         aux_coords_and_dims = []
 
         # Generate all the auxiliary coordinates for the new concatenated cube.
-        for i, coord, dims in enumerate(cube_signature.aux_coords_and_dims):
+        for i, (coord, dims) in enumerate(cube_signature.aux_coords_and_dims):
             # Check whether the coordinate spans the nominated
             # dimension of concatenation.
             if axis in dims:
@@ -565,7 +682,7 @@ class ProtoCube(object):
 
                 # Concatenate the bounds together.
                 bnds = None
-                if self._coord_signature.has_bounds():
+                if coord.has_bounds():
                     bnds = [skeleton.signature.aux_coords_and_dims[i][0].bounds
                             for skeleton in skeletons]
                     bnds = numpy.concatenate(tuple(bnds), axis=dim)
@@ -590,6 +707,10 @@ class ProtoCube(object):
                                                      **kwargs)
 
             aux_coords_and_dims.append((deepcopy(coord), dims))
+
+        # Generate all the scalar coordinates for the new concatenated cube.
+        for coord in cube_signature.scalar_coords:
+            aux_coords_and_dims.append((deepcopy(coord), ()))
 
         return aux_coords_and_dims
 
@@ -684,15 +805,15 @@ class ProtoCube(object):
         # Ensure that the extents don't overlap.
         if len(dim_extents) > 1:
             for i, extent in enumerate(dim_extents[1:]):
-                # Check the points.
-                if dim_extents[i].points.max > extent.points.min:
+                # Check the points - must be strictly monotonic.
+                if dim_extents[i].points.max >= extent.points.min:
                     result = False
                     break
-                # Check the bounds.
+                # Check the bounds - must be strictly monotonic.
                 if extent.bounds is not None:
-                    lower = dim_extents[i].bounds[0].max > extent.bounds[0].min
-                    upper = dim_extents[i].bounds[1].max > extent.bounds[1].min
-                    if lower or upper:
+                    bnd0 = dim_extents[i].bounds[0].max >= extent.bounds[0].min
+                    bnd1 = dim_extents[i].bounds[1].max >= extent.bounds[1].min
+                    if bnd0 or bnd1:
                         result = False
                         break
 
