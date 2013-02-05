@@ -1,4 +1,4 @@
-# (C) British Crown Copyright 2010 - 2012, Met Office
+# (C) British Crown Copyright 2010 - 2013, Met Office
 #
 # This file is part of Iris.
 #
@@ -29,6 +29,7 @@ already existing dimensions.
 from collections import namedtuple
 from copy import deepcopy
 import numpy
+import operator
 
 import iris.coords
 import iris.cube
@@ -799,21 +800,27 @@ class ProtoCube(object):
                        for skeleton in self._skeletons]
         dim_extents.append(extent)
 
-        # Sort into ascending order - the direction is inconsequencial.
-        dim_extents.sort()
+        # Sort into the appropriate dimension order.
+        order = self._coord_signature.axis_order
+        dim_extents.sort(reverse=order == _DECREASING)
+
+        # Determine the comparison operator.
+        compare = operator.le if order == _DECREASING else operator.ge
 
         # Ensure that the extents don't overlap.
         if len(dim_extents) > 1:
             for i, extent in enumerate(dim_extents[1:]):
                 # Check the points - must be strictly monotonic.
-                if dim_extents[i].points.max >= extent.points.min:
+                if compare(dim_extents[i].points.max, extent.points.min):
                     result = False
                     break
                 # Check the bounds - must be strictly monotonic.
                 if extent.bounds is not None:
-                    bnd0 = dim_extents[i].bounds[0].max >= extent.bounds[0].min
-                    bnd1 = dim_extents[i].bounds[1].max >= extent.bounds[1].min
-                    if bnd0 or bnd1:
+                    lower_bound_fail = compare(dim_extents[i].bounds[0].max,
+                                               extent.bounds[0].min)
+                    upper_bound_fail = compare(dim_extents[i].bounds[1].max,
+                                               extent.bounds[1].min)
+                    if lower_bound_fail or upper_bound_fail:
                         result = False
                         break
 
