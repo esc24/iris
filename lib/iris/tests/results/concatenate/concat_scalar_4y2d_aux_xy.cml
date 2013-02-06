@@ -3,7 +3,7 @@
   <cube units="unknown">
     <coords>
       <coord>
-        <auxCoord id="c7be93c8" long_name="height" points="[10]" shape="(1,)" units="Unit('m')" value_type="int64"/>
+        <auxCoord id="c7be93c8" long_name="height" points="[10.0]" shape="(1,)" units="Unit('m')" value_type="float32"/>
       </coord>
       <coord datadims="[1]">
         <dimCoord bounds="[[-0.5, 0.5],
@@ -30,7 +30,7 @@
   <cube units="unknown">
     <coords>
       <coord>
-        <auxCoord id="c7be93c8" long_name="height" points="[20]" shape="(1,)" units="Unit('m')" value_type="int64"/>
+        <auxCoord id="c7be93c8" long_name="height" points="[20.0]" shape="(1,)" units="Unit('m')" value_type="float32"/>
       </coord>
       <coord datadims="[1]">
         <dimCoord bounds="[[-0.5, 0.5],

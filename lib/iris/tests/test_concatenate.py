@@ -61,7 +61,8 @@ def _make_cube(x, y, data, aux=None, offset=0, scalar=None):
             cube.add_aux_coord(coord, (0, 1))
 
     if scalar is not None:
-        coord = AuxCoord(scalar, long_name='height', units='m')
+        data = numpy.array([scalar], dtype=numpy.float32)
+        coord = AuxCoord(data, long_name='height', units='m')
         cube.add_aux_coord(coord, ())
 
     return cube
@@ -649,7 +650,7 @@ class TestMulti2DScalar(tests.IrisTest):
         self.assertEqual(len(merged), 4)
 
         result = concatenate(merged)
-        self.assertCML(result, ('concatenate'
+        self.assertCML(result, ('concatenate',
                                 'concat_merged_scalar_4y2d_aux_xy.cml'))
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].shape, (2, 4, 4))
