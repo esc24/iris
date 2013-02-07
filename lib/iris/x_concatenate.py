@@ -28,7 +28,8 @@ already existing dimensions.
 
 from collections import namedtuple
 from copy import deepcopy
-import numpy
+import numpy as np
+import numpy.ma as ma
 import operator
 
 import iris.coords
@@ -87,10 +88,10 @@ class _CoordMetaData(namedtuple('CoordMetaData',
         coordinate.
 
     * points_dtype:
-        The points data :class:`numpy.dtype` of an associated coordinate.
+        The points data :class:`np.dtype` of an associated coordinate.
 
     * bounds_dtype:
-        The bounds data :class:`numpy.dtype` of an associated coordinate.
+        The bounds data :class:`np.dtype` of an associated coordinate.
 
     * kwargs:
         A dictionary of key/value pairs required to define a coordinate.
@@ -243,7 +244,7 @@ class CubeSignature(object):
             self.data_type = cube.data.dtype.name
             self.mdi = None
 
-            if isinstance(cube.data, numpy.ma.core.MaskedArray):
+            if isinstance(cube.data, ma.core.MaskedArray):
                 # Only set when we're dealing with a masked payload.
                 self.mdi = cube.data.fill_value
 
@@ -679,14 +680,14 @@ class ProtoCube(object):
                 dim = dims.index(axis)
                 points = [skeleton.signature.aux_coords_and_dims[i][0].points
                           for skeleton in skeletons]
-                points = numpy.concatenate(tuple(points), axis=dim)
+                points = np.concatenate(tuple(points), axis=dim)
 
                 # Concatenate the bounds together.
                 bnds = None
                 if coord.has_bounds():
                     bnds = [skeleton.signature.aux_coords_and_dims[i][0].bounds
                             for skeleton in skeletons]
-                    bnds = numpy.concatenate(tuple(bnds), axis=dim)
+                    bnds = np.concatenate(tuple(bnds), axis=dim)
 
                 # Generate the associated coordinate metadata.
                 defn = cube_signature.aux_metadata[i].defn
@@ -729,9 +730,9 @@ class ProtoCube(object):
 
         if self._cube_signature.mdi is not None:
             # Preserve masked entries.
-            data = numpy.ma.concatenate(tuple(data), axis=axis)
+            data = ma.concatenate(tuple(data), axis=axis)
         else:
-            data = numpy.concatenate(tuple(data), axis=axis)
+            data = np.concatenate(tuple(data), axis=axis)
 
         return data
 
@@ -753,14 +754,14 @@ class ProtoCube(object):
         # Concatenate the points together for the nominated dimension.
         points = [skeleton.signature.dim_coords[axis].points
                   for skeleton in skeletons]
-        points = numpy.concatenate(tuple(points))
+        points = np.concatenate(tuple(points))
 
         # Concatenate the bounds together for the nominated dimension.
         bounds = None
         if self._coord_signature.has_bounds():
             bounds = [skeleton.signature.dim_coords[axis].bounds
                       for skeleton in skeletons]
-            bounds = numpy.concatenate(tuple(bounds))
+            bounds = np.concatenate(tuple(bounds))
 
         # Populate the new dimension coordinate with the concatenated
         # points, bounds and associated metadata.
@@ -804,22 +805,37 @@ class ProtoCube(object):
         order = self._coord_signature.axis_order
         dim_extents.sort(reverse=order == _DECREASING)
 
-        # Determine the comparison operator.
-        compare = operator.le if order == _DECREASING else operator.ge
-
         # Ensure that the extents don't overlap.
         if len(dim_extents) > 1:
             for i, extent in enumerate(dim_extents[1:]):
                 # Check the points - must be strictly monotonic.
-                if compare(dim_extents[i].points.max, extent.points.min):
+                if order == _DECREASING:
+                    left = dim_extents[i].points.min
+                    right = extent.points.max
+                else:
+                    left = dim_extents[i].points.max
+                    right = extent.points.min
+
+                if left >= right:
                     result = False
                     break
+
                 # Check the bounds - must be strictly monotonic.
                 if extent.bounds is not None:
-                    lower_bound_fail = compare(dim_extents[i].bounds[0].max,
-                                               extent.bounds[0].min)
-                    upper_bound_fail = compare(dim_extents[i].bounds[1].max,
-                                               extent.bounds[1].min)
+                    if order == _DECREASING:
+                        left_0 = dim_extents[i].bounds[0].min
+                        left_1 = dim_extents[1].bounds[1].min
+                        right_0 = extent.bounds[0].max
+                        right_1 = extent.bounds[1].max
+                    else:
+                        left_0 = dim_extents[i].bounds[0].max
+                        left_1 = dim_extents[i].bounds[1].max
+                        right_0 = extent.bounds[0].min
+                        right_1 = extent.bounds[1].min
+
+                    lower_bound_fail = left_0 >= right_0
+                    upper_bound_fail = left_1 >= right_1
+
                     if lower_bound_fail or upper_bound_fail:
                         result = False
                         break
