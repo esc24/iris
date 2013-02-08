@@ -54,6 +54,8 @@ __all__ = ['concatenate']
 #
 #   * Don't load the cube data payload.
 #
+#   * Deal with anonymous dimensions.
+#
 
 
 class _CoordAndDims(namedtuple('CoordAndDims',
