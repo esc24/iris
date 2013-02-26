@@ -165,6 +165,13 @@ CoordAndDims(DimCoord(f.regular_points("x"), standard_name=f._y_coord_name(), un
 
 IF
 len(f.lbcode) == 5
+f.lbcode.ix == 11
+f.bdx != 0
+THEN
+CoordAndDims(DimCoord(f.regular_points("x"), standard_name=f._x_coord_name(), units='degrees', coord_system=f.coord_system()), 1)
+
+IF
+len(f.lbcode) == 5
 f.lbcode.iy == 1
 f.bdy == 0
 THEN
@@ -186,6 +193,14 @@ f.lbcode[-1] == 1
 f.lbcode.iy == 23
 THEN
 CoordAndDims(DimCoord(f.y, standard_name='time', units=iris.unit.Unit('days since 0000-01-01 00:00:00', calendar=iris.unit.CALENDAR_360_DAY), bounds=f.y_bounds), 0)
+
+# WARNING - undocumented offset from epoch being used in this rule.
+IF
+len(f.lbcode) == 5
+f.lbcode[-1] == 1
+f.lbcode.iy == 20
+THEN
+CoordAndDims(DimCoord(f.y + 640163., standard_name='time', units=iris.unit.Unit('days since 0000-01-01 00:00:00', calendar=iris.unit.CALENDAR_GREGORIAN), bounds=f.y_bounds + 640163.), 0)
 
 
 IF
