@@ -1,4 +1,4 @@
-# (C) British Crown Copyright 2010 - 2013, Met Office
+# (C) British Crown Copyright 2013 Met Office
 #
 # This file is part of Iris.
 #
@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Iris.  If not, see <http://www.gnu.org/licenses/>.
 """
-Automatic concatenation of multiple cubes over one or more common and
-already existing dimensions.
+Automatic concatenation of multiple cubes over one or more existing dimensions.
 
 .. warning::
     Currently, the :func:`concatenate` routine will load the data payload
@@ -26,7 +25,7 @@ already existing dimensions.
 
 """
 
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from copy import deepcopy
 import numpy as np
 import numpy.ma as ma
@@ -35,10 +34,6 @@ import operator
 import iris.coords
 import iris.cube
 from iris.util import guess_coord_axis, array_equal
-
-
-# Restrict the names imported from this namespace.
-__all__ = ['concatenate']
 
 
 #
@@ -58,10 +53,19 @@ __all__ = ['concatenate']
 #
 
 
+# Restrict the names imported from this namespace.
+__all__ = ['concatenate']
+
+# Direction of dimension coordinate value order.
+_CONSTANT = 0
+_DECREASING = -1
+_INCREASING = 1
+
+
 class _CoordAndDims(namedtuple('CoordAndDims',
                                ['coord', 'dims'])):
     """
-    Container for a coordinate and the associated data dimension/s
+    Container for a coordinate and the associated data dimension(s)
     spanned over a :class:`iris.cube.Cube`.
 
     Args:
@@ -71,7 +75,7 @@ class _CoordAndDims(namedtuple('CoordAndDims',
         coordinate instance.
 
     * dims:
-        A tuple of the data dimesion/s spanned by the coordinate.
+        A tuple of the data dimension(s) spanned by the coordinate.
 
     """
 
@@ -153,12 +157,6 @@ class _CoordExtent(namedtuple('CoordExtent',
     """
 
 
-# Direction of dimension coordinate value order.
-_CONSTANT = 0
-_DECREASING = -1
-_INCREASING = 1
-
-
 def concatenate(cubes):
     """
     Concatenate the provided cubes over common existing dimensions.
@@ -176,16 +174,16 @@ def concatenate(cubes):
         This routine will load your data payload!
 
     """
-    proto_cubes_by_name = {}
+    proto_cubes_by_name = defaultdict(list)
     axis = None
 
     # Register each cube with its appropriate proto-cube.
     for cube in cubes:
+        # TODO: Remove this when new deferred data mechanism is available.
         # Avoid deferred data/data manager issues, and load the cube data!!
         cube.data
 
-        name = cube.standard_name
-        proto_cubes = proto_cubes_by_name.setdefault(name, [])
+        proto_cubes = proto_cubes_by_name[cube.name()]
         registered = False
 
         # Register cube with an existing proto-cube.
@@ -232,10 +230,16 @@ class CubeSignature(object):
             The :class:`iris.cube.Cube` source-cube.
 
         """
-        self.dim_coords = cube.dim_coords
-        self.ndim = cube.ndim
-        self.dim_metadata = []
+        self.anonymous = True
         self.aux_coords_and_dims = []
+        self.aux_metadata = []
+        self.data_type = None
+        self.defn = None
+        self.dim_coords = cube.dim_coords
+        self.dim_metadata = []
+        self.mdi = None
+        self.ndim = cube.ndim
+        self.scalar_coords = []
 
         # Determine whether there are any anonymous cube dimensions.
         covered = set([cube.coord_dims(coord)[0] for coord in self.dim_coords])
@@ -243,14 +247,15 @@ class CubeSignature(object):
 
         if not self.anonymous:
             self.defn = cube.metadata
-            self.data_type = cube.data.dtype.name
-            self.mdi = None
+            self.data_type = cube.data.dtype
 
-            if isinstance(cube.data, ma.core.MaskedArray):
+            if ma.isMaskedArray(cube.data):
                 # Only set when we're dealing with a masked payload.
                 self.mdi = cube.data.fill_value
 
+            #
             # Collate the dimension coordinate metadata.
+            #
             for coord in self.dim_coords:
                 defn = coord._as_defn()
                 points_dtype = coord.points.dtype
@@ -264,24 +269,24 @@ class CubeSignature(object):
                 else:
                     order = _DECREASING
 
+                # Mix the monotonic order into the metadata.
                 kwargs = dict(circular=coord.circular, order=order)
                 metadata = _CoordMetaData(defn, points_dtype,
                                           bounds_dtype, kwargs)
                 self.dim_metadata.append(metadata)
 
+            #
             # Collate the auxiliary coordinate metadata and scalar coordinates.
-            self.scalar_coords = []
+            #
 
-            # Coordinate axis ordering dictionary.
-            axes = dict(T=0, Z=1, Y=2, X=3)
             # Coordinate sort function - by guessed coordinate axis, then
             # by coordinate definition, then by dimensions, in ascending order.
+            axes = dict(T=0, Z=1, Y=2, X=3)
             key_func = lambda coord: (axes.get(guess_coord_axis(coord),
                                                len(axes) + 1),
                                       coord._as_defn(),
                                       cube.coord_dims(coord))
 
-            self.aux_metadata = []
             for coord in sorted(cube.aux_coords, key=key_func):
                 dims = cube.coord_dims(coord)
                 if dims:
@@ -289,9 +294,11 @@ class CubeSignature(object):
                     points_dtype = coord.points.dtype
                     bounds_dtype = coord.bounds.dtype \
                         if coord.bounds is not None else None
+                    # Mix the coordinate dimensional mapping into the metadata.
                     kwargs = dict(dims=dims)
-                    # Factor the coordinate dimensional mapping into
-                    # the metadata criterion.
+                    # Add circular flag metadata for dimensional coordinates.
+                    if isinstance(coord, iris.coords.DimCoord):
+                        kwargs['circular'] = coord.circular
                     metadata = _CoordMetaData(defn, points_dtype,
                                               bounds_dtype, kwargs)
                     self.aux_metadata.append(metadata)
@@ -557,7 +564,7 @@ class ProtoCube(object):
             # Sequence the skeleton segments into the correct order
             # pending concatenation.
             key_func = lambda skeleton: skeleton.signature.dim_extents
-            skeletons.sort(key=key_func, reverse=order == _DECREASING)
+            skeletons.sort(key=key_func, reverse=(order == _DECREASING))
 
             # Concatenate the new dimension coordinate.
             dim_coords_and_dims = self._build_dim_coordinates()
@@ -569,8 +576,7 @@ class ProtoCube(object):
             data = self._build_data()
 
             # Build the new cube.
-            kwargs = dict(zip(iris.cube.CubeMetadata._fields,
-                              cube_signature.defn))
+            kwargs = cube_signature.defn._asdict()
             cube = iris.cube.Cube(data,
                                   dim_coords_and_dims=dim_coords_and_dims,
                                   aux_coords_and_dims=aux_coords_and_dims,
@@ -659,11 +665,11 @@ class ProtoCube(object):
 
     def _build_aux_coordinates(self):
         """
-        Generate the auxiliary coordinates with associated dimension/s
+        Generate the auxiliary coordinates with associated dimension(s)
         mapping for the new concatenated cube.
 
         Returns:
-            A list of auxiliary coordinates and dimension/s tuple pairs.
+            A list of auxiliary coordinates and dimension(s) tuple pairs.
 
         """
         # Setup convenience hooks.
@@ -692,8 +698,7 @@ class ProtoCube(object):
                     bnds = np.concatenate(tuple(bnds), axis=dim)
 
                 # Generate the associated coordinate metadata.
-                defn = cube_signature.aux_metadata[i].defn
-                kwargs = dict(zip(iris.coords.CoordDefn._fields, defn))
+                kwargs = cube_signature.aux_metadata[i].defn._asdict()
 
                 # Build the concatenated coordinate.
                 if isinstance(cube_signature.aux_coords_and_dims[i][0],
@@ -767,7 +772,7 @@ class ProtoCube(object):
 
         # Populate the new dimension coordinate with the concatenated
         # points, bounds and associated metadata.
-        kwargs = dict(zip(iris.coords.CoordDefn._fields, defn))
+        kwargs = defn._asdict()
         kwargs['circular'] = circular
         dim_coord = iris.coords.DimCoord(points, bounds=bounds, **kwargs)
 
@@ -805,7 +810,7 @@ class ProtoCube(object):
 
         # Sort into the appropriate dimension order.
         order = self._coord_signature.axis_order
-        dim_extents.sort(reverse=order == _DECREASING)
+        dim_extents.sort(reverse=(order == _DECREASING))
 
         # Ensure that the extents don't overlap.
         if len(dim_extents) > 1:
