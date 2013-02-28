@@ -26,7 +26,6 @@ Automatic concatenation of multiple cubes over one or more existing dimensions.
 """
 
 from collections import defaultdict, namedtuple
-from copy import deepcopy
 import numpy as np
 import numpy.ma as ma
 import operator
@@ -715,11 +714,11 @@ class ProtoCube(object):
                         coord = iris.coords.AuxCoord(points, bounds=bnds,
                                                      **kwargs)
 
-            aux_coords_and_dims.append((deepcopy(coord), dims))
+            aux_coords_and_dims.append((coord.copy(), dims))
 
         # Generate all the scalar coordinates for the new concatenated cube.
         for coord in cube_signature.scalar_coords:
-            aux_coords_and_dims.append((deepcopy(coord), ()))
+            aux_coords_and_dims.append((coord.copy(), ()))
 
         return aux_coords_and_dims
 
@@ -780,9 +779,9 @@ class ProtoCube(object):
         dim_coords_and_dims = []
         for dim, coord in enumerate(self._cube_signature.dim_coords):
             if dim == axis:
-                dim_coords_and_dims.append((deepcopy(dim_coord), dim))
+                dim_coords_and_dims.append((dim_coord, dim))
             else:
-                dim_coords_and_dims.append((deepcopy(coord), dim))
+                dim_coords_and_dims.append((coord.copy(), dim))
 
         return dim_coords_and_dims
 
