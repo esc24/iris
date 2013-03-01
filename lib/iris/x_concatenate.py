@@ -50,6 +50,9 @@ from iris.util import guess_coord_axis, array_equal
 #
 #   * Deal with anonymous dimensions.
 #
+#   * When concatenating masked data payload, promote all
+#     payload to be masked ?
+#
 
 
 # Restrict the names imported from this namespace.
@@ -80,7 +83,7 @@ class _CoordAndDims(namedtuple('CoordAndDims',
 
 
 class _CoordMetaData(namedtuple('CoordMetaData',
-                                ['defn', 'points_dtype',
+                                ['defn', 'dims', 'points_dtype',
                                  'bounds_dtype', 'kwargs'])):
     """
     Container for the metadata that defines a dimension or auxiliary
@@ -91,6 +94,9 @@ class _CoordMetaData(namedtuple('CoordMetaData',
     * defn:
         The :class:`iris.coords.CoordDefn` metadata that represents a
         coordinate.
+
+    * dims:
+        The dimension(s) associated with the coordinate.
 
     * points_dtype:
         The points data :class:`np.dtype` of an associated coordinate.
@@ -229,11 +235,8 @@ class CubeSignature(object):
             The :class:`iris.cube.Cube` source-cube.
 
         """
-        self.anonymous = True
         self.aux_coords_and_dims = []
         self.aux_metadata = []
-        self.data_type = None
-        self.defn = None
         self.dim_coords = cube.dim_coords
         self.dim_metadata = []
         self.mdi = None
@@ -244,67 +247,63 @@ class CubeSignature(object):
         covered = set([cube.coord_dims(coord)[0] for coord in self.dim_coords])
         self.anonymous = covered != set(range(self.ndim))
 
-        if not self.anonymous:
-            self.defn = cube.metadata
-            self.data_type = cube.data.dtype
+        self.defn = cube.metadata
+        self.data_type = cube.data.dtype
 
-            if ma.isMaskedArray(cube.data):
-                # Only set when we're dealing with a masked payload.
-                self.mdi = cube.data.fill_value
+        if ma.isMaskedArray(cube.data):
+            # Only set when we're dealing with a masked payload.
+            self.mdi = cube.data.fill_value
 
-            #
-            # Collate the dimension coordinate metadata.
-            #
-            for coord in self.dim_coords:
+        #
+        # Collate the dimension coordinate metadata.
+        #
+        for coord in self.dim_coords:
+            defn = coord._as_defn()
+            dim = cube.coord_dims(coord)
+            points_dtype = coord.points.dtype
+            bounds_dtype = coord.bounds.dtype if coord.bounds is not None \
+                else None
+            if coord.points[0] == coord.points[-1]:
+                order = _CONSTANT
+            elif coord.points[-1] > coord.points[0]:
+                order = _INCREASING
+            else:
+                order = _DECREASING
+            # Mix the monotonic ordering into the metadata.
+            kwargs = dict(circular=coord.circular, order=order)
+            metadata = _CoordMetaData(defn, dim, points_dtype,
+                                      bounds_dtype, kwargs)
+            self.dim_metadata.append(metadata)
+
+        #
+        # Collate the auxiliary coordinate metadata and scalar coordinates.
+        #
+        axes = dict(T=0, Z=1, Y=2, X=3)
+        # Coordinate sort function - by guessed coordinate axis, then
+        # by coordinate definition, then by dimensions, in ascending order.
+        key_func = lambda coord: (axes.get(guess_coord_axis(coord),
+                                           len(axes) + 1),
+                                  coord._as_defn(),
+                                  cube.coord_dims(coord))
+
+        for coord in sorted(cube.aux_coords, key=key_func):
+            dims = cube.coord_dims(coord)
+            if dims:
                 defn = coord._as_defn()
                 points_dtype = coord.points.dtype
-                bounds_dtype = coord.bounds.dtype if coord.bounds is not None \
-                    else None
-
-                if coord.points[0] == coord.points[-1]:
-                    order = _CONSTANT
-                elif coord.points[-1] > coord.points[0]:
-                    order = _INCREASING
-                else:
-                    order = _DECREASING
-
-                # Mix the monotonic order into the metadata.
-                kwargs = dict(circular=coord.circular, order=order)
-                metadata = _CoordMetaData(defn, points_dtype,
+                bounds_dtype = coord.bounds.dtype \
+                    if coord.bounds is not None else None
+                kwargs = {}
+                # Add circular flag metadata for dimensional coordinates.
+                if isinstance(coord, iris.coords.DimCoord):
+                    kwargs['circular'] = coord.circular
+                metadata = _CoordMetaData(defn, dims, points_dtype,
                                           bounds_dtype, kwargs)
-                self.dim_metadata.append(metadata)
-
-            #
-            # Collate the auxiliary coordinate metadata and scalar coordinates.
-            #
-
-            # Coordinate sort function - by guessed coordinate axis, then
-            # by coordinate definition, then by dimensions, in ascending order.
-            axes = dict(T=0, Z=1, Y=2, X=3)
-            key_func = lambda coord: (axes.get(guess_coord_axis(coord),
-                                               len(axes) + 1),
-                                      coord._as_defn(),
-                                      cube.coord_dims(coord))
-
-            for coord in sorted(cube.aux_coords, key=key_func):
-                dims = cube.coord_dims(coord)
-                if dims:
-                    defn = coord._as_defn()
-                    points_dtype = coord.points.dtype
-                    bounds_dtype = coord.bounds.dtype \
-                        if coord.bounds is not None else None
-                    # Mix the coordinate dimensional mapping into the metadata.
-                    kwargs = dict(dims=dims)
-                    # Add circular flag metadata for dimensional coordinates.
-                    if isinstance(coord, iris.coords.DimCoord):
-                        kwargs['circular'] = coord.circular
-                    metadata = _CoordMetaData(defn, points_dtype,
-                                              bounds_dtype, kwargs)
-                    self.aux_metadata.append(metadata)
-                    coord_and_dims = _CoordAndDims(coord, tuple(dims))
-                    self.aux_coords_and_dims.append(coord_and_dims)
-                else:
-                    self.scalar_coords.append(coord)
+                self.aux_metadata.append(metadata)
+                coord_and_dims = _CoordAndDims(coord, tuple(dims))
+                self.aux_coords_and_dims.append(coord_and_dims)
+            else:
+                self.scalar_coords.append(coord)
 
     def __eq__(self, other):
         result = NotImplemented
@@ -314,11 +313,12 @@ class CubeSignature(object):
             if self.anonymous or other.anonymous:
                 result = False
             else:
-                result = self.defn == other.defn and \
+                result = self.aux_metadata == other.aux_metadata and \
                     self.data_type == other.data_type and \
-                    self.mdi == other.mdi and \
+                    self.defn == other.defn and \
                     self.dim_metadata == other.dim_metadata and \
-                    self.aux_metadata == other.aux_metadata and \
+                    self.mdi == other.mdi and \
+                    self.ndim == other.ndim and \
                     self.scalar_coords == other.scalar_coords
 
         return result
