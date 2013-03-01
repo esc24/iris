@@ -140,9 +140,11 @@ def concatenate(cubes, order=None):
 
     for cube in result:
         if ma.isMaskedArray(cube.data):
-            cube.data = ma.copy(cube.data, order=order)
+#            cube.data = ma.copy(cube.data, order=order)
+            cube.data = ma.array(cube.data, copy=True, order=order)
         else:
-            cube.data = np.copy(cube.data, order=order)
+#            cube.data = np.copy(cube.data, order=order)
+            cube.data = np.array(cube.data, copy=True, order=order)
 
     return result
 
