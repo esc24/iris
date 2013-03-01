@@ -28,7 +28,7 @@ import numpy.ma as ma
 
 import iris.cube
 from iris.coords import DimCoord, AuxCoord
-from iris.x_concatenate import concatenate
+from iris.x_concatenate import concatenate as cube_concatenate
 
 
 def _make_cube(x, y, data, aux=None, offset=0, scalar=None):
@@ -123,6 +123,28 @@ def _make_cube_3d(x, y, z, data, aux=None, offset=0):
             cube.add_aux_coord(coord, (0, 1, 2))
 
     return cube
+
+
+def concatenate(cubes, order=None):
+    """
+    Explicitly force the contiguous major order of cube data
+    alignment to ensure consistent CML crc32 checksums.
+
+    Defaults to contiguous 'C' row-major order.
+
+    """
+    if order is None:
+        order = 'C'
+
+    result = cube_concatenate(cubes)
+
+    for cube in result:
+        if ma.isMaskedArray(cube.data):
+            cube.data = ma.copy(cube.data, order=order)
+        else:
+            cube.data = np.copy(cube.data, order=order)
+
+    return result
 
 
 class TestSimple(tests.IrisTest):
@@ -660,9 +682,6 @@ class TestMulti2DScalar(tests.IrisTest):
 
         result = concatenate(merged)
         self.assertEqual(len(result), 1)
-        # For comparison reasons, require to convert data alignment in memory
-        # from "Fortran" column-major to "C" row-major.
-        result[0].data = np.ascontiguousarray(result[0].data)
         self.assertCML(result, ('concatenate',
                                 'concat_merged_scalar_4y2d_aux_xy.cml'))
         self.assertEqual(result[0].shape, (2, 4, 4))
