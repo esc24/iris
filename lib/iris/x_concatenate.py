@@ -185,10 +185,11 @@ def concatenate(cubes):
     # Register each cube with its appropriate proto-cube.
     for cube in cubes:
         # TODO: Remove this when new deferred data mechanism is available.
-        # Avoid deferred data/data manager issues, and load the cube data!!
+        # Avoid deferred data/data manager issues, and load the cube data!
         cube.data
 
-        proto_cubes = proto_cubes_by_name[cube.name()]
+        name = cube.standard_name or cube.long_name
+        proto_cubes = proto_cubes_by_name[name]
         registered = False
 
         # Register cube with an existing proto-cube.
