@@ -651,10 +651,8 @@ class ProtoCube(object):
                 kwargs = cube_signature.aux_metadata[i].defn._asdict()
 
                 # Build the concatenated coordinate.
-                if isinstance(cube_signature.aux_coords_and_dims[i].coord,
-                              iris.coords.AuxCoord):
-                    coord = iris.coords.AuxCoord(points, bounds=bnds,
-                                                 **kwargs)
+                if isinstance(coord, iris.coords.AuxCoord):
+                    coord = iris.coords.AuxCoord(points, bounds=bnds, **kwargs)
                 else:
                     # Attempt to create a DimCoord, otherwise default to
                     # an AuxCoord on failure.
