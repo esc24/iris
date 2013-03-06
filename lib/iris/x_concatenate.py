@@ -18,6 +18,7 @@
 Automatic concatenation of multiple cubes over one or more existing dimensions.
 
 .. warning::
+
     Currently, the :func:`concatenate` routine will load the data payload
     of all cubes passed to it.
 
@@ -174,6 +175,7 @@ def concatenate(cubes):
         A :class:`iris.cube.CubeList` of concatenated :class:`iris.cube.Cube`s.
 
     .. warning::
+
         This routine will load your data payload!
 
     """
