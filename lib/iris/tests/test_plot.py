@@ -139,7 +139,7 @@ class TestHybridHeight(tests.GraphicsTest):
             self.check_graphic()
 
 
-# Caches _load_4d_testcube so subsequent calls are faster
+# Caches test cubes so subsequent calls are faster.
 def cache(fn, cache={}):
     def inner(*args, **kwargs):
         key = fn.__name__
@@ -156,40 +156,36 @@ def _load_4d_testcube():
     # Replace forecast_period coord with a multi-valued version.
     time_coord = test_cube.coord('time')
     n_times = len(time_coord.points)
-    forecast_dims = test_cube.coord_dims(time_coord)
-    test_cube.remove_coord('forecast_period')
-    # Make up values (including bounds), to roughly match older testdata.
-    point_values = np.linspace((1 + 1.0 / 6), 2.0, n_times)
-    point_uppers = point_values + (point_values[1] - point_values[0])
-    bound_values = np.column_stack([point_values, point_uppers])
+    time_dims = test_cube.coord_dims(time_coord)
+    # Make up values to roughly match older testdata.
+    points = np.linspace((1 + 1.0 / 6), 2.0, n_times)
     # NOTE: this must be a DimCoord
     #  - an equivalent AuxCoord produces different plots.
     new_forecast_coord = iris.coords.DimCoord(
-        points=point_values,
-        bounds=bound_values,
+        points=points,
         standard_name='forecast_period',
         units=iris.unit.Unit('hours')
     )
-    test_cube.add_aux_coord(new_forecast_coord, forecast_dims)
+    new_forecast_coord.guess_bounds(0.0)
+    test_cube.remove_coord('forecast_period')
+    test_cube.add_aux_coord(new_forecast_coord, time_dims)
     # Heavily reduce dimensions for faster testing.
-    # NOTE: this makes ZYX non-contiguous.  Doesn't seem to matter for now.
-    test_cube = test_cube[:, ::10, ::10, ::10]
+    test_cube = test_cube[:, :10, :15, :20]
     return test_cube
 
 
 @cache
-def _load_wind_no_bounds():
-    # Load the COLPEX data => TZYX
-    path = tests.get_data_path(('PP', 'COLPEX', 'uwind_and_orog.pp'))
-    wind = iris.load_cube(path, 'eastward_wind')
+def _load_4d_testcube_no_bounds():
+    test_cube = _load_4d_testcube().copy()
 
     # Remove bounds from all coords that have them.
-    wind.coord('grid_latitude').bounds = None
-    wind.coord('grid_longitude').bounds = None
-    wind.coord('level_height').bounds = None
-    wind.coord('sigma').bounds = None
+    test_cube.coord('grid_latitude').bounds = None
+    test_cube.coord('grid_longitude').bounds = None
+    test_cube.coord('forecast_period').bounds = None
+    test_cube.coord('level_height').bounds = None
+    test_cube.coord('sigma').bounds = None
 
-    return wind[:, :, :50, :50]
+    return test_cube
 
 
 def _time_series(src_cube):
@@ -245,7 +241,6 @@ class SliceMixin(object):
         self.check_graphic()
 
 
-@iris.tests.skip_data
 class TestContour(tests.GraphicsTest, SliceMixin):
     """Test the iris.plot.contour routine."""
     def setUp(self):
@@ -253,7 +248,6 @@ class TestContour(tests.GraphicsTest, SliceMixin):
         self.draw_method = iplt.contour
 
 
-@iris.tests.skip_data
 class TestContourf(tests.GraphicsTest, SliceMixin):
     """Test the iris.plot.contourf routine."""
     def setUp(self):
@@ -261,7 +255,6 @@ class TestContourf(tests.GraphicsTest, SliceMixin):
         self.draw_method = iplt.contourf
 
 
-@iris.tests.skip_data
 class TestPcolor(tests.GraphicsTest, SliceMixin):
     """Test the iris.plot.pcolor routine."""
     def setUp(self):
@@ -269,7 +262,6 @@ class TestPcolor(tests.GraphicsTest, SliceMixin):
         self.draw_method = iplt.pcolor
 
 
-@iris.tests.skip_data
 class TestPcolormesh(tests.GraphicsTest, SliceMixin):
     """Test the iris.plot.pcolormesh routine."""
     def setUp(self):
@@ -354,7 +346,6 @@ class CheckForWarningsMetaclass(type):
         return type.__new__(cls, name, bases, local)
 
 
-@iris.tests.skip_data
 class TestPcolorNoBounds(tests.GraphicsTest, SliceMixin):
     """
     Test the iris.plot.pcolor routine on a cube with coordinates
@@ -364,11 +355,10 @@ class TestPcolorNoBounds(tests.GraphicsTest, SliceMixin):
     __metaclass__ = CheckForWarningsMetaclass
 
     def setUp(self):
-        self.wind = _load_wind_no_bounds()
+        self.wind = _load_4d_testcube_no_bounds()
         self.draw_method = iplt.pcolor
 
 
-@iris.tests.skip_data
 class TestPcolormeshNoBounds(tests.GraphicsTest, SliceMixin):
     """
     Test the iris.plot.pcolormesh routine on a cube with coordinates
@@ -378,7 +368,7 @@ class TestPcolormeshNoBounds(tests.GraphicsTest, SliceMixin):
     __metaclass__ = CheckForWarningsMetaclass
 
     def setUp(self):
-        self.wind = _load_wind_no_bounds()
+        self.wind = _load_4d_testcube_no_bounds()
         self.draw_method = iplt.pcolormesh
 
 
@@ -417,7 +407,6 @@ class Slice1dMixin(object):
         self.check_graphic()
 
 
-@iris.tests.skip_data
 class TestPlot(tests.GraphicsTest, Slice1dMixin):
     """Test the iris.plot.plot routine."""
     def setUp(self):
@@ -425,7 +414,6 @@ class TestPlot(tests.GraphicsTest, Slice1dMixin):
         self.draw_method = iplt.plot
 
 
-@iris.tests.skip_data
 class TestQuickplotPlot(tests.GraphicsTest, Slice1dMixin):
     """Test the iris.quickplot.plot routine."""
     def setUp(self):
