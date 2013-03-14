@@ -207,7 +207,7 @@ def concatenate(cubes):
     Args:
 
     * cubes:
-        The :class:`iris.cube.CubeList` containing the :class:`iris.cube.Cube`s
+        An iterable containing one or more :class:`iris.cube.Cube`s
         to be concatenated together.
 
     Returns:
