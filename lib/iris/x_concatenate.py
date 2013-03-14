@@ -27,6 +27,7 @@ Automatic concatenation of multiple cubes over one or more existing dimensions.
 """
 
 from collections import defaultdict, namedtuple
+
 import numpy as np
 import numpy.ma as ma
 
@@ -107,10 +108,48 @@ class _CoordMetaData(namedtuple('CoordMetaData',
         A dictionary of key/value pairs required to define a coordinate.
 
     """
+    def __new__(cls, coord, dims):
+        """
+        Create a new :class:`_CoordMetaData` instance.
+
+        Args:
+
+        * coord:
+            The :class:`iris.coord.DimCoord` or :class:`iris.coord.AuxCoord`.
+
+        * dims:
+            The dimension(s) associated with the coordinate.
+
+        Returns:
+            The new class instance.
+
+        """
+        defn = coord._as_defn()
+        points_dtype = coord.points.dtype
+        bounds_dtype = coord.bounds.dtype if coord.bounds is not None \
+            else None
+        kwargs = {}
+        # Add circular flag metadata for dimensional coordinates.
+        if hasattr(coord, 'circular'):
+            kwargs['circular'] = coord.circular
+        if isinstance(coord, iris.coords.DimCoord):
+            # Mix the monotonic ordering into the metadata.
+            if coord.points[0] == coord.points[-1]:
+                order = _CONSTANT
+            elif coord.points[-1] > coord.points[0]:
+                order = _INCREASING
+            else:
+                order = _DECREASING
+            kwargs['order'] = order
+        metadata = super(_CoordMetaData, cls).__new__(cls, defn, dims,
+                                                      points_dtype,
+                                                      bounds_dtype,
+                                                      kwargs)
+        return metadata
 
 
-class _Skeleton(namedtuple('Skeleton',
-                           ['signature', 'data'])):
+class _SkeletonCube(namedtuple('SkeletonCube',
+                               ['signature', 'data'])):
     """
     Basis of a source-cube, containing the associated coordinate metadata,
     coordinates and cube data payload.
@@ -247,7 +286,7 @@ class CubeSignature(object):
         self.scalar_coords = []
 
         # Determine whether there are any anonymous cube dimensions.
-        covered = set([cube.coord_dims(coord)[0] for coord in self.dim_coords])
+        covered = set(cube.coord_dims(coord)[0] for coord in self.dim_coords)
         self.anonymous = covered != set(range(self.ndim))
 
         self.defn = cube.metadata
@@ -261,21 +300,7 @@ class CubeSignature(object):
         # Collate the dimension coordinate metadata.
         #
         for coord in self.dim_coords:
-            defn = coord._as_defn()
-            dim = cube.coord_dims(coord)
-            points_dtype = coord.points.dtype
-            bounds_dtype = coord.bounds.dtype if coord.bounds is not None \
-                else None
-            if coord.points[0] == coord.points[-1]:
-                order = _CONSTANT
-            elif coord.points[-1] > coord.points[0]:
-                order = _INCREASING
-            else:
-                order = _DECREASING
-            # Mix the monotonic ordering into the metadata.
-            kwargs = dict(circular=coord.circular, order=order)
-            metadata = _CoordMetaData(defn, dim, points_dtype,
-                                      bounds_dtype, kwargs)
+            metadata = _CoordMetaData(coord, cube.coord_dims(coord))
             self.dim_metadata.append(metadata)
 
         #
@@ -292,16 +317,7 @@ class CubeSignature(object):
         for coord in sorted(cube.aux_coords, key=key_func):
             dims = cube.coord_dims(coord)
             if dims:
-                defn = coord._as_defn()
-                points_dtype = coord.points.dtype
-                bounds_dtype = coord.bounds.dtype \
-                    if coord.bounds is not None else None
-                kwargs = {}
-                # Add circular flag metadata for dimensional coordinates.
-                if isinstance(coord, iris.coords.DimCoord):
-                    kwargs['circular'] = coord.circular
-                metadata = _CoordMetaData(defn, dims, points_dtype,
-                                          bounds_dtype, kwargs)
+                metadata = _CoordMetaData(coord, dims)
                 self.aux_metadata.append(metadata)
                 coord_and_dims = _CoordAndDims(coord, tuple(dims))
                 self.aux_coords_and_dims.append(coord_and_dims)
@@ -363,8 +379,8 @@ class CoordSignature(object):
         Compare the coordinates for concatenation compatibility.
 
         Returns:
-            Tuple pair of whether the coordinates are compatible,
-            and whether represent a candidate axis of concatenation.
+            A boolean tuple pair of whether the coordinates are compatible,
+            and whether they represent a candidate axis of concatenation.
 
         """
         # A candidate axis must have non-identical coordinate points.
@@ -397,8 +413,9 @@ class CoordSignature(object):
             The :class:`CoordSignature`
 
         Returns:
-            None if no candidate axis exists, otherwise the
-            candidate axis of concatenation.
+            None if no single candidate axis exists, otherwise
+            the candidate axis of concatenation.
+
         """
         result = False
         candidate_axes = []
@@ -560,18 +577,12 @@ class ProtoCube(object):
         """
         # Verify and assert the nominated axis.
         if axis is not None:
-            ndim = self._cube_signature.ndim
-            if axis < ndim:
-                if self._axis is None:
-                    # Seed the proto-cube nominated axis.
-                    self._axis = axis
-                elif self._axis != axis:
-                    msg = 'Nominated axis [{}] is not equal ' \
-                        'to negotiated axis [{}]'.format(axis, self._axis)
-                    raise ValueError(msg)
-            else:
-                msg = 'Nominated axis [{}] out of range ' \
-                    'for {} dimensional cube'.format(axis, ndim)
+            if self._axis is None:
+                # Seed the proto-cube nominated axis.
+                self._axis = axis
+            elif self._axis != axis:
+                msg = 'Nominated axis [{}] is not equal ' \
+                    'to negotiated axis [{}]'.format(axis, self._axis)
                 raise ValueError(msg)
 
         # Check for compatible cube signatures.
@@ -613,7 +624,7 @@ class ProtoCube(object):
             source-cube.
 
         """
-        skeleton = _Skeleton(coord_signature, data)
+        skeleton = _SkeletonCube(coord_signature, data)
         self._skeletons.append(skeleton)
 
     def _build_aux_coordinates(self):
