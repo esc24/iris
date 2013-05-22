@@ -385,8 +385,12 @@ class TestAggregators(tests.IrisTest):
 @iris.tests.skip_data
 class TestRotatedPole(tests.IrisTest):
     def _check_both_conversions(self, cube):
+        # Get coord_system.
+        rcs = cube.coord(axis="X").coord_system
+        self.assertEqual(rcs, cube.coord(axis="Y").coord_system)
+        self.assertTrue(isinstance(rcs, iris.coord_systems.RotatedGeogCS))
+        # Get meshgrids.
         rlons, rlats = iris.analysis.cartography.get_xy_grids(cube)
-        rcs = cube.coord_system('RotatedGeogCS')
         x, y = iris.analysis.cartography.unrotate_pole(
             rlons, rlats, rcs.grid_north_pole_longitude,
             rcs.grid_north_pole_latitude)

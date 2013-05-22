@@ -465,11 +465,21 @@ def curl(i_cube, j_cube, k_cube=None, ignore=None, update_history=True):
     z_coord = i_cube.coord(axis='Z')
     
     y_dim = i_cube.coord_dims(y_coord)[0]
-   
-    horiz_cs = i_cube.coord_system('CoordSystem')
-        
+
+    if x_coord.coord_system != y_coord.coord_system:
+        raise ValueError('The coordinate systems of the x and y coordinates '
+                         'of {!r} are not equal.'.format(i_cube.name()))
+    horiz_cs = x_coord.coord_system
     # Planar (non spherical) coords?
-    ellipsoidal = isinstance(horiz_cs, (iris.coord_systems.GeogCS, iris.coord_systems.RotatedGeogCS))
+    cs_types = (iris.coord_systems.GeogCS,
+                iris.coord_systems.RotatedGeogCS)
+    if (horiz_cs is not None and isinstance(horiz_cs, cs_types)) or \
+            (horiz_cs is None and 'latitude' in y_coord.name() and \
+             'longitude' in x_coord.name()):
+        ellipsoidal = True
+    else:
+        ellipsoidal = False
+
     if not ellipsoidal:
         
         # TODO Implement some mechanism for conforming to a common grid

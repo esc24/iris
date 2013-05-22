@@ -1040,7 +1040,12 @@ class Saver(object):
             None
 
         """
-        cs = cube.coord_system('CoordSystem')
+        x_coord = cube.coord(axis='X', dim_coords=True)
+        y_coord = cube.coord(axis='Y', dim_coords=True)
+        if x_coord.coord_system != y_coord.coord_system:
+            raise ValueError('The coordinate systems of the x and y coordinates '
+                             'of {!r} are not equal.'.format(cube.name()))
+        cs = x_coord.coord_system
         if cs is not None:
             # Grid var not yet created?
             if cs not in self._coord_systems:

@@ -399,8 +399,8 @@ def _map_common(draw_method_name, arg_func, mode, cube, data, *args, **kwargs):
         data = ma.concatenate([data, data[:, 0:1]], axis=1)
 
     # Replace non-cartopy subplot/axes with a cartopy alternative.
-    cs = cube.coord_system('CoordSystem')
-    if cs:
+    cs = x_coord.coord_system
+    if cs is not None:
         cartopy_proj = cs.as_cartopy_projection()
     else:
         cartopy_proj = cartopy.crs.PlateCarree()
@@ -497,6 +497,27 @@ def contourf(cube, *args, **kwargs):
 
     return result
 
+def _get_coord_system(cube, axis):
+    """
+    Return the coordinate system of the first coordinate associated
+    with the specified axis, giving preference to dimension coordinates
+    over auxiliary coordinates.
+
+    Args:
+
+    * cube:
+        An instance of :class:`iris.cube.Cube`.
+    * axis:
+        Name of axis (either 'X', 'Y' or 'Z').
+
+    Return:
+        An instance of :class:`iris.coord_systems.CoordSystem` or None.
+
+    """
+    coords = cube.coords(axis=axis, dim_coords=True) or \
+        cube.coords(axis=axis)
+    cs = coords[0].coord_system if coords else None
+    return cs
 
 def default_projection(cube):
     """
@@ -508,9 +529,17 @@ def default_projection(cube):
         ax = plt.ax(projection=default_projection(cube))
 
     """
-    # XXX logic seems flawed, but it is what map_setup did...
-    cs = cube.coord_system("CoordSystem")
-    projection = cs.as_cartopy_projection() if cs else None
+    x_cs = _get_coord_system(cube, 'X')
+    y_cs = _get_coord_system(cube, 'Y')
+    if x_cs is not None and y_cs is not None and x_cs != y_cs:
+        raise ValueError('The coordinate systems of the x and y coordinates '
+                         'of {!r} are not equal.'.format(cube.name()))
+    cs = x_cs or y_cs
+    if cs is not None:
+        projection = cs.as_cartopy_projection()
+    else:
+        projection = None
+
     return projection
 
 

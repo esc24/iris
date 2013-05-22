@@ -1062,7 +1062,13 @@ class Cube(CFVariableMixin):
         If spec is provided as a type it can be a superclass of any
         CoordSystems found.
 
+        .. deprecated:: 1.2
+            Examine the :attr:`iris.coord.Coord.coord_system` instead.
+
         """
+        warnings.warn('Cube.coord_system() has been deprecated: '
+                      'please examine the coord_system attribute of the '
+                      'relevant coordinate instead.')
         # Was a string or a type provided?
         if isinstance(spec, basestring):
             spec_name = spec

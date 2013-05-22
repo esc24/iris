@@ -126,16 +126,19 @@ def _xy_range(cube, mode=None):
                  Set to iris.coords.POINT_MODE or iris.coords.BOUND_MODE.
 
     """
-    # Helpful error if we have an inappropriate CoordSystem
-    cs = cube.coord_system("CoordSystem")
+    x_coord, y_coord = cube.coord(axis="X"), cube.coord(axis="Y")
+
+    # Helpful error if we have an inappropriate coord_system.
+    if x_coord.coord_system != y_coord.coord_system:
+        raise ValueError('The coordinate systems of the x and y coordinates '
+                         'of {!r} are not equal.'.format(cube.name()))
+    cs = x_coord.coord_system
     cs_valid_types = (iris.coord_systems.GeogCS,
                       iris.coord_systems.RotatedGeogCS)
-    if ((cs is not None) and not isinstance(cs, cs_valid_types)):
-        raise ValueError(
-            "Latlon coords cannot be found with {0}.".format(type(cs)))
-
-    x_coord, y_coord = cube.coord(axis="X"), cube.coord(axis="Y")
-    cs = cube.coord_system('CoordSystem')
+    if cs is not None and not isinstance(cs, cs_valid_types):
+        raise ValueError('Latitude and longitude coordinate cannot be found. '
+                         'The x and y coordinates have a {} coordinate '
+                         'system.'.format(type(cs)))
 
     if x_coord.has_bounds() != x_coord.has_bounds():
         raise ValueError(
@@ -290,21 +293,6 @@ def area_weights(cube, normalize=False):
     Defaults to iris.analysis.cartography.DEFAULT_SPHERICAL_EARTH_RADIUS.
 
     """
-    # Get the radius of the earth
-    cs = cube.coord_system("CoordSystem")
-    if isinstance(cs, iris.coord_systems.GeogCS):
-        if cs.inverse_flattening != 0.0:
-            warnings.warn("Assuming spherical earth from ellipsoid.")
-        radius_of_earth = cs.semi_major_axis
-    elif (isinstance(cs, iris.coord_systems.RotatedGeogCS) and
-            (cs.ellipsoid is not None)):
-        if cs.ellipsoid.inverse_flattening != 0.0:
-            warnings.warn("Assuming spherical earth from ellipsoid.")
-        radius_of_earth = cs.ellipsoid.semi_major_axis
-    else:
-        warnings.warn("Using DEFAULT_SPHERICAL_EARTH_RADIUS.")
-        radius_of_earth = DEFAULT_SPHERICAL_EARTH_RADIUS
-
     # Get the lon and lat coords and axes
     try:
         lat, lon = _get_lat_lon_coords(cube)
@@ -333,6 +321,25 @@ def area_weights(cube, normalize=False):
     lat.convert_units('radians')
     lon = lon.copy()
     lon.convert_units('radians')
+
+    # Get the radius of the earth
+    if lon.coord_system != lon.coord_system:
+        raise ValueError('The coordinate systems of the lat and lon '
+                         'coordinates of {!r} are not equal.'.format(
+                         cube.name()))
+    cs = lat.coord_system
+    if isinstance(cs, iris.coord_systems.GeogCS):
+        if cs.inverse_flattening != 0.0:
+            warnings.warn("Assuming spherical earth from ellipsoid.")
+        radius_of_earth = cs.semi_major_axis
+    elif (isinstance(cs, iris.coord_systems.RotatedGeogCS) and
+            (cs.ellipsoid is not None)):
+        if cs.ellipsoid.inverse_flattening != 0.0:
+            warnings.warn("Assuming spherical earth from ellipsoid.")
+        radius_of_earth = cs.ellipsoid.semi_major_axis
+    else:
+        warnings.warn("Using DEFAULT_SPHERICAL_EARTH_RADIUS.")
+        radius_of_earth = DEFAULT_SPHERICAL_EARTH_RADIUS
 
     # Create 2D weights from bounds
     if lat.has_bounds() and lon.has_bounds():
