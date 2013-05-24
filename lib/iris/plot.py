@@ -497,6 +497,7 @@ def contourf(cube, *args, **kwargs):
 
     return result
 
+
 def _get_coord_system(cube, axis):
     """
     Return the coordinate system of the first coordinate associated
@@ -515,9 +516,10 @@ def _get_coord_system(cube, axis):
 
     """
     coords = cube.coords(axis=axis, dim_coords=True) or \
-        cube.coords(axis=axis)
+        cube.coords(axis=axis, dim_coords=False)
     cs = coords[0].coord_system if coords else None
     return cs
+
 
 def default_projection(cube):
     """

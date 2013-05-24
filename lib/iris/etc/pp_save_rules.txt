@@ -25,16 +25,16 @@ THEN
     pp.lbproc = 0                # Processing. Start at 0.
 
 IF
-    cm.coord_system("GeogCS") is not None
+    isinstance(coord_system(cm), iris.coord_systems.GeogCS)
 THEN
     pp.bplat = 90
     pp.bplon = 0
 
 IF
-    cm.coord_system("RotatedGeogCS") is not None
+    isinstance(coord_system(cm), iris.coord_systems.RotatedGeogCS)
 THEN
-    pp.bplat = cm.coord_system("RotatedGeogCS").grid_north_pole_latitude
-    pp.bplon = cm.coord_system("RotatedGeogCS").grid_north_pole_longitude
+    pp.bplat = coord_system(cm).grid_north_pole_latitude
+    pp.bplon = coord_system(cm).grid_north_pole_longitude
     
 
 #UM - no version number

@@ -36,6 +36,7 @@ import numpy as np
 import numpy.ma as ma
 
 import iris.config as config
+import iris.coord_systems
 import iris.cube
 import iris.exceptions
 import iris.fileformats.mosig_cf_map
@@ -636,6 +637,20 @@ def scalar_cell_method(cube, method, coord_name):
             if len(coords) == 1:
                 found_cell_method = cell_method
     return found_cell_method
+
+
+def coord_system(cube):
+    """
+    Return the coord_system attribute of the first identified X or Y
+    coordinate, starting with dimension coordinates.
+
+    """
+    coords = cube.coords(axis='X', dim_coords=True) or \
+        cube.coords(axis='Y', dim_coords=True) or \
+        cube.coords(axis='X', dim_coords=False) or \
+        cube.coords(axis='Y', dim_coords=False)
+    cs = coords[0].coord_system if coords else None
+    return cs
 
 
 class _ReferenceError(Exception):
