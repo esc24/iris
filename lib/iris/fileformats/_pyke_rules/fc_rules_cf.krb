@@ -255,6 +255,114 @@ fc_build_auxiliary_coordinate_time_period
 #
 # Context:
 #   This rule will trigger iff an auxiliary_coordinate() case specific fact
+#   has been asserted that refers to non-rotated pole longitude data and
+#   their exists a grid mapping but no longitude dimension coordinate.
+#
+# Purpose:
+#   Add the longitude auxiliary coordinate to the cube with the coordinate
+#   system defined by the grid mapping.
+#
+fc_build_auxiliary_coordinate_longitude_with_coord_system
+    foreach
+        facts_cf.auxiliary_coordinate($coordinate)
+        facts_cf.provides(coordinate_system, latitude_longitude)
+        check is_longitude(engine, $coordinate)
+        check not is_rotated_longitude(engine, $coordinate)
+        notany
+            facts_cf.provides(coordinate, longitude, $coordinate)
+    assert
+        facts_cf.provides(coordinate, auxiliary_lon, $coordinate)
+        python cf_coord_var = engine.cf_var.cf_group.auxiliary_coordinates[$coordinate]
+        python build_auxiliary_coordinate(engine, cf_coord_var,
+                                          coord_name=CF_VALUE_STD_NAME_LON,
+                                          coord_system=engine.provides['coordinate_system'])
+        python engine.rule_triggered.add(rule.name)
+
+
+#
+# Context:
+#   This rule will trigger iff an auxiliary_coordinate() case specific fact
+#   has been asserted that refers to non-rotated pole latitude data and
+#   their exists a grid mapping but no latitude dimension coordinate.
+#
+# Purpose:
+#   Add the latitude auxiliary coordinate to the cube with the coordinate
+#   system defined by the grid mapping.
+#
+fc_build_auxiliary_coordinate_latitude_with_coord_system
+    foreach
+        facts_cf.auxiliary_coordinate($coordinate)
+        facts_cf.provides(coordinate_system, latitude_longitude)
+        check is_latitude(engine, $coordinate)
+        check not is_rotated_latitude(engine, $coordinate)
+        notany
+            facts_cf.provides(coordinate, latitude, $coordinate)
+    assert
+        facts_cf.provides(coordinate, auxiliary_lat, $coordinate)
+        python cf_coord_var = engine.cf_var.cf_group.auxiliary_coordinates[$coordinate]
+        python build_auxiliary_coordinate(engine, cf_coord_var,
+                                          coord_name=CF_VALUE_STD_NAME_LAT,
+                                          coord_system=engine.provides['coordinate_system'])
+        python engine.rule_triggered.add(rule.name)
+
+
+#
+# Context:
+#   This rule will trigger iff an auxiliary_coordinate() case specific fact
+#   has been asserted that refers to rotated pole longitude data and
+#   their exists a grid mapping but no longitude dimension coordinate.
+#
+# Purpose:
+#   Add the rotated longitude auxiliary coordinate to the cube with the
+#   coordinate system defined by the grid mapping.
+#
+fc_build_auxiliary_coordinate_longitude_rotated_with_coord_system
+    foreach
+        facts_cf.auxiliary_coordinate($coordinate)
+        facts_cf.provides(coordinate_system, rotated_latitude_longitude)
+        check is_longitude(engine, $coordinate)
+        check is_rotated_longitude(engine, $coordinate)
+        notany
+            facts_cf.provides(coordinate, longitude, $coordinate)
+    assert
+        facts_cf.provides(coordinate, auxiliary_lon, $coordinate)
+        python cf_coord_var = engine.cf_var.cf_group.auxiliary_coordinates[$coordinate]
+        python build_auxiliary_coordinate(engine, cf_coord_var,
+                                          coord_name=CF_VALUE_STD_NAME_GRID_LON,
+                                          coord_system=engine.provides['coordinate_system'])
+        python engine.rule_triggered.add(rule.name)
+
+
+#
+# Context:
+#   This rule will trigger iff an auxiliary_coordinate() case specific fact
+#   has been asserted that refers to rotated pole latitude data and
+#   their exists a grid mapping but no latitude dimension coordinate.
+#
+# Purpose:
+#   Add the rotated latitude auxiliary coordinate to the cube with the coordinate
+#   system defined by the grid mapping.
+#
+fc_build_auxiliary_coordinate_latitude_rotated_with_coord_system
+    foreach
+        facts_cf.auxiliary_coordinate($coordinate)
+        facts_cf.provides(coordinate_system, rotated_latitude_longitude)
+        check is_latitude(engine, $coordinate)
+        check is_rotated_latitude(engine, $coordinate)
+        notany
+            facts_cf.provides(coordinate, latitude, $coordinate)
+    assert
+        facts_cf.provides(coordinate, auxiliary_lat, $coordinate)
+        python cf_coord_var = engine.cf_var.cf_group.auxiliary_coordinates[$coordinate]
+        python build_auxiliary_coordinate(engine, cf_coord_var,
+                                          coord_name=CF_VALUE_STD_NAME_GRID_LAT,
+                                          coord_system=engine.provides['coordinate_system'])
+        python engine.rule_triggered.add(rule.name)
+
+
+#
+# Context:
+#   This rule will trigger iff an auxiliary_coordinate() case specific fact
 #   has been asserted that refers to non-rotated pole latitude data.
 #
 # Purpose:
@@ -265,6 +373,8 @@ fc_build_auxiliary_coordinate_latitude
         facts_cf.auxiliary_coordinate($coordinate)
         check is_latitude(engine, $coordinate)
         check not is_rotated_latitude(engine, $coordinate)
+        notany
+            facts_cf.provides(coordinate, auxiliary_lat, $coordinate)
     assert
         python cf_coord_var = engine.cf_var.cf_group.auxiliary_coordinates[$coordinate]
         python build_auxiliary_coordinate(engine, cf_coord_var,
@@ -285,6 +395,8 @@ fc_build_auxiliary_coordinate_latitude_rotated
         facts_cf.auxiliary_coordinate($coordinate)
         check is_latitude(engine, $coordinate)
         check is_rotated_latitude(engine, $coordinate)
+        notany
+            facts_cf.provides(coordinate, auxiliary_lat, $coordinate)
     assert
         python cf_coord_var = engine.cf_var.cf_group.auxiliary_coordinates[$coordinate]
         python build_auxiliary_coordinate(engine, cf_coord_var,
@@ -305,6 +417,8 @@ fc_build_auxiliary_coordinate_longitude
         facts_cf.auxiliary_coordinate($coordinate)
         check is_longitude(engine, $coordinate)
         check not is_rotated_longitude(engine, $coordinate)
+        notany
+            facts_cf.provides(coordinate, auxiliary_lon, $coordinate)
     assert
         python cf_coord_var = engine.cf_var.cf_group.auxiliary_coordinates[$coordinate]
         python build_auxiliary_coordinate(engine, cf_coord_var,
@@ -325,6 +439,8 @@ fc_build_auxiliary_coordinate_longitude_rotated
         facts_cf.auxiliary_coordinate($coordinate)
         check is_longitude(engine, $coordinate)
         check is_rotated_longitude(engine, $coordinate)
+        notany
+            facts_cf.provides(coordinate, auxiliary_lon, $coordinate)
     assert
         python cf_coord_var = engine.cf_var.cf_group.auxiliary_coordinates[$coordinate]
         python build_auxiliary_coordinate(engine, cf_coord_var,
@@ -715,6 +831,7 @@ fc_extras
     CF_ATTR_GRID_NORTH_POLE_LAT = 'grid_north_pole_latitude'
     CF_ATTR_GRID_NORTH_POLE_LON = 'grid_north_pole_longitude'
     CF_ATTR_GRID_NORTH_POLE_GRID_LON = 'north_pole_grid_longitude'
+    CF_ATTR_GRID_EARTH_RADIUS = 'earth_radius'
     CF_ATTR_GRID_SEMI_MAJOR_AXIS = 'semi_major_axis'
     CF_ATTR_GRID_SEMI_MINOR_AXIS = 'semi_minor_axis'
     CF_ATTR_GRID_LAT_OF_PROJ_ORIGIN = 'latitude_of_projection_origin'
@@ -812,34 +929,44 @@ fc_extras
 
 
     ################################################################################
-    def build_coordinate_system(engine, cf_grid_var):
-        """Create a coordinate system from the CF-netCDF grid mapping variable."""
+    def get_ellipsoid_params(engine, cf_grid_var):
+        """
+        Return the major, minor and inverse_flattening from the CF-netCDF
+        grid mapping variable.
+
+        """
         major = getattr(cf_grid_var, CF_ATTR_GRID_SEMI_MAJOR_AXIS, None)
         minor = getattr(cf_grid_var, CF_ATTR_GRID_SEMI_MINOR_AXIS, None)
         inverse_flattening = getattr(cf_grid_var, CF_ATTR_GRID_INVERSE_FLATTENING, None)
-        # Avoid over-specification exception
-        if major is not None and minor is not None:
-        	inverse_flattening = None
+        earth_radius = getattr(cf_grid_var, CF_ATTR_GRID_EARTH_RADIUS, None)
 
-        return iris.coord_systems.GeogCS(major, minor, inverse_flattening)
+        if earth_radius is not None:
+            if major is None:
+                major = earth_radius
+            else:
+                warnings.warn('Ignoring earth_radius in favour of major axis.')
+            
+        # Avoid over-specification exception by preferring minor over
+        # inverse_flattening.
+        if inverse_flattening is not None and minor is not None:
+            inverse_flattening = None
+
+        return major, minor, inverse_flattening
+        
+    def build_coordinate_system(engine, cf_grid_var):
+        """Create a coordinate system from the CF-netCDF grid mapping variable."""
+        return iris.coord_systems.GeogCS(*get_ellipsoid_params(engine, cf_grid_var))
 
     def build_rotated_coordinate_system(engine, cf_grid_var):
         """Create a rotated coordinate system from the CF-netCDF grid mapping variable."""
-        
-        major = getattr(cf_grid_var, CF_ATTR_GRID_SEMI_MAJOR_AXIS, None)
-        minor = getattr(cf_grid_var, CF_ATTR_GRID_SEMI_MINOR_AXIS, None)
-        inverse_flattening = getattr(cf_grid_var, CF_ATTR_GRID_INVERSE_FLATTENING, None)
-        # Avoid over-specification exception
-        if major is not None and minor is not None:
-        	inverse_flattening = None
-
+        major, minor, inverse_flattening = get_ellipsoid_params(engine, cf_grid_var)
         north_pole_latitude = getattr(cf_grid_var, CF_ATTR_GRID_NORTH_POLE_LAT, 90.0)
         north_pole_longitude = getattr(cf_grid_var, CF_ATTR_GRID_NORTH_POLE_LON, 0.0)
         if north_pole_latitude is None or north_pole_longitude is None:
         	warnings.warn('Rotated pole position is not fully specified')
 
         north_pole_grid_lon = getattr(cf_grid_var, CF_ATTR_GRID_NORTH_POLE_GRID_LON, 0.0)
-        
+
         ellipsoid = None
         if major is not None or minor is not None or inverse_flattening is not None:
         	ellipsoid = iris.coord_systems.GeogCS(major, minor, inverse_flattening)
@@ -855,13 +982,7 @@ fc_extras
         grid mapping variable.
 
         """
-        major = getattr(cf_grid_var, CF_ATTR_GRID_SEMI_MAJOR_AXIS, None)
-        minor = getattr(cf_grid_var, CF_ATTR_GRID_SEMI_MINOR_AXIS, None)
-        inverse_flattening = getattr(cf_grid_var, CF_ATTR_GRID_INVERSE_FLATTENING, None)
-        # Avoid over-specification exception
-        if major is not None and minor is not None:
-            inverse_flattening = None
-
+        major, minor, inverse_flattening = get_ellipsoid_params(engine, cf_grid_var)
         latitude_of_projection_origin = getattr(
             cf_grid_var, CF_ATTR_GRID_LAT_OF_PROJ_ORIGIN, None)
         longitude_of_projection_origin = getattr(
