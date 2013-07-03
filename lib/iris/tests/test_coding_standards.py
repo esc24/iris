@@ -63,7 +63,6 @@ class StandardReportWithExclusions(pep8.StandardReport):
     expected_bad_files = [
         '*/iris/_cube_coord_common.py',
         '*/iris/_merge.py',
-        '*/iris/aux_factory.py',
         '*/iris/config.py',
         '*/iris/coord_categorisation.py',
         '*/iris/coord_systems.py',

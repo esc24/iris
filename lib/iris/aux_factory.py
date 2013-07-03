@@ -40,13 +40,13 @@ class LazyArray(object):
 
     The first use of either of these methods causes the array to be
     computed and cached for any subsequent access.
-    
+
     """
 
     def __init__(self, shape, func):
         """
         Args:
-        
+
         * shape (tuple):
             The shape of the array which will be created.
         * func:
@@ -104,7 +104,7 @@ class AuxCoordFactory(CFVariableMixin):
     The `standard_name`, `long_name`, `var_name`, `units`, `attributes` and
     `coord_system` of the factory are used to set the corresponding
     properties of the resulting auxiliary coordinates.
-    
+
     """
     __metaclass__ = ABCMeta
 
@@ -142,9 +142,9 @@ class AuxCoordFactory(CFVariableMixin):
 
         * coord_dims_func:
             A callable which can return the list of dimensions relevant
-            to a given coordinate. 
+            to a given coordinate.
             See :meth:`iris.cube.Cube.coord_dims()`.
-        
+
         """
 
     @abstractmethod
@@ -179,9 +179,9 @@ class AuxCoordFactory(CFVariableMixin):
 
         * coord_dims_func:
             A callable which can return the list of dimensions relevant
-            to a given coordinate. 
+            to a given coordinate.
             See :meth:`iris.cube.Cube.coord_dims()`.
-        
+
         """
         # Which dimensions are relevant?
         # e.g. If sigma -> [1] and orog -> [2, 3] then result = [1, 2, 3]
@@ -237,7 +237,7 @@ class AuxCoordFactory(CFVariableMixin):
         """
         Returns the coord's bounds in Cube-orientation and
         broadcastable to N dimensions.
-        
+
         Example:
             coord.shape == (70,)
             coord.nbounds = 2
@@ -265,7 +265,7 @@ class AuxCoordFactory(CFVariableMixin):
         """
         Returns the coord's points in Cube-orientation and
         broadcastable to N dimensions.
-        
+
         Example:
             coord.shape == (4, 3)
             dims == [3, 2]
@@ -300,8 +300,9 @@ class AuxCoordFactory(CFVariableMixin):
                 # Get the points as consistent with the Cube.
                 nd_points = self._nd_points(coord, dependency_dims[key], ndim)
 
-                # Restrict to just the dimensions relevant to the derived coord.
-                # NB. These are always in Cube-order, so no transpose is needed.
+                # Restrict to just the dimensions relevant to the derived
+                # coord. These are always in Cube-order, so no transpose
+                # is needed.
                 shape = []
                 for dim in derived_dims:
                     shape.append(nd_points.shape[dim])
@@ -330,12 +331,15 @@ class AuxCoordFactory(CFVariableMixin):
             if coord:
                 # Get the bounds or points as consistent with the Cube.
                 if coord.nbounds:
-                    nd_values = self._nd_bounds(coord, dependency_dims[key], ndim)
+                    nd_values = self._nd_bounds(coord, dependency_dims[key],
+                                                ndim)
                 else:
-                    nd_values = self._nd_points(coord, dependency_dims[key], ndim)
+                    nd_values = self._nd_points(coord, dependency_dims[key],
+                                                ndim)
 
-                # Restrict to just the dimensions relevant to the derived coord.
-                # NB. These are always in Cube-order, so no transpose is needed.
+                # Restrict to just the dimensions relevant to the derived
+                # coord. These are always in Cube-order, so no transpose
+                # is needed.
                 shape = []
                 for dim in derived_dims:
                     shape.append(nd_values.shape[dim])
@@ -370,7 +374,7 @@ class AuxCoordFactory(CFVariableMixin):
                     # NB. If there's an inconsistency it can only come
                     # from a mismatch in the number of bounds (the Cube
                     # ensures the other dimensions must match).
-                    # But we can't afford to raise an error now - it'd 
+                    # But we can't afford to raise an error now - it'd
                     # break Cube.derived_coords. Instead, we let the
                     # error happen when the derived coordinate's bounds
                     # are accessed.
@@ -405,15 +409,15 @@ class HybridHeightFactory(AuxCoordFactory):
         super(HybridHeightFactory, self).__init__()
 
         if delta and delta.nbounds not in (0, 2):
-            raise ValueError('Invalid delta coordinate: must have either 0 or'
-                             ' 2 bounds.')
+            raise ValueError('Invalid delta coordinate: must have either '
+                             '0 or 2 bounds.')
         if sigma and sigma.nbounds not in (0, 2):
-            raise ValueError('Invalid sigma coordinate: must have either 0 or'
-                             ' 2 bounds.')
+            raise ValueError('Invalid sigma coordinate: must have either '
+                             '0 or 2 bounds.')
         if orography and orography.nbounds:
-            warnings.warn('Orography coordinate {!r} has bounds.'
-                          'These will be disregarded.'.format(orography.name()), 
-                          UserWarning, stacklevel=2)
+            msg = 'Orography coordinate {!r} has bounds. These ' \
+                  'will be disregarded.'.format(orography.name())
+            warnings.warn(msg, UserWarning, stacklevel=2)
 
         self.delta = delta
         self.sigma = sigma
@@ -421,15 +425,15 @@ class HybridHeightFactory(AuxCoordFactory):
 
         self.standard_name = 'altitude'
         if delta is None and orography is None:
-            raise ValueError('Unable to determine units: no delta or orography'
-                             ' available.')
+            raise ValueError('Unable to determine units: no delta or '
+                             'orography available.')
         if delta and orography and delta.units != orography.units:
-            raise ValueError('Incompatible units: delta and orography must have'
-                             ' the same units.')
+            raise ValueError('Incompatible units: delta and orography must '
+                             'have the same units.')
         self.units = (delta and delta.units) or orography.units
         if not self.units.is_convertible('m'):
-            raise ValueError('Invalid units: delta and/or orography'
-                             ' must be expressed in length units.')
+            raise ValueError('Invalid units: delta and/or orography '
+                             'must be expressed in length units.')
         self.attributes = {'positive': 'up'}
 
     @property
@@ -439,7 +443,8 @@ class HybridHeightFactory(AuxCoordFactory):
         the corresponding coordinates.
 
         """
-        return {'delta': self.delta, 'sigma': self.sigma, 'orography': self.orography}
+        return {'delta': self.delta, 'sigma': self.sigma,
+                'orography': self.orography}
 
     def _derive(self, delta, sigma, surface_pressure):
         temp = delta + sigma * surface_pressure
@@ -454,9 +459,9 @@ class HybridHeightFactory(AuxCoordFactory):
 
         * coord_dims_func:
             A callable which can return the list of dimensions relevant
-            to a given coordinate. 
+            to a given coordinate.
             See :meth:`iris.cube.Cube.coord_dims()`.
-        
+
         """
         # Which dimensions are relevant?
         derived_dims = self.derived_dims(coord_dims_func)
@@ -466,6 +471,7 @@ class HybridHeightFactory(AuxCoordFactory):
         # Build a "lazy" points array.
         nd_points_by_key = self._remap(dependency_dims, derived_dims)
         # Define the function here to obtain a closure.
+
         def calc_points():
             return self._derive(nd_points_by_key['delta'],
                                 nd_points_by_key['sigma'],
@@ -477,8 +483,10 @@ class HybridHeightFactory(AuxCoordFactory):
         if ((self.delta and self.delta.nbounds) or
                 (self.sigma and self.sigma.nbounds)):
             # Build a "lazy" bounds array.
-            nd_values_by_key = self._remap_with_bounds(dependency_dims, derived_dims)
+            nd_values_by_key = self._remap_with_bounds(dependency_dims,
+                                                       derived_dims)
             # Define the function here to obtain a closure.
+
             def calc_bounds():
                 delta = nd_values_by_key['delta']
                 sigma = nd_values_by_key['sigma']
@@ -489,10 +497,13 @@ class HybridHeightFactory(AuxCoordFactory):
                 if sigma.shape[-1:] not in ok_bound_shapes:
                     raise ValueError('Invalid sigma coordinate bounds.')
                 if orography.shape[-1:] not in [(), (1,)]:
-                    warnings.warn('Orography coordinate has bounds. '
-                                  'These are being disregarded.', UserWarning, stacklevel=2)
-                    orography_pts_shape = list(nd_points_by_key['orography'].shape)
-                    orography = nd_points_by_key['orography'].reshape(orography_pts_shape.append(1))
+                    msg = 'Orography coordinate has bounds. These are being ' \
+                          'disregarded.'
+                    warnings.warn(msg, UserWarning, stacklevel=2)
+                    orography_pts_shape = list(
+                        nd_points_by_key['orography'].shape)
+                    orography = nd_points_by_key['orography'].reshape(
+                        orography_pts_shape.append(1))
                 return self._derive(delta, sigma, orography)
             b_shape = self._shape(nd_values_by_key)
             bounds = LazyArray(b_shape, calc_bounds)
@@ -523,17 +534,19 @@ class HybridHeightFactory(AuxCoordFactory):
         """
         if self.delta is old_coord:
             if new_coord and new_coord.nbounds not in (0, 2):
-                raise ValueError('Invalid delta coordinate: must have either 0 or 2 bounds.')
+                raise ValueError('Invalid delta coordinate: must have either '
+                                 '0 or 2 bounds.')
             self.delta = new_coord
         elif self.sigma is old_coord:
             if new_coord and new_coord.nbounds not in (0, 2):
-                raise ValueError('Invalid sigma coordinate: must have either 0 or 2 bounds.')
+                raise ValueError('Invalid sigma coordinate: must have either '
+                                 '0 or 2 bounds.')
             self.sigma = new_coord
         elif self.orography is old_coord:
             if new_coord and new_coord.nbounds:
-                warnings.warn('Orography coordinate {!r} has bounds. '
-                              'These will be disregarded.'.format(new_coord.name()), 
-                              UserWarning, stacklevel=2)
+                msg = 'Orography coordinate {!r} has bounds. These ' \
+                      'will be disregarded.'.format(new_coord.name())
+                warnings.warn(msg, UserWarning, stacklevel=2)
             self.orography = new_coord
 
 
@@ -564,15 +577,15 @@ class HybridPressureFactory(AuxCoordFactory):
         super(HybridPressureFactory, self).__init__()
 
         if delta and delta.nbounds not in (0, 2):
-            raise ValueError('Invalid delta coordinate: must have either 0 or'
-                             ' 2 bounds.')
+            raise ValueError('Invalid delta coordinate: must have either '
+                             '0 or 2 bounds.')
         if sigma and sigma.nbounds not in (0, 2):
-            raise ValueError('Invalid sigma coordinate: must have either 0 or'
-                             ' 2 bounds.')
+            raise ValueError('Invalid sigma coordinate: must have either '
+                             '0 or 2 bounds.')
         if surface_pressure and surface_pressure.nbounds:
-            warnings.warn('Surface pressure coordinate {!r} has bounds.'
-                          'These will be disregarded.'.format(surface_pressure.name()),
-                          UserWarning, stacklevel=2)
+            msg = 'Surface pressure coordinate {!r} has bounds. These ' \
+                  'will be disregarded.'.format(surface_pressure.name())
+            warnings.warn(msg, UserWarning, stacklevel=2)
 
         self.delta = delta
         self.sigma = sigma
@@ -580,15 +593,16 @@ class HybridPressureFactory(AuxCoordFactory):
 
         self.standard_name = 'air_pressure'
         if delta is None and surface_pressure is None:
-            raise ValueError('Unable to determine units: no delta or'
-                             ' surface_pressure available.')
-        if delta and surface_pressure and delta.units != surface_pressure.units:
-            raise ValueError('Incompatible units: delta and surface_pressure'
-                             ' must have the same units.')
+            raise ValueError('Unable to determine units: no delta or '
+                             'surface_pressure available.')
+        if delta and surface_pressure and \
+                delta.units != surface_pressure.units:
+            raise ValueError('Incompatible units: delta and surface_pressure '
+                             'must have the same units.')
         self.units = (delta and delta.units) or surface_pressure.units
         if not self.units.is_convertible('Pa'):
-            raise ValueError('Invalid units: delta and/or surface_pressure'
-                             ' must be expressed in pressure units.')
+            raise ValueError('Invalid units: delta and/or surface_pressure '
+                             'must be expressed in pressure units.')
         self.attributes = {}
 
     @property
@@ -614,9 +628,9 @@ class HybridPressureFactory(AuxCoordFactory):
 
         * coord_dims_func:
             A callable which can return the list of dimensions relevant
-            to a given coordinate. 
+            to a given coordinate.
             See :meth:`iris.cube.Cube.coord_dims()`.
-        
+
         """
         # Which dimensions are relevant?
         derived_dims = self.derived_dims(coord_dims_func)
@@ -626,10 +640,12 @@ class HybridPressureFactory(AuxCoordFactory):
         # Build a "lazy" points array.
         nd_points_by_key = self._remap(dependency_dims, derived_dims)
         # Define the function here to obtain a closure.
+
         def calc_points():
             return self._derive(nd_points_by_key['delta'],
                                 nd_points_by_key['sigma'],
                                 nd_points_by_key['surface_pressure'])
+
         shape = self._shape(nd_points_by_key)
         points = LazyArray(shape, calc_points)
 
@@ -637,8 +653,10 @@ class HybridPressureFactory(AuxCoordFactory):
         if ((self.delta and self.delta.nbounds) or
                 (self.sigma and self.sigma.nbounds)):
             # Build a "lazy" bounds array.
-            nd_values_by_key = self._remap_with_bounds(dependency_dims, derived_dims)
+            nd_values_by_key = self._remap_with_bounds(dependency_dims,
+                                                       derived_dims)
             # Define the function here to obtain a closure.
+
             def calc_bounds():
                 delta = nd_values_by_key['delta']
                 sigma = nd_values_by_key['sigma']
@@ -651,21 +669,25 @@ class HybridPressureFactory(AuxCoordFactory):
                 if surface_pressure.shape[-1:] not in [(), (1,)]:
                     warnings.warn('Surface pressure coordinate has bounds. '
                                   'These are being disregarded.')
-                    surface_pressure_pts_shape = list(nd_points_by_key['surface_pressure'].shape)
-                    surface_pressure = nd_points_by_key['surface_pressure'].reshape(surface_pressure_pts_shape.append(1))
+                    surface_pressure_pts_shape = list(
+                        nd_points_by_key['surface_pressure'].shape)
+                    surface_pressure = nd_points_by_key['surface_pressure']
+                    surface_pressure = surface_pressure.reshape(
+                        surface_pressure_pts_shape.append(1))
                 return self._derive(delta, sigma, surface_pressure)
+
             b_shape = self._shape(nd_values_by_key)
             bounds = LazyArray(b_shape, calc_bounds)
 
-        hybrid_pressure = iris.coords.AuxCoord(points,
-                                               standard_name=self.standard_name,
-                                               long_name=self.long_name,
-                                               var_name=self.var_name,
-                                               units=self.units,
-                                               bounds=bounds,
-                                               attributes=self.attributes,
-                                               coord_system=self.coord_system)
-        return hybrid_pressure
+        hybrid_pres = iris.coords.AuxCoord(points,
+                                           standard_name=self.standard_name,
+                                           long_name=self.long_name,
+                                           var_name=self.var_name,
+                                           units=self.units,
+                                           bounds=bounds,
+                                           attributes=self.attributes,
+                                           coord_system=self.coord_system)
+        return hybrid_pres
 
     def update(self, old_coord, new_coord=None):
         """
@@ -683,15 +705,17 @@ class HybridPressureFactory(AuxCoordFactory):
         """
         if self.delta is old_coord:
             if new_coord and new_coord.nbounds not in (0, 2):
-                raise ValueError('Invalid delta coordinate: must have either 0 or 2 bounds.')
+                raise ValueError('Invalid delta coordinate: must have either '
+                                 '0 or 2 bounds.')
             self.delta = new_coord
         elif self.sigma is old_coord:
             if new_coord and new_coord.nbounds not in (0, 2):
-                raise ValueError('Invalid sigma coordinate: must have either 0 or 2 bounds.')
+                raise ValueError('Invalid sigma coordinate: must have either '
+                                 '0 or 2 bounds.')
             self.sigma = new_coord
         elif self.surface_pressure is old_coord:
             if new_coord and new_coord.nbounds:
-                warnings.warn('Surface pressure coordinate {!r} has bounds. '
-                              'These will be disregarded.'.format(new_coord.name()),
-                              UserWarning, stacklevel=2)
+                msg = 'Surface pressure coordinate {!r} has bounds. These ' \
+                      'will be disregarded.'.format(new_coord.name())
+                warnings.warn(msg, UserWarning, stacklevel=2)
             self.surface_pressure = new_coord
