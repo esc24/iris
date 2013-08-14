@@ -45,7 +45,7 @@ import iris.exceptions
 import iris.fileformats.rules
 import iris.util
 
-from iris._cube_coord_common import CFVariableMixin
+from iris._cube_coord_common import CFVariableMixin, LimitedAttributeDict
 
 
 __all__ = ['Cube', 'CubeList', 'CubeMetadata']
@@ -57,6 +57,7 @@ class CubeMetadata(collections.namedtuple('CubeMetadata',
                                            'var_name',
                                            'units',
                                            'attributes',
+                                           'global_attributes',
                                            'cell_methods'])):
     """
     Represents the phenomenon metadata for a single :class:`Cube`.
@@ -379,7 +380,7 @@ bound=(1994-12-01 00:00:00, 1998-12-01 00:00:00)
                  var_name=None, units=None, attributes=None,
                  cell_methods=None, dim_coords_and_dims=None,
                  aux_coords_and_dims=None, aux_factories=None,
-                 data_manager=None):
+                 data_manager=None, global_attributes=None):
         """
         Creates a cube with data and optional metadata.
 
@@ -427,6 +428,8 @@ bound=(1994-12-01 00:00:00, 1998-12-01 00:00:00)
             manager is provided, then the data should be a numpy array of data
             proxy instances. See :class:`iris.fileformats.pp.PPDataProxy` or
             :class:`iris.fileformats.netcdf.NetCDFDataProxy`.
+        * global_attributes
+            A dictionary of CF global attributes.
 
         For example::
 
@@ -469,6 +472,10 @@ bound=(1994-12-01 00:00:00, 1998-12-01 00:00:00)
         #: A dictionary, with a few restricted keys, for arbitrary
         #: Cube metadata.
         self.attributes = attributes
+
+        #: A dictionary, with a few restricted keys, for CF global
+        #: attribute metadata.
+        self.global_attributes = global_attributes
 
         # Coords
         self._dim_coords_and_dims = []
@@ -513,7 +520,8 @@ bound=(1994-12-01 00:00:00, 1998-12-01 00:00:00)
 
         """
         return CubeMetadata(self.standard_name, self.long_name, self.var_name,
-                            self.units, self.attributes, self.cell_methods)
+                            self.units, self.attributes,
+                            self.global_attributes, self.cell_methods)
 
     @metadata.setter
     def metadata(self, value):
@@ -530,13 +538,23 @@ bound=(1994-12-01 00:00:00, 1998-12-01 00:00:00)
         for name in CubeMetadata._fields:
             setattr(self, name, getattr(value, name))
 
+    @property
+    def global_attributes(self):
+        return self._global_attributes
+
+    @global_attributes.setter
+    def global_attributes(self, attributes):
+        self._global_attributes = LimitedAttributeDict(attributes or {})
+
     def is_compatible(self, other, ignore=None):
         """
         Return whether the cube is compatible with another.
 
         Compatibility is determined by comparing :meth:`iris.cube.Cube.name()`,
-        :attr:`iris.cube.Cube.units`, :attr:`iris.cube.Cube.cell_methods` and
-        :attr:`iris.cube.Cube.attributes` that are present in both objects.
+        :attr:`iris.cube.Cube.units`, :attr:`iris.cube.Cube.cell_methods`,
+        :attr:`iris.cube.Cube.attributes` and
+        :attr:`iris.cube.Cube.global_attributes` that are present in both
+        objects.
 
         Args:
 
@@ -545,8 +563,7 @@ bound=(1994-12-01 00:00:00, 1998-12-01 00:00:00)
             :class:`iris.cube.CubeMetadata`.
         * ignore:
            A single attribute key or iterable of attribute keys to ignore when
-           comparing the cubes. Default is None. To ignore all attributes set
-           this to other.attributes.
+           comparing the cubes. Default is None.
 
         Returns:
            Boolean.
@@ -560,17 +577,31 @@ bound=(1994-12-01 00:00:00, 1998-12-01 00:00:00)
                       self.units == other.units and
                       self.cell_methods == other.cell_methods)
 
-        if compatible:
-            common_keys = set(self.attributes).intersection(other.attributes)
+        def compatible_attributes(attributes, other_attributes, ignore=None):
+            """
+            Return whether two attributes dictionaries are compatible based
+            on their common keys, taking into account any keys that should be
+            ignored.
+
+            """
+            compatible = True
+            common_keys = set(attributes).intersection(other_attributes)
             if ignore is not None:
                 if isinstance(ignore, basestring):
                     ignore = (ignore,)
                 common_keys = common_keys.difference(ignore)
             for key in common_keys:
-                if self.attributes[key] != other.attributes[key]:
+                if attributes[key] != other_attributes[key]:
                     compatible = False
                     break
+            return compatible
 
+        if compatible:
+            compatible = compatible_attributes(self.attributes,
+                                               other.attributes, ignore)
+        if compatible:
+            compatible = compatible_attributes(self.global_attributes,
+                                               other.global_attributes, ignore)
         return compatible
 
     def convert_units(self, unit):
@@ -1565,6 +1596,21 @@ bound=(1994-12-01 00:00:00, 1998-12-01 00:00:00)
                 summary += '\n     Attributes:\n' + '\n'.join(attribute_lines)
 
             #
+            # Generate summary of cube global_attributes.
+            #
+            if self.global_attributes:
+                attribute_lines = []
+                for name, value in sorted(self.global_attributes.iteritems()):
+                    value = iris.util.clip_string(unicode(value))
+                    line = u'{pad:{width}}{name}: {value}'.format(pad=' ',
+                                                                  width=indent,
+                                                                  name=name,
+                                                                  value=value)
+                    attribute_lines.append(line)
+                summary += '\n     Global attributes:\n' + '\n'.join(
+                    attribute_lines)
+
+            #
             # Generate summary of cube cell methods
             #
             if self.cell_methods:
@@ -1992,6 +2038,16 @@ bound=(1994-12-01 00:00:00, 1998-12-01 00:00:00)
                 attributes_element.appendChild(attribute_element)
             cube_xml_element.appendChild(attributes_element)
 
+        if self.global_attributes:
+            attributes_element = doc.createElement('global_attributes')
+            for name in sorted(self.global_attributes.iterkeys()):
+                attribute_element = doc.createElement('attribute')
+                attribute_element.setAttribute('name', name)
+                value = str(self.global_attributes[name])
+                attribute_element.setAttribute('value', value)
+                attributes_element.appendChild(attribute_element)
+            cube_xml_element.appendChild(attributes_element)
+
         coords_xml_element = doc.createElement("coords")
         for coord in sorted(self.coords(), key=lambda coord: coord.name()):
             # make a "cube coordinate" element which holds the dimensions (if
@@ -2252,11 +2308,12 @@ bound=(1994-12-01 00:00:00, 1998-12-01 00:00:00)
                       forecast_period: 0 hours
                       longitude: 180.0 degrees, bound=(0.0, 360.0) degrees
                  Attributes:
-                      Conventions: CF-1.5
                       STASH: m01s00i024
                       history: Mean of surface_temperature aggregated \
 over month, year
             Mean of surface_temperature...
+                 Global attributes:
+                      Conventions: CF-1.5
                  Cell methods:
                       mean: month, year
                       mean: longitude
@@ -2397,11 +2454,12 @@ over month, year
                  Scalar coordinates:
                       forecast_period: 0 hours
                  Attributes:
-                      Conventions: CF-1.5
                       STASH: m01s00i024
                       history: Mean of surface_temperature aggregated \
 over month, year
             Mean of surface_temperature...
+                 Global attributes:
+                      Conventions: CF-1.5
                  Cell methods:
                       mean: month, year
                       mean: year

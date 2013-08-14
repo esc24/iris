@@ -20,6 +20,11 @@ A summary of the main features added with version 1.5:
 * class:`iris.analysis.SUM` is now a weighted aggregator, allowing it to take a
   weights keyword argument.
 * Grib2 translations added for standard_name 'soil_temperature'.
+* Cubes now have a dictionary for CF global metadata called
+  :attr:`iris.cube.Cube.global_attributes`. Some of the metadata in this dictionary
+  may have previously been stored in :attr:`iris.cube.Cube.attributes`. As part of
+  this change the signature of Cube constructor (:meth:`iris.cube.Cube.__init__`)
+  now has an additional `global_attributes` keyword argument.
 
 Bugs fixed
 ----------

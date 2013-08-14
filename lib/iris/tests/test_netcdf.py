@@ -453,6 +453,33 @@ class TestNetCDFSave(tests.IrisTest):
                                   'multi_dim_coord_slightly_different.cdl'))
         os.remove(file_out)
 
+    def test_netcdf_matching_global_attributes(self):
+        self.cube2.global_attributes = dict(foo='bar', fruit='apple')
+        self.cube3.global_attributes = dict(foo='bar', fruit='apple')
+        self.cube2.attributes['fruit'] = 'orange'
+        self.cube3.attributes['fruit'] = 'lemon'
+        cubes = iris.cube.CubeList([self.cube2, self.cube3])
+        with self.temp_filename(suffix='.nc') as filename:
+            iris.save(cubes, filename)
+            self.assertCDL(filename, ('netcdf',
+                                      'matching_global_attributes.cdl'))
+
+    def test_netcdf_subset_global_attributes(self):
+        self.cube2.global_attributes = dict(foo='bar', fruit='apple')
+        self.cube3.global_attributes = dict(foo='bar')
+        cubes = iris.cube.CubeList([self.cube2, self.cube3])
+        with self.temp_filename(suffix='.nc') as filename:
+            with self.assertRaises(ValueError):
+                iris.save(cubes, filename)
+
+    def test_netcdf_different_global_attributes(self):
+        self.cube2.global_attributes = dict(foo='bar', fruit='apple')
+        self.cube3.global_attributes = dict(foo='bar', fruit='orange')
+        cubes = iris.cube.CubeList([self.cube2, self.cube3])
+        with self.temp_filename(suffix='.nc') as filename:
+            with self.assertRaises(ValueError):
+                iris.save(cubes, filename)
+
     @iris.tests.skip_data
     def test_netcdf_hybrid_height(self):
         # Test saving a CF-netCDF file which contains a hybrid height

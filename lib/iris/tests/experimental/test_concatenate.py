@@ -342,6 +342,68 @@ class TestNoConcat(tests.IrisTest):
         result = concatenate(cubes)
         self.assertEqual(len(result), 2)
 
+    def test_different_attributes_keys(self):
+        cubes = []
+        y = (0, 2)
+        cubes.append(_make_cube((0, 4), y, 1))
+        cubes.append(_make_cube((4, 6), y, 2))
+        result = concatenate(cubes)
+        self.assertEqual(len(result), 1)
+        cubes[0].attributes['foo'] = 'apple'
+        cubes[1].attributes['bar'] = 'apple'
+        result = concatenate(cubes)
+        self.assertEqual(len(result), 2)
+
+    def test_different_attributes_values(self):
+        cubes = []
+        y = (0, 2)
+        cubes.append(_make_cube((0, 4), y, 1))
+        cubes.append(_make_cube((4, 6), y, 2))
+        result = concatenate(cubes)
+        self.assertEqual(len(result), 1)
+        cubes[0].attributes['source'] = 'foo'
+        cubes[1].attributes['source'] = 'bar'
+        result = concatenate(cubes)
+        self.assertEqual(len(result), 2)
+
+    def test_different_global_attributes_keys(self):
+        cubes = []
+        y = (0, 2)
+        cubes.append(_make_cube((0, 4), y, 1))
+        cubes.append(_make_cube((4, 6), y, 2))
+        result = concatenate(cubes)
+        self.assertEqual(len(result), 1)
+        cubes[0].global_attributes['foo'] = 'apple'
+        cubes[1].global_attributes['bar'] = 'apple'
+        result = concatenate(cubes)
+        self.assertEqual(len(result), 2)
+
+    def test_different_global_attributes_values(self):
+        cubes = []
+        y = (0, 2)
+        cubes.append(_make_cube((0, 4), y, 1))
+        cubes.append(_make_cube((4, 6), y, 2))
+        result = concatenate(cubes)
+        self.assertEqual(len(result), 1)
+        cubes[0].global_attributes['source'] = 'foo'
+        cubes[1].global_attributes['source'] = 'bar'
+        result = concatenate(cubes)
+        self.assertEqual(len(result), 2)
+
+    def test_different_global_but_equal_local_attributes(self):
+        cubes = []
+        y = (0, 2)
+        cubes.append(_make_cube((0, 4), y, 1))
+        cubes.append(_make_cube((4, 6), y, 2))
+        result = concatenate(cubes)
+        self.assertEqual(len(result), 1)
+        cubes[0].attributes['source'] = 'foo'
+        cubes[0].global_attributes['source'] = 'orange'
+        cubes[1].attributes['source'] = 'foo'
+        cubes[1].global_attributes['source'] = 'apple'
+        result = concatenate(cubes)
+        self.assertEqual(len(result), 2)
+
 
 class Test2D(tests.IrisTest):
     def test_concat_masked_2x2d(self):

@@ -168,6 +168,17 @@ def describe_diff(cube_a, cube_b, output_file=None):
                                      cube_a.attributes[key],
                                      cube_b.attributes[key]))
 
+        common_global_keys = set(cube_a.global_attributes).intersection(
+            cube_b.global_attributes)
+        for key in common_global_keys:
+            if cube_a.global_attributes[key] != cube_b.global_attributes[key]:
+                output_file.write('"%s" cube_a global attribute value "%s" is '
+                                  'not compatible with cube_b '
+                                  'global attribute value "%s"\n'
+                                  % (key,
+                                     cube_a.global_attributes[key],
+                                     cube_b.global_attributes[key]))
+
         if cube_a.name() != cube_b.name():
             output_file.write('cube_a name "%s" is not compatible '
                               'with cube_b name "%s"\n'

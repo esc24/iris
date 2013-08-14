@@ -693,10 +693,12 @@ class TestCubeAPI(TestCube2d):
         self.assertIsNone(self.t.var_name)
         self.assertEqual(self.t.units, 'meters')
         self.assertEqual(self.t.attributes, {})
+        self.assertEqual(self.t.global_attributes, {})
         self.assertEqual(self.t.cell_methods, ())
 
     def test_metadata_tuple(self):
-        metadata = ('air_pressure', 'foo', 'bar', '', {'random': '12'}, ())
+        metadata = ('air_pressure', 'foo', 'bar', '', {'random': '12'},
+                    {'foobar': '23'}, ())
         self.t.metadata = metadata
         self.assertEqual(self.t.standard_name, 'air_pressure')
         self.assertEqual(self.t.long_name, 'foo')
@@ -704,6 +706,8 @@ class TestCubeAPI(TestCube2d):
         self.assertEqual(self.t.units, '')
         self.assertEqual(self.t.attributes, metadata[4])
         self.assertIsNot(self.t.attributes, metadata[4])
+        self.assertEqual(self.t.global_attributes, metadata[5])
+        self.assertIsNot(self.t.global_attributes, metadata[5])
         self.assertEqual(self.t.cell_methods, ())
 
     def test_metadata_dict(self):
@@ -712,6 +716,7 @@ class TestCubeAPI(TestCube2d):
                     'var_name': 'bar',
                     'units': '',
                     'attributes': {'random': '12'},
+                    'global_attributes': {'foobar': '23'},
                     'cell_methods': ()}
         self.t.metadata = metadata
         self.assertEqual(self.t.standard_name, 'air_pressure')
@@ -720,6 +725,10 @@ class TestCubeAPI(TestCube2d):
         self.assertEqual(self.t.units, '')
         self.assertEqual(self.t.attributes, metadata['attributes'])
         self.assertIsNot(self.t.attributes, metadata['attributes'])
+        self.assertEqual(self.t.global_attributes,
+                         metadata['global_attributes'])
+        self.assertIsNot(self.t.global_attributes,
+                         metadata['global_attributes'])
         self.assertEqual(self.t.cell_methods, ())
 
     def test_metadata_attrs(self):
@@ -730,6 +739,7 @@ class TestCubeAPI(TestCube2d):
         metadata.var_name = 'bar'
         metadata.units = ''
         metadata.attributes = {'random': '12'}
+        metadata.global_attributes = {'foobar': '23'}
         metadata.cell_methods = ()
         self.t.metadata = metadata
         self.assertEqual(self.t.standard_name, 'air_pressure')
@@ -738,19 +748,25 @@ class TestCubeAPI(TestCube2d):
         self.assertEqual(self.t.units, '')
         self.assertEqual(self.t.attributes, metadata.attributes)
         self.assertIsNot(self.t.attributes, metadata.attributes)
+        self.assertEqual(self.t.global_attributes, metadata.global_attributes)
+        self.assertIsNot(self.t.global_attributes, metadata.global_attributes)
         self.assertEqual(self.t.cell_methods, ())
 
     def test_metadata_fail(self):
+        # Test that assignment to cube.metadata raises an exception when not
+        # providing enough variables in collection.
         with self.assertRaises(TypeError):
-            self.t.metadata = ('air_pressure', 'foo', 'bar', '', {'random': '12'})
-        with self.assertRaises(TypeError):
-            self.t.metadata = ('air_pressure', 'foo', 'bar', '', {'random': '12'}, (), ())
+            self.t.metadata = ('air_pressure', 'foo', 'bar', '',
+                               {'random': '12'}, {'foobar': '23'})
+
         with self.assertRaises(TypeError):
             self.t.metadata = {'standard_name': 'air_pressure',
                                'long_name': 'foo',
                                'var_name': 'bar',
                                'units': '',
-                               'attributes': {'random': '12'}}
+                               'local_attributes': {'random': '12'},
+                               'global_attributes': {'foobar': '23'}}
+
         with self.assertRaises(TypeError):
             class Metadata(object): pass
             metadata = Metadata()
@@ -758,8 +774,62 @@ class TestCubeAPI(TestCube2d):
             metadata.long_name = 'foo'
             metadata.var_name = 'bar'
             metadata.units = ''
-            metadata.attributes = {'random': '12'}
+            metadata.local_attributes = {'random': '12'}
+            metadata.global_attributes = {'foobar': '23'}
             self.t.metadata = metadata
+
+        # Test that assignment to cube.metadata raises an exception when
+        # providing too many variables in collection.
+        with self.assertRaises(TypeError):
+            self.t.metadata = ('air_pressure', 'foo', 'bar', '',
+                               {'random': '12'}, {'foobar': '23'}, (), ())
+
+
+class AttributesTestMixin(object):
+    def test_set(self):
+        self.attributes['foo'] = 'bar'
+        self.assertEqual(self.attributes['foo'], 'bar')
+
+    def test_del(self):
+        key = 'foo'
+        self.attributes[key] = 'foobar'
+        self.assertIn(key, self.attributes)
+        del self.attributes[key]
+        self.assertNotIn(key, self.attributes)
+
+    def test_clear(self):
+        self.attributes['foo'] = 'bar'
+        self.attributes.clear()
+        self.assertEqual(self.attributes, {})
+
+    def test_update(self):
+        other = dict(foo='bar', fruit='orange')
+        self.attributes.update(other)
+        self.assertEqual(self.attributes, other)
+
+    def test_forbidden_keys(self):
+        forbidden_keys = ('standard_name', 'long_name', 'units', 'bounds',
+                          'axis', 'calendar', 'leap_month', 'leap_year',
+                          'month_lengths', 'coordinates', 'grid_mapping',
+                          'climatology', 'cell_methods', 'formula_terms',
+                          'compress', 'missing_value', 'add_offset',
+                          'scale_factor', 'valid_max', 'valid_min',
+                          'valid_range', '_FillValue')
+        for key in forbidden_keys:
+            with self.assertRaises(ValueError):
+                self.attributes[key] = 'foobar'
+
+
+class TestCubeAttributes(TestCube2d, AttributesTestMixin):
+    def setUp(self):
+        super(TestCubeAttributes, self).setUp()
+        self.attributes = self.t.attributes
+
+
+class TestCubeGlobalAttributes(TestCube2d, AttributesTestMixin):
+    def setUp(self):
+        super(TestCubeGlobalAttributes, self).setUp()
+        self.attributes = self.t.global_attributes
 
 
 class TestCubeEquality(TestCube2d):

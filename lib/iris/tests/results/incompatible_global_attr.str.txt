@@ -1,0 +1,2 @@
+"source" cube_a attribute value "foo" is not compatible with cube_b attribute value "bar"
+"Conventions" cube_a global attribute value "CF-1.5" is not compatible with cube_b global attribute value "CF-1.6"

@@ -208,9 +208,10 @@ Printing this cube now shows that two extra coordinates exist on the cube:
          Scalar coordinates:
               forecast_period: 0 hours
          Attributes:
-              Conventions: CF-1.5
               STASH: m01s00i024
               history: Mean of surface_temperature aggregated over month, year
+         Global attributes:
+              Conventions: CF-1.5
          Cell methods:
               mean: month, year
 

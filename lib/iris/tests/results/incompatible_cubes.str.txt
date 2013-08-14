@@ -1,4 +1,4 @@
-"Conventions" cube_a attribute value "CF-1.5" is not compatible with cube_b attribute value "CF-1.6"
+"Conventions" cube_a global attribute value "CF-1.5" is not compatible with cube_b global attribute value "CF-1.6"
 cube_a name "relative_humidity" is not compatible with cube_b name "air_potential_temperature"
 cube_a units "m" are not compatible with cube_b units "K"
 Cell methods
