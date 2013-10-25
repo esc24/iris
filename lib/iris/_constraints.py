@@ -453,3 +453,650 @@ class AttributeConstraint(Constraint):
 
     def __repr__(self):
         return 'AttributeConstraint(%r)' % self._attributes
+
+
+# Useful lookup tables for TimeConstraint and TimePeriodConstraint
+months = {1 : (1, 'jan', 'january', 'Jan', 'January'),
+          2 : (2, 'feb', 'february', 'Feb', 'February'),
+          3 : (3, 'mar', 'march', 'Mar', 'March'),
+          4 : (4, 'apr', 'april', 'Apr', 'April'),
+          5 : (5, 'may', 'May'),
+          6 : (6, 'jun', 'june', 'Jun', 'June'),
+          7 : (7, 'jul', 'july', 'Jul', 'July'),
+          8 : (8, 'aug', 'august', 'Aug', 'August'),
+          9 : (9, 'sep', 'september', 'Sep', 'September'),
+          10 : (10, 'oct', 'october', 'Oct', 'October'),
+          11 : (11, 'nov', 'november', 'Nov', 'November'),
+          12 : (12, 'dec', 'december', 'Dec', 'December')}
+
+seasons = {'djf' : (12, 'dec', 'december',
+                    1, 'jan', 'january',
+                    2, 'feb', 'february'),
+           'mam' : (3, 'mar', 'march',
+                    4, 'apr', 'april',
+                    5, 'may', 'may'),
+           'jja' : (6, 'jun', 'june',
+                    7, 'jul', 'july',
+                    8, 'aug', 'august'),
+           'son' : (9, 'sep', 'september',
+                    10, 'oct', 'october',
+                    11, 'nov', 'november')}
+
+
+class TimeConstraint(Constraint):
+    """
+    Provides a simplified interface for a time-based :class:`Constraint`
+    
+    Example here... TODO
+
+    """ 
+    def __init__(self, year=None, month=None, day=None, hour=None,
+                 minute=None, second=None, microsecond=None,
+                 season=None, season_year=None, coord_name='time'):
+        self._coord_name = coord_name
+        PeriodValues = collections.namedtuple(
+            'PeriodValues', ['year', 'month', 'day', 'hour',
+                             'minute', 'second', 'microsecond',
+                             'season', 'season_year'])
+        self._period_values = PeriodValues(year, month, day, hour,
+                                           minute, second, microsecond,
+                                           season, season_year)
+
+        # Create predicates.
+        self._predicates = []
+        if year is not None:
+            self._predicates.append(self._cast_year_thing(year))
+        if month is not None:
+            self._predicates.append(self._cast_month_thing(month))
+        if day is not None:
+            self._predicates.append(self._cast_day_thing(day))
+        if hour is not None:
+            self._predicates.append(self._cast_time_thing('hour', hour))
+        if minute is not None:
+            self._predicates.append(self._cast_time_thing('minute', minute))
+        if second is not None:
+            self._predicates.append(self._cast_time_thing('second', second))
+        if microsecond is not None:
+            self._predicates.append(self._cast_time_thing('microsecond',
+                                                          microsecond))
+        if season is not None:
+            self._predicates.append(self._cast_season_thing(season))
+        if season_year is not None:
+            self._predicates.append(self._cast_season_year_thing(season_year))
+
+        Constraint.__init__(self, cube_func=self._cube_func)
+
+    def _cube_func(self, cube):
+        try:
+            _ = cube.coord(self._coord_name)
+        except iris.exceptions.CoordinateNotFoundError:
+            return False
+        else:
+            return True
+
+    def _cast_year_thing(self, year_thing):
+        """Turn the year thing into a function where appropriate."""
+        def _cell_year_eq(cell, year_collection):
+            if cell.style() == iris.coords.POINT:
+                return cell.point.year in year_collection
+            else:
+                lower = numpy.min(cell.bound)
+                upper = numpy.max(cell.bound) - numpy.max(cell.bound).resolution # Non-inclusive upper bound
+                for year in year_collection:
+                    if lower.year <= year <= upper.year:
+                        return True
+                return False
+
+        if callable(year_thing):      # Think about preventing this.
+            def _period_attribute_callable_wrapper(cell, period_name, period_thing):
+                if cell.style() == iris.coords.POINT:
+                    pseudo_cell = iris.coords.Cell(cell.point.__getattribute__(period_name))
+                elif cell.style() == iris.coords.BOUND:
+                    pseudo_bound = [numpy.min(cell.bound).__getattribute__(period_name), 
+                                    (numpy.max(cell.bound) - numpy.max(cell.bound).resolution).__getattribute__(period_name)]
+                    pseudo_cell = iris.coords.Cell(None, pseudo_bound)
+                else:
+                    pseudo_bound = [numpy.min(cell.bound).__getattribute__(period_name), 
+                                    (numpy.max(cell.bound) - numpy.max(cell.bound).resolution).__getattribute__(period_name)]
+                    pseudo_cell = iris.coords.Cell(cell.point.__getattribute__(period_name), pseudo_bound)
+                return period_thing(pseudo_cell)
+            result = lambda cell: _period_attribute_callable_wrapper(cell, 'year', year_thing)
+        elif isinstance(year_thing, collections.Iterable) and not isinstance(year_thing, basestring):
+            result = lambda cell: _cell_year_eq(cell, year_thing)
+        else:
+            result = lambda cell: _cell_year_eq(cell, [year_thing])
+        return result
+
+    def _cast_time_thing(self, period_name, period_thing):
+        """Turn the periodic thing into a function where appropriate."""
+        def _cell_time_eq(cell, period_name, period_collection):
+            if cell.style() == iris.coords.POINT:
+                return cell.point.__getattribute__(period_name) in period_collection
+            else:
+                PeriodLimits = collections.namedtuple('PeriodLimits', ['length', 'min_val', 'max_val'])
+                if period_name == 'hour':
+                    truncated_bound_extent = (numpy.max(cell.bound).replace(minute=0, second=0, microsecond=0) - 
+                                              numpy.min(cell.bound).replace(minute=0, second=0, microsecond=0))
+                    period_limits = PeriodLimits(3600, 0, 23)
+                elif period_name == 'minute':
+                    truncated_bound_extent = (numpy.max(cell.bound).replace(second=0, microsecond=0) - 
+                                              numpy.min(cell.bound).replace(second=0, microsecond=0))
+                    period_limits = PeriodLimits(60, 0, 59)
+                elif period_name == 'second':
+                    truncated_bound_extent = (numpy.max(cell.bound).replace(microsecond=0) - 
+                                              numpy.min(cell.bound).replace(microsecond=0))
+                    period_limits = PeriodLimits(1, 0, 59)
+                elif period_name == 'microsecond':
+                    truncated_bound_extent = numpy.max(cell.bound) - numpy.min(cell.bound)
+                    period_limits = PeriodLimits(0.000001, 0, 999999)
+                else:
+                    raise ValueError('Expected period_name to be hour, minute, second or microsecond, got %r' % period_name)
+
+                for period in period_collection:
+                    # Check whether bound is wider than the modulus of the period_name e.g. for hours is the 
+                    # bound wider than 24 hours
+                    if truncated_bound_extent.total_seconds() >= ((period_limits.max_val - period_limits.min_val) * 
+                                                                  period_limits.length):
+                        if period_limits.min_val <= period <= period_limits.max_val:
+                            return True
+                    else:
+                        # Case where the bound spans less than the modulus e.g. for hours this would be 1 day (24 hours)
+                        lower_period = numpy.min(cell.bound).__getattribute__(period_name)
+                        upper_period = (numpy.max(cell.bound) - numpy.max(cell.bound).resolution).__getattribute__(period_name)
+                        if lower_period <= upper_period:
+                            if lower_period <= period <= upper_period:
+                                return True
+                        else:
+                            if lower_period <= period <= period_limits.max_val or period_limits.min_val <= period <= upper_period:
+                                return True
+                return False
+
+        if callable(period_thing):
+            raise ValueError('TimeConstraint cannot accept functions as parameters')
+        elif isinstance(period_thing, collections.Iterable) and not isinstance(period_thing, basestring):
+            result = lambda cell: _cell_time_eq(cell, period_name, period_thing)
+        else:
+            result = lambda cell: _cell_time_eq(cell, period_name, [period_thing])
+        return result
+
+    def _cast_month_thing(self, month_thing):
+        def _cell_month_eq(cell, month_collection):
+            # Check the collection and raise an exception if their constraint uses an unknown month
+            for month in month_collection:
+                if month not in itertools.chain.from_iterable(months.itervalues()):
+                    raise ValueError('Unknown month %r' % month)
+        
+            if cell.style() == iris.coords.POINT:
+                return bool(set(months[cell.point.month]) & set(month_collection))
+            else:
+                lower = numpy.min(cell.bound)
+                upper = numpy.max(cell.bound) - numpy.max(cell.bound).resolution
+                l_year = lower.year
+                l_month = lower.month
+                u_year = upper.year
+                u_month = upper.month
+                delta_months = (u_year - l_year) * 12 + u_month - l_month
+                if u_year < 0 != l_year < 0:        # special case to handle the missing year 0
+                    delta_months -= 12
+                
+                if delta_months >= 11:
+                    for month in month_collection:
+                        if month in itertools.chain.from_iterable(months.itervalues()):
+                            return True
+                else:
+                    if l_month <= u_month:
+                        for month in xrange(l_month, u_month + 1):
+                            if set(months[month]) & set(month_collection):
+                                return True
+                    else:
+                        for month in xrange(l_month, 13):
+                            if set(months[month]) & set(month_collection):
+                                return True
+                        for month in xrange(1, u_month + 1):
+                            if set(months[month]) & set(month_collection):
+                                return True
+                return False
+        
+        if callable(month_thing):      
+            raise ValueError('TimeConstraint cannot accept functions as parameters')
+        elif isinstance(month_thing, collections.Iterable) and not isinstance(month_thing, basestring):
+            result = lambda cell: _cell_month_eq(cell, month_thing)
+        else:
+            result = lambda cell: _cell_month_eq(cell, [month_thing])
+        return result
+
+
+    def _cast_day_thing(self, day_thing):
+        """Turn the day thing into a function where appropriate."""
+        def _cell_day_eq(cell, day_collection):
+            if cell.style() == iris.coords.POINT:
+                return cell.point.day in day_collection
+            else:
+                lower = numpy.min(cell.bound)
+                upper = numpy.max(cell.bound) - numpy.max(cell.bound).resolution
+                # The day number is linked to the calendar e.g. Feb 29th exists in leap years in gregorian, 
+                # but exists every year (and every month) in a 360 day calendar
+                if isinstance(lower, iris.datetime360.date) and isinstance(upper, iris.datetime360.date):   # 360 day calendar
+                    PeriodLimits = collections.namedtuple('PeriodLimits', ['length', 'min_val', 'max_val'])
+                    if isinstance(lower, iris.datetime360.datetime) and isinstance(upper, iris.datetime360.datetime):
+                        truncated_bound_extent = (upper.replace(hour=0, minute=0, second=0, microsecond=0) - 
+                                                  lower.replace(hour=0, minute=0, second=0, microsecond=0))
+                        period_limits = PeriodLimits(24*60*60, 1, 30)
+                    else:
+                        truncated_bound_extent = upper - lower
+                        period_limits = PeriodLimits(24*60*60, 1, 30)
+
+                    for day in day_collection:
+                        # Check whether bound is wider than the modulus of the period_name, i.e. greater than 29
+                        if truncated_bound_extent.total_seconds() >= ((period_limits.max_val - period_limits.min_val) * 
+                                                                      period_limits.length):
+                            if period_limits.min_val <= day <= period_limits.max_val:
+                                return True
+                        else:
+                            # Case where the bound spans less than the modulus e.g. for days this would be 30 days
+                            lower_day = lower.day
+                            upper_day = upper.day
+                            if lower.day <= upper.day:
+                                if lower.day <= day <= upper.day:
+                                    return True
+                            else:
+                                if lower.day <= day <= period_limits.max_val or period_limits.min_val <= day <= upper.day:
+                                    return True
+                    return False
+                elif isinstance(numpy.min(cell.bound), datetime.date) and isinstance(numpy.max(cell.bound), datetime.date):
+                    # gregorian calendar
+                    lower = numpy.min(cell.bound)
+                    upper = numpy.max(cell.bound) - numpy.max(cell.bound).resolution
+                    if (upper - lower).days >= 59:  # covers all month days regardless of leap years, months etc.
+                        for day in day_collection:
+                            if day in xrange(1, 32):   # valid
+                                return True
+                    elif lower.month == upper.month:
+                        for day in day_collection:
+                            if day in xrange(lower.day, upper.day + 1):
+                                return True
+                    else:
+                        for day in day_collection:
+                            if day in xrange(lower.day, calendar.monthrange(lower.year, lower.month)[1] + 1) or day in xrange(1, upper.day + 1):
+                                return True
+                            else: # middle month (if present)
+                                if lower.year == upper.year:
+                                    for month in xrange(lower.month + 1, upper.month): 
+                                        if day in xrange(1, calendar.monthrange(lower.year, month)[1] + 1):
+                                            return True
+                                else:
+                                    if upper.month == 2: # need to cover Jan 
+                                        if day in xrange(1, 32):
+                                            return True
+                    return False
+                else:
+                    raise ValueError('Unsuported datetime objects of type %r, %r' % (type(lower), type(upper)))
+
+        if callable(day_thing):
+            raise ValueError('TimeConstraint cannot accept functions as parameters')
+        elif isinstance(day_thing, collections.Iterable) and not isinstance(day_thing, basestring):
+            result = lambda cell: _cell_day_eq(cell, day_thing)
+        else:
+            result = lambda cell: _cell_day_eq(cell, [day_thing])
+        return result
+
+    def _cast_season_thing(self, season_thing):
+        def season_from_month(month):
+            if isinstance(month, basestring):
+                month = month.lower()
+
+            for season, season_months in seasons.iteritems():
+                if month in season_months:
+                    return season
+            raise ValueError('Unknown month %r' % month)
+
+        def _cell_season_eq(cell, season_collection):
+            # Check the collection and raise an exception if the constraint uses an unknown season
+            for season in season_collection:
+                if season.lower() not in seasons:
+                    raise ValueError('Unknown season %r' % season)
+            
+            # Ignore case
+            season_collection_lc = [season.lower() for season in season_collection]
+
+            if cell.style() == iris.coords.POINT:
+                return season_from_month(cell.point.month) in season_collection_lc
+            else:
+                lower = numpy.min(cell.bound)
+                upper = numpy.max(cell.bound) - numpy.max(cell.bound).resolution
+                l_year = lower.year
+                l_month = lower.month
+                u_year = upper.year
+                u_month = upper.month
+                delta_months = (u_year - l_year) * 12 + u_month - l_month
+                if u_year < 0 != l_year < 0:        # special case to handle the missing year 0
+                    delta_months -= 12
+                if delta_months >= 11:
+                    for season in season_collection_lc:
+                        if season in seasons.iterkeys():
+                            return True
+                if l_month <= u_month:
+                    for month in xrange(l_month, u_month + 1):
+                        if season_from_month(month) in season_collection_lc:
+                            return True
+                else:
+                    for month in xrange(l_month, 13):
+                        if season_from_month(month) in season_collection_lc:
+                            return True
+                    for month in xrange(1, u_month + 1):
+                        if season_from_month(month) in season_collection_lc:
+                            return True
+                return False
+
+        if callable(season_thing):
+            raise ValueError('TimeConstraint cannot accept functions as parameters')
+        elif isinstance(season_thing, collections.Iterable) and not isinstance(season_thing, basestring):
+            result = lambda cell: _cell_season_eq(cell, season_thing)
+        else:
+            result = lambda cell: _cell_season_eq(cell, [season_thing])
+        return result
+
+    def _cast_season_year_thing(self, year_thing):
+        """Turn the year thing into a function where appropriate."""
+        def season_year(dt):
+            if dt.month == 12:
+                return dt.year + 1
+            else:
+                return dt.year
+
+        def _cell_season_year_eq(cell, year_collection):
+            if cell.style() == iris.coords.POINT:
+                return season_year(cell.point) in year_collection
+            else:
+                lower = numpy.min(cell.bound)
+                upper = numpy.max(cell.bound) - numpy.max(cell.bound).resolution
+                for year in year_collection:
+                    if season_year(lower) <= year <= season_year(upper):
+                        return True
+                return False
+
+        if callable(year_thing):
+            raise ValueError('TimeConstraint cannot accept functions as parameters')
+        elif isinstance(year_thing, collections.Iterable) and not isinstance(year_thing, basestring):
+            result = lambda cell: _cell_season_year_eq(cell, year_thing)
+        else:
+            result = lambda cell: _cell_season_year_eq(cell, [year_thing])
+        return result
+
+
+    def _CIM_extract(self, cube):
+        cube_cim = _ColumnIndexManager(len(cube.shape))
+        try:
+            coord = cube.coord(self._coord_name)
+        except iris.exceptions.CoordinateNotFoundError:
+            cube_cim.all_false()
+            return cube_cim
+
+        dims = cube.coord_dims(coord)
+        if not dims:
+            return cube_cim.all_false()
+        elif len(dims) > 1:
+            raise iris.exceptions.CoordinateMultiDimError(coord)
+
+        #axis = cube._axes.get(coord.axis_name)
+        for predicate in self._predicates:
+            cim = _ColumnIndexManager(len(cube.shape))
+            #r = numpy.array([predicate(cell) for cell in coord.cells()], ndmin=1)
+            #if axis is not None:
+            #    cim[axis] = r
+            cim[dim] = numpy.array([predicate(cell) for cell in coord.cells()], ndmin=1)
+            cube_cim = cube_cim & cim
+        
+        return cube_cim
+
+    def __repr__(self):
+        return 'TimeConstraint(%r, %r)' % (self._coord_name, self._period_values)
+
+# Type factory to produce a named tuple that is used as a base class for 
+# _DateTimeTuple, a calendar agnostic container for start or end parameters
+_DateTimeTupleParent = collections.namedtuple('_DateTimeTupleParent', ['year', 'month', 'day', 'hour', 
+                                                                       'minute', 'second', 'microsecond'])
+
+class _DateTimeTuple(_DateTimeTupleParent):
+    """
+    A calendar agnostic container used to store year, month, day, hour, minute, second and microsecond
+    values passed as parameters to the TimePeriodConstraint constructor. 
+    
+    This class allows any/all of the named values to be None.
+    
+    """
+    def __new__(cls, year=None, month=None, day=None, hour=None, minute=None, second=None, microsecond=None):
+        month_number = None
+        month_numbers = {'jan':1 , 'feb':2, 'mar':3, 'apr':4, 'may':5, 'jun':6, 
+                         'jul':7, 'aug':8, 'sep':9, 'oct':10, 'nov':11, 'dec':12}
+        if month is not None:
+            if month not in itertools.chain.from_iterable(months.itervalues()):
+                raise ValueError('Unknown month %r' % month)
+            # Convert to number if provide as string e.g. 'March'
+            if isinstance(month, basestring):
+                month_number = month_numbers[month.lower()[:3]]
+            else:
+                month_number = month
+        
+        return _DateTimeTupleParent.__new__(cls, year, month_number, day, hour, minute, second, microsecond)
+
+    def __init__(self, *_args):
+        # Require contiguous values (no gaps)
+        self._start_index = None
+        for i, val in enumerate(self):
+            if val is not None:
+                self._start_index = i
+                break
+
+        self._end_index = None
+        if self._start_index is not None:
+            for i, val in enumerate(reversed(self)):
+                if val is not None:
+                    self._end_index = len(self) - i
+                    break
+            for i in range(self._start_index + 1, self._end_index):
+                if self[i] is None:
+                    raise ValueError('Specified parameters must not span an unspecified '\
+                                     'parameter e.g. if you specify year and day, you must also specify month')
+    def __repr__(self):
+        return '_DateTimeTuple(year=%r, month=%r, day=%r, hour=%r, minute=%r, second=%r, microsecond=%r)' % self
+    
+    @property
+    def start_index(self):
+        return self._start_index
+    
+    @property
+    def end_index(self):
+        return self._end_index
+
+    def valid_fields(self):
+        """Returns a tuple of the field names (strings) that are specified i.e. not None."""
+        if self._start_index is None:
+            return []
+        if self._end_index is None:
+            return self._fields
+        return self._fields[self._start_index:self._end_index]
+
+    def is_all_none(self):
+        return self.start_index == None
+    
+    def blended(self, other):
+        """
+        Returns a new _DateTimeTuple with any None values populated with the values from the object passed in.
+        Note that this method should accept another _DateTimeTuple or a datetime object e.g. an iris.datetime360.datetime
+     
+        Arguments:
+    
+        * other  -  _DateTimeTuple or datetime object
+        Object from which to obtain field values to replace corresponding None values in self.
+
+        """
+        self_as_list = list(self)
+        for index, field in enumerate(self._fields):
+            if self_as_list[index] is None:
+                self_as_list[index] = other.__getattribute__(field)
+        return _DateTimeTuple(*self_as_list)
+
+    def truncated(self, other):
+        """
+        Returns a new _DateTimeTuple equal to self except that the necessary field values will be replaced by 
+        None such that the startindex of the resulting _DateTimeTuple will equal that of the object passed in. 
+                    
+        Arguments:
+    
+        * other  -  _DateTimeTuple
+        
+        For example:
+        
+            >>> start = iris._constraints._DateTimeTuple(2002, 2, 15, None, None, None, None)
+            >>> other = iris._constraints._DateTimeTuple(None, 12, 13, None, None, None, None)
+            >>> start.truncated(other)
+            _DateTimeTuple(year=None, month=2, day=15, hour=None, minute=None, second=None, microsecond=None)
+
+        """            
+
+        if other.start_index is None:
+            return _DateTimeTuple()
+        self_as_list = list(self)
+        self_as_list[0:other.start_index] = [None] * other.start_index
+        return _DateTimeTuple(*self_as_list)
+
+class TimePeriodConstraint(Constraint):
+    """
+    Provides a simplified interface for a time-based :class:`Constraint` between two datetimes. For example:
+    iris.TimePeriodConstraint(start_month='Dec', start_day=25, end_month='Jan', end_day=2)
+    
+    """
+    
+    
+    def __init__(self, start_year=None, start_month=None, start_day=None, start_hour=None, start_minute=None, 
+                 start_second=None, start_microsecond=None, end_year=None, end_month=None, end_day=None, 
+                 end_hour=None, end_minute=None, end_second=None, end_microsecond=None, coord_name='time'):
+        self._coord_name = coord_name
+        self._start = _DateTimeTuple(start_year, start_month, start_day, 
+                                     start_hour, start_minute, start_second,
+                                     start_microsecond)
+        self._end = _DateTimeTuple(end_year, end_month, end_day, 
+                                   end_hour, end_minute, end_second, 
+                                   end_microsecond)
+
+        self._predicate = self._generate_predicate(self._start, self._end)
+        Constraint.__init__(self, cube_func=self._cube_func)
+    
+    def _cube_func(self, cube):
+        try:
+            cube.coord(self._coord_name)
+        except iris.exceptions.CoordinateNotFoundError:
+            return False
+        else:
+            return True
+
+    def _generate_predicate(self, start, end):
+        def _cell_point_function(point, start, end):
+            if start.is_all_none() and end.is_all_none():
+                return True
+            
+            # Handle difficult case where the largest period is only specified at one end 
+            # e.g. start_year=2008, start_month='Nov', end_month='March'
+            if not start.is_all_none() and not end.is_all_none():
+                if start.start_index != end.start_index:
+                    if start.start_index < end.start_index:
+                        return (_cell_point_function(point, start, _DateTimeTuple()) and 
+                                _cell_point_function(point, start.truncated(end), end))
+                    else:
+                        return (_cell_point_function(point, _DateTimeTuple(), end) and 
+                                _cell_point_function(point, start, end.truncated(start)))
+                
+            long_dt = type(point)(2000,1,1) # Chosen to have all day numbers in 360, gregorian, no_leap and all_leap calendars
+            start_dt = type(point)(*start.blended(long_dt))
+            end_dt = type(point)(*end.blended(long_dt))
+            point_tuple = _DateTimeTuple(point.year, point.month, point.day, point.hour, 
+                                                            point.minute, point.second, point.microsecond)
+            point_start_dt = type(point)(*point_tuple.truncated(start).blended(long_dt))
+            point_end_dt = type(point)(*point_tuple.truncated(end).blended(long_dt))
+        
+            after_start = start_dt <= point_start_dt
+            before_end = point_end_dt < end_dt
+
+            if start.is_all_none():
+                return before_end
+            elif end.is_all_none():
+                return after_start 
+            else:
+                if start_dt <= end_dt:
+                    return after_start and before_end
+                else:
+                    return  after_start or before_end
+
+        def _cell_bound_function(bound, start, end):
+            if start.is_all_none() and end.is_all_none():
+                return True
+        
+            # Handle difficult case where the largest period is only specified at one end 
+            # e.g. start_year=2008, start_month='Nov', end_month='March'
+            if not start.is_all_none() and not end.is_all_none():
+                if start.start_index != end.start_index:
+                    if start.start_index < end.start_index:
+                        return (_cell_bound_function(bound, start, _DateTimeTuple()) and 
+                                _cell_bound_function(bound, start.truncated(end), end))
+                    else:
+                        return (_cell_bound_function(bound, _DateTimeTuple(), end) and 
+                                _cell_bound_function(bound, start, end.truncated(start)))
+
+            lower = numpy.min(bound)
+            upper = numpy.max(bound) - numpy.max(bound).resolution
+            
+            long_dt = type(lower)(2000,1,1) # Chosen to have all day numbers in 360, gregorian, no_leap and all_leap calendars
+            start_dt = type(lower)(*start.blended(long_dt))
+            end_dt = type(lower)(*end.blended(long_dt))
+
+            upper_after_start = _cell_point_function(upper, start, _DateTimeTuple())
+            lower_before_end = _cell_point_function(lower, _DateTimeTuple(), end)
+
+            #upper_after_end = _cell_point_function(upper, end, _DateTimeTuple())
+            #lower_before_start = _cell_point_function(lower, _DateTimeTuple(), start)
+            
+            lower_truncated = type(lower)(*_DateTimeTuple(lower.year, lower.month, lower.day, lower.hour, lower.minute, 
+                                                          lower.second, lower.microsecond).truncated(start).blended(long_dt))
+            upper_truncated = type(upper)(*_DateTimeTuple(upper.year, upper.month, upper.day, upper.hour, upper.minute,
+                                                          upper.second, upper.microsecond).truncated(start).blended(long_dt))
+            if lower_truncated <= upper_truncated:
+                if start.is_all_none():
+                    return lower_before_end
+                elif end.is_all_none():
+                    return upper_after_start
+                elif start_dt <= end_dt:
+                    return lower_before_end and upper_after_start
+                else:
+                    return lower_before_end or upper_after_start
+            else:
+                raise NotImplementedYetError()      ## Need to fix this - issue is very large bounds e.g Oct 91 to Dec 94 and constraint mar-may
+
+        def _cell_function(cell, start, end):
+            if cell.style() == iris.coords.POINT:
+                return _cell_point_function(cell.point, start, end)
+            else:
+                return _cell_bound_function(cell.bound, start, end)
+
+        return lambda cell: _cell_function(cell, start, end) 
+        
+    def _CIM_extract(self, cube):
+        cube_cim = _ColumnIndexManager(len(cube.shape))
+        try:
+            coord = cube.coord(self._coord_name)
+        except iris.exceptions.CoordinateNotFoundError:
+            cube_cim.all_false()
+            return cube_cim
+        
+        axis = cube._axes.get(coord.axis_name)
+        r = numpy.array([self._predicate(cell) for cell in coord.cells()], ndmin=1)
+        if axis is not None:
+            cube_cim[axis] = r
+        elif not all(r):
+            cube_cim.all_false()
+        
+        return cube_cim
+
+    def __repr__(self):
+        return 'TimePeriodConstraint(coord=%r, start=%r, end=%r)' % (self._coord_name, self._start, self._end)
+

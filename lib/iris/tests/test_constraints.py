@@ -382,5 +382,290 @@ class TestBetween(tests.IrisTest):
         self.run_test(function, numbers, results)
 
 
+class TestTimeConstraint(tests.IrisTest):
+    def setUp(self):
+        # Data with a variety of time coordinates
+        # Hourly: 2010-03-09 9am to 2010-03-10 9pm
+        self.hourly_cube_points = iris.load_strict(tests.get_data_path(['PP', 'uk4', 'uk4par09.pp']), 'air_temperature')
+        # Daily Dec 87 - Nov 88, 360 day
+        self.daily_cube_bounds = iris.load_strict(tests.get_data_path(['PP', 'ian_edmond', 'abcza_pa19591997_daily_29.b.pp']),
+                                                  'precipitation_flux')
+        # Dec, Jan, Feb every year 2091 - 2095, 360 day
+        self.yearly_djf_cube_bounds = iris.load_strict(tests.get_data_path(['PP', 'ian_edmond', 'aaxzc_n10r13xy.b.pp']))
+        # Yearly with bounds spanning the year, Sep 74 to Sep 96, 360 day
+        self.yearly_cube_bounds = iris.load_strict(tests.get_data_path(['PP', 'ian_edmond', 'model.b.pp']))
+        # Yearly with points at Midnight March 1st from Mar 1861 to Mar 2100, 360 day
+        self.yearly_cube_points = iris.load_strict(tests.get_data_path(['PP', 'ian_edmond', 'HadCM2_ts_SAT_ann_18602100.b.pp']))
+        # Points every ten minutes on 2009-09-09 from 17:10 to 18:00
+        self.minutes_cube_points = iris.load_strict(tests.get_data_path(['PP', 'COLPEX', 'theta_and_orog_subset.pp']),
+                                                    'air_potential_temperature') #  Every ten minutes: 2009-09-09 17:10 to 18:00
+
+    def test_empty(self):
+        # all
+        cube = self.hourly_cube_points.extract(iris.TimeConstraint())
+        self.assertEqual(self.hourly_cube_points, cube)
+        cube = self.daily_cube_bounds.extract(iris.TimeConstraint())
+        self.assertEqual(self.daily_cube_bounds, cube)
+        cube = self.yearly_djf_cube_bounds.extract(iris.TimeConstraint())
+        self.assertEqual(self.yearly_djf_cube_bounds, cube)
+        cube = self.yearly_cube_bounds.extract(iris.TimeConstraint())
+        self.assertEqual(self.yearly_cube_bounds, cube)
+        cube = self.yearly_cube_points.extract(iris.TimeConstraint())
+        self.assertEqual(self.yearly_cube_points, cube)
+        cube = self.minutes_cube_points.extract(iris.TimeConstraint())
+        self.assertEqual(self.minutes_cube_points, cube)
+
+    def test_year(self):
+        # yearly_cube_bounds, yearly_cube_points
+        cube = self.yearly_cube_bounds.extract(iris.TimeConstraint(year=1990))
+        self.assertCML(cube, ('constrained_load', 'year_bnds.cml'))
+        cube = self.yearly_cube_bounds.extract(iris.TimeConstraint(year=2000))
+        self.assertIsNone(cube)
+        cube = self.yearly_cube_points.extract(iris.TimeConstraint(year=1990))
+        self.assertCML(cube, ('constrained_load', 'year_pts.cml'))
+        cube = self.yearly_cube_points.extract(iris.TimeConstraint(year=1850))
+        self.assertIsNone(cube)
+        cube = self.yearly_cube_bounds.extract(iris.TimeConstraint(year=[1990,1995,2000]))
+        self.assertCML(cube, ('constrained_load', 'multiyear.cml'))
+
+    def test_month(self):
+        # daily_cube_bounds, yearly_cube_bounds, yearly_cube_points, hourly_cube_points, yearly_djf_cube_bounds
+        months = ('January', 'February', 'March', 'April', 'May', 'June', 
+                  'July', 'August', 'September', 'October', 'November', 'December')
+        for i, month in enumerate(months, start=1):
+            # Numerical
+            cube = self.daily_cube_bounds.extract(iris.TimeConstraint(month=i))
+            self.assertCML(cube, ('constrained_load', month.lower() + '_bnds.cml'))
+            # Short name e.g 'Feb'
+            cube = self.daily_cube_bounds.extract(iris.TimeConstraint(month=month[0:3]))
+            self.assertCML(cube, ('constrained_load', month.lower() + '_bnds.cml'))
+            # Long name e.g. 'February'
+            cube = self.daily_cube_bounds.extract(iris.TimeConstraint(month=month))
+            self.assertCML(cube, ('constrained_load', month.lower() + '_bnds.cml'))
+            # Lower case short name e.g. 'feb'
+            cube = self.daily_cube_bounds.extract(iris.TimeConstraint(month=month[0:3].lower()))
+            self.assertCML(cube, ('constrained_load', month.lower() + '_bnds.cml'))
+            # Lower case long name e.g. 'february'
+            cube = self.daily_cube_bounds.extract(iris.TimeConstraint(month=month.lower()))
+            self.assertCML(cube, ('constrained_load', month.lower() + '_bnds.cml'))
+
+        with self.assertRaises(ValueError):
+            cube = self.daily_cube_bounds.extract(iris.TimeConstraint(month='misspelled'))
+        with self.assertRaises(ValueError):
+            subcube = self.daily_cube_bounds.extract(iris.TimeConstraint(month=0))
+
+        cube = self.hourly_cube_points.extract(iris.TimeConstraint(month='Mar'))
+        self.assertCML(cube, ('constrained_load', 'month_pts.cml'))
+
+        cube = self.yearly_cube_bounds.extract(iris.TimeConstraint(year=1990, month='Feb'))
+        self.assertCML(cube, ('constrained_load', 'year_month_bnds_1.cml'))
+        cube = self.daily_cube_bounds.extract(iris.TimeConstraint(year=1988, month='Feb'))
+        self.assertCML(cube, ('constrained_load', 'year_month_bnds_2.cml'))
+        cube = self.yearly_cube_points.extract(iris.TimeConstraint(year=1990, month='Mar'))
+        self.assertCML(cube, ('constrained_load', 'year_month_pts.cml'))
+        cube = self.yearly_cube_points.extract(iris.TimeConstraint(year=1990, month='Feb'))
+        self.assertIsNone(cube)        
+        cube = self.daily_cube_bounds.extract(iris.TimeConstraint(year=1987, month='Feb'))
+        self.assertIsNone(cube)        
+        cube = self.yearly_djf_cube_bounds.extract(iris.TimeConstraint(month=['Dec', 'Jan', 'Feb']))
+        self.assertCML(cube, ('constrained_load', 'multimonth.cml'))
+
+    def test_day(self):
+        # daily_cube_bounds, yearly_cube_bounds, yearly_cube_points
+        cube = self.daily_cube_bounds.extract(iris.TimeConstraint(day=23))
+        self.assertCML(cube, ('constrained_load', 'day_bnds.cml'))
+        cube = self.daily_cube_bounds.extract(iris.TimeConstraint(day=[1,2,3,4,5]))
+        self.assertCML(cube, ('constrained_load', 'multiday.cml'))
+
+        for x in xrange(10):
+            day = random.randint(1,28)
+            cube = self.yearly_cube_bounds.extract(iris.TimeConstraint(day=day))
+            self.assertCML(cube, ('constrained_load', 'day_random.cml'))    # Should match every cell as bounds span more than a mont
+
+        cube = self.yearly_cube_points.extract(iris.TimeConstraint(day=1))
+        self.assertCML(cube, ('constrained_load', 'day_pts.cml'))
+        cube = self.yearly_cube_points.extract(iris.TimeConstraint(day=23))
+        self.assertIsNone(cube)
+
+        # leap year - need a gregorian calendar - ostia data would suffice but is over 800MB
+        #cube = iris.load_strict(tests.get_data_path(['PP', 'ostia', 'ostia_sst_200604_201009_N216.pp']), 
+        #                                            iris.TimeConstraint(month='Feb', day=29))
+        #self.assertCML(cube, ('constrained_load', 'leap_year.cml'))
+        
+    def test_season(self):
+        # daily_cube_bounds, yearly_djf_cube_bounds, yearly_cube_points
+        cube = self.daily_cube_bounds.extract(iris.TimeConstraint(season='djf'))
+        self.assertCML(cube, ('constrained_load', 'djf_bnds.cml'))            
+        cube = self.daily_cube_bounds.extract(iris.TimeConstraint(season='mam'))
+        self.assertCML(cube, ('constrained_load', 'mam_bnds.cml'))            
+        cube = self.daily_cube_bounds.extract(iris.TimeConstraint(season='jja'))
+        self.assertCML(cube, ('constrained_load', 'jja_bnds.cml'))            
+        cube = self.daily_cube_bounds.extract(iris.TimeConstraint(season='son'))
+        self.assertCML(cube, ('constrained_load', 'son_bnds.cml'))
+
+        # No change to data containing only djf
+        cube = self.yearly_djf_cube_bounds.extract(iris.TimeConstraint(season='djf'))
+        self.assertEqual(self.yearly_djf_cube_bounds, cube)                
+        
+        # Data refers only to March 1st 0:00:00 
+        cube = self.yearly_cube_points.extract(iris.TimeConstraint(season='djf'))
+        self.assertIsNone(cube)
+        cube = self.yearly_cube_points.extract(iris.TimeConstraint(season='mam'))
+        self.assertCML(cube, ('constrained_load', 'mam_pts.cml'))
+        cube = self.yearly_cube_points.extract(iris.TimeConstraint(season='jja'))
+        self.assertIsNone(cube)
+        cube = self.yearly_cube_points.extract(iris.TimeConstraint(season='son'))
+        self.assertIsNone(cube)
+
+        with self.assertRaises(ValueError):
+            cube = self.yearly_cube_points.extract(iris.TimeConstraint(season='summer'))
+        with self.assertRaises(ValueError):
+            cube = self.yearly_cube_points.extract(iris.TimeConstraint(season='ABC'))
+
+    def test_season_year(self):
+        # daily_cube_bounds, yearly_cube_points
+        cube = self.daily_cube_bounds.extract(iris.TimeConstraint(season_year=1988))
+        self.assertEqual(self.daily_cube_bounds, cube)
+        cube = self.daily_cube_bounds.extract(iris.TimeConstraint(season_year=1988, season='djf'))
+        self.assertCML(cube, ('constrained_load', 'djf_year_bnds.cml'))
+        cube = self.daily_cube_bounds.extract(iris.TimeConstraint(season_year=1987))
+        self.assertIsNone(cube)
+        cube = self.daily_cube_bounds.extract(iris.TimeConstraint(season_year=1989))
+        self.assertIsNone(cube)
+        cube = self.yearly_cube_points.extract(iris.TimeConstraint(season_year=[1980, 1985, 1990], season='mam'))
+        self.assertCML(cube, ('constrained_load', 'mam_season_year_pts.cml'))
+
+    def test_time(self):
+        # minutes_cube_points, daily_cube_bounds, hourly_cube_points
+        cube = self.minutes_cube_points.extract(iris.TimeConstraint(hour=17))
+        self.assertCML(cube, ('constrained_load', 'hour.cml'))        
+        cube = self.minutes_cube_points.extract(iris.TimeConstraint(minute=20))
+        self.assertCML(cube, ('constrained_load', 'minute.cml'))                
+        cube = self.minutes_cube_points.extract(iris.TimeConstraint(hour=17, minute=20, second=0))
+        self.assertCML(cube, ('constrained_load', 'hour_min_sec.cml'))                
+        cube = self.minutes_cube_points.extract(iris.TimeConstraint(hour=17, minute=20, second=23))
+        self.assertIsNone(cube)
+        # Data has bounds that span a day so should match any time
+        cube = self.daily_cube_bounds.extract(iris.TimeConstraint(hour=17, minute=20, second=10, microsecond=200))
+        self.assertEqual(self.daily_cube_bounds, cube)
+        # 24 hour clock
+        cube = self.hourly_cube_points.extract(iris.TimeConstraint(hour=0))
+        self.assertCML(cube, ('constrained_load', 'hour_1.cml'))
+        cube = self.hourly_cube_points.extract(iris.TimeConstraint(hour=9))
+        self.assertCML(cube, ('constrained_load', 'hour_2.cml'))
+        cube = self.hourly_cube_points.extract(iris.TimeConstraint(hour=21))
+        self.assertCML(cube, ('constrained_load', 'hour_3.cml'))
+        
+
+class TestTimePeriodConstraint(tests.IrisTest):
+    def setUp(self):
+        
+    def test_year:
+        # Bounds
+        cube = self.yearly_cube_bounds.extract(iris.TimePeriodConstraint(start_year=1990))
+        self.assertCML(cube, ('constrained_load', 'start_year_bnds.cml'))        
+        cube = self.yearly_cube_bounds.extract(iris.TimePeriodConstraint(end_year=1995))                
+        self.assertCML(cube, ('constrained_load', 'end_year_bnds.cml'))        
+        cube = self.yearly_cube_bounds.extract(iris.TimePeriodConstraint(start_year=1990, end_year=1995))
+        self.assertCML(cube, ('constrained_load', 'startend_year_bnds.cml'))        
+        cube = self.yearly_cube_bounds.extract(iris.TimePeriodConstraint(start_year=1990, end_year=1990))
+        self.assertCML(cube, ('constrained_load', 'start_year_equal_bnds.cml'))        
+
+        # Points
+        cube = self.yearly_cube_points.extract(iris.TimePeriodConstraint(start_year=1990))
+        self.assertCML(cube, ('constrained_load', 'start_year_bnds.cml'))        
+        cube = self.yearly_cube_points.extract(iris.TimePeriodConstraint(end_year=1995))                
+        self.assertCML(cube, ('constrained_load', 'end_year_bnds.cml'))        
+        cube = self.yearly_cube_points.extract(iris.TimePeriodConstraint(start_year=1990, end_year=1995))
+        self.assertCML(cube, ('constrained_load', 'startend_year_bnds.cml'))        
+        cube = self.yearly_cube_points.extract(iris.TimePeriodConstraint(start_year=1990, end_year=1990))
+        self.assertIsNone(cube)
+
+    def test_month:
+        months = ('January', 'February', 'March', 'April', 'May', 'June', 
+                  'July', 'August', 'September', 'October', 'November', 'December')
+        for i, month in enumerate(months, start=1):
+            # Numerical
+            cube = self.daily_cube_bounds.extract(iris.TimePeriodConstraint(start_month=i))
+            self.assertCML(cube, ('constrained_load', 'start_' + month.lower() + '_bnds.cml'))
+            cube = self.daily_cube_bounds.extract(iris.TimePeriodConstraint(end_month=i))
+            self.assertCML(cube, ('constrained_load', 'end_' + month.lower() + '_bnds.cml'))
+            # Short name e.g 'Feb'
+            cube = self.daily_cube_bounds.extract(iris.TimeConstraint(start_month=month[0:3]))
+            self.assertCML(cube, ('constrained_load', 'start_' + month.lower() + '_bnds.cml'))
+            cube = self.daily_cube_bounds.extract(iris.TimeConstraint(end_month=month[0:3]))
+            self.assertCML(cube, ('constrained_load', 'end_' + month.lower() + '_bnds.cml'))
+            # Long name e.g. 'February'
+            cube = self.daily_cube_bounds.extract(iris.TimeConstraint(start_month=month))
+            self.assertCML(cube, ('constrained_load', 'start_' + month.lower() + '_bnds.cml'))
+            cube = self.daily_cube_bounds.extract(iris.TimeConstraint(end_month=month))
+            self.assertCML(cube, ('constrained_load', 'end_' + month.lower() + '_bnds.cml'))
+            # Lower case short name e.g. 'feb'
+            cube = self.daily_cube_bounds.extract(iris.TimeConstraint(start_month=month[0:3].lower()))
+            self.assertCML(cube, ('constrained_load', 'start_' + month.lower() + '_bnds.cml'))
+            cube = self.daily_cube_bounds.extract(iris.TimeConstraint(end_month=month[0:3].lower()))
+            self.assertCML(cube, ('constrained_load', 'end_' + month.lower() + '_bnds.cml'))
+            # Lower case long name e.g. 'february'
+            cube = self.daily_cube_bounds.extract(iris.TimeConstraint(start_month=month.lower()))
+            self.assertCML(cube, ('constrained_load', 'start_' + month.lower() + '_bnds.cml'))
+            cube = self.daily_cube_bounds.extract(iris.TimeConstraint(end_month=month.lower()))
+            self.assertCML(cube, ('constrained_load', 'end_' + month.lower() + '_bnds.cml'))
+
+        # Over the end of the year
+        cube = self.daily_cube_bounds.extract(iris.TimePeriodConstraint(start_month='Feb', end_month='Dec'))
+        self.assertCML(cube, ('constrained_load', 'startend_month_bnds_1.cml'))
+        cube = self.daily_cube_bounds.extract(iris.TimePeriodConstraint(start_month='Dec', end_month='Feb'))
+        self.assertCML(cube, ('constrained_load', 'startend_month_bnds_2.cml'))
+        yearly_djf_cube_bounds.extract(iris.TimePeriodConstraint(start_month='Dec', end_month='Mar'))
+        self.assertEqual(cube, yearly_djf_cube_bounds)
+
+        # Year and month
+        cube = self.yearly_cube_points.extract(iris.TimePeriodConstraint(start_year=1890, start_month='Nov', end_year=1900, end_month='Feb'))
+        self.assertCML(cube, ('constrained_load', 'startend_year_month_bnds.cml'))
+        cube = self.yearly_cube_points.extract(iris.TimePeriodConstraint(start_month='Nov', end_month='Feb'))
+        self.assertIsNone(cube)
+        
+    def test_day:
+        # Bounds
+        cube = daily_cube_bounds.extract(iris.TimePeriodConstraint(start_day=5))
+        self.assertCML(cube, ('constrained_load', 'start_day_bnds.cml'))        
+        cube = daily_cube_bounds.extract(iris.TimePeriodConstraint(end_day=5))
+        self.assertCML(cube, ('constrained_load', 'end_day_bnds.cml'))        
+        cube = self.daily_cube_bounds.extract(iris.TimePeriodConstraint(start_day=5, end_day=10))
+        self.assertCML(cube, ('constrained_load', 'startend_day_bnds_1.cml'))        
+        cube = self.daily_cube_bounds.extract(iris.TimePeriodConstraint(start_day=25, end_day=5))
+        self.assertCML(cube, ('constrained_load', 'startend_day_bnds_2.cml'))        
+        # Points
+        cube = hourly_cube_points.extract(iris.TimePeriodConstraint(start_day=8))
+        self.assertEqual(self.hourly_cube_points, cube)
+        cube = hourly_cube_points.extract(iris.TimePeriodConstraint(start_day=9))
+        self.assertCML(cube, ('constrained_load', 'start_day_pts_1.cml'))
+        cube = hourly_cube_points.extract(iris.TimePeriodConstraint(start_day=10))
+        self.assertCML(cube, ('constrained_load', 'start_day_pts_2.cml'))
+        cube = hourly_cube_points.extract(iris.TimePeriodConstraint(start_day=11))
+        self.assertIsNone(cube)
+        cube = hourly_cube_points.extract(iris.TimePeriodConstraint(end_day=9))
+        self.assertIsNone(cube)
+        cube = hourly_cube_points.extract(iris.TimePeriodConstraint(end_day=10))
+        self.assertCML(cube, ('constrained_load', 'start_day_pts_2.cml'))
+        cube = hourly_cube_points.extract(iris.TimePeriodConstraint(end_day=11))
+        self.assertEqual(self.hourly_cube_points, cube)
+
+        # Month and day
+        cube = self.daily_cube_bounds.extract(iris.TimePeriodConstraint(start_month='Mar', start_day=5, end_month='Mar', end_day=10))
+        self.assertCML(cube, ('constrained_load', 'startend_month_day_bnds.cml'))
+
+    def test_ymd:
+        
+        pass
+        pass
+    def test_over_period_end:
+        pass
+    def test_period_combinations:
+        pass
+    def test_time_and_period_combinations:
+        pass
+
+
 if __name__ == "__main__":
     tests.main()
