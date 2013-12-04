@@ -118,8 +118,8 @@ class TestTrajectory(tests.IrisTest):
     @iris.tests.skip_data
     def test_tri_polar(self):
         # load data
-        cubes = iris.load(tests.get_data_path(['NetCDF', 'ORCA2', 'votemper.nc']))
-        cube = cubes[0]
+        path = tests.get_data_path(['NetCDF', 'ORCA2', 'votemper.nc'])
+        cube = iris.load_cube(path, 'sea_water_potential_temperature')
         # The netCDF file has different data types for the points and
         # bounds of 'depth'. This wasn't previously supported, so we
         # emulate that old behaviour.

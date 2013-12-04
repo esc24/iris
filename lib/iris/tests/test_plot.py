@@ -328,13 +328,13 @@ class Test1dQuickplotScatter(Test1dScatter):
 class TestAttributePositive(tests.GraphicsTest):
     def test_1d_positive_up(self):
         path = tests.get_data_path(('NetCDF', 'ORCA2', 'votemper.nc'))
-        cube = iris.load_cube(path)
+        cube = iris.load_cube(path, 'sea_water_potential_temperature')
         qplt.plot(cube.coord('depth'), cube[0, :, 60, 80])
         self.check_graphic()
 
     def test_1d_positive_down(self):
         path = tests.get_data_path(('NetCDF', 'ORCA2', 'votemper.nc'))
-        cube = iris.load_cube(path)
+        cube = iris.load_cube(path, 'sea_water_potential_temperature')
         qplt.plot(cube[0, :, 60, 80], cube.coord('depth'))
         self.check_graphic()
 
@@ -347,8 +347,8 @@ class TestAttributePositive(tests.GraphicsTest):
 
     def test_2d_positive_down(self):
         path = tests.get_data_path(('NetCDF', 'ORCA2', 'votemper.nc'))
-        cube = iris.load_cube(path)[0, :, 42, :]
-        qplt.pcolormesh(cube)
+        cube = iris.load_cube(path, 'sea_water_potential_temperature')
+        qplt.pcolormesh(cube[0, :, 42, :])
         self.check_graphic()
 
 

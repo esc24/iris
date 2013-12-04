@@ -24,6 +24,7 @@ import warnings
 
 import numpy as np
 import numpy.ma as ma
+from scipy.sparse import csc_matrix
 
 import iris.analysis.cartography
 import iris.coords
@@ -1025,3 +1026,186 @@ def regrid_area_weighted_rectilinear_src_and_grid(src_cube, grid_cube):
         new_cube = new_cube[tuple(indices)]
 
     return new_cube
+
+
+def regrid_src_to_area_weighted_rectilinear_grid(src_cube,
+                                                 area_cube,
+                                                 grid_cube):
+    """
+    Return a new cube with the data values calculated using the area weighted
+    mean of data values from :data:`src_cube` and the weights from
+    :data:`area_cube` regridded onto the horizontal grid of :data:`grid_cube`.
+
+    Note that, this function requires that the :data:`src_cube` has a variable
+    horizontal grid and the target :data:`grid_cube` is rectilinear i.e.
+    expressed in terms of two orthogonal 1D horizontal coordinates. Both grids
+    require to be in the same coordinate system, and the :data:`grid_cube` must
+    have horizontal coordinates that are both bounded and contiguous.
+
+    .. warning::
+
+        * All cubes require to be 2D.
+        * All coordinates that span the :data:`src_cube` that don't define
+          the horizontal grid will be ignored.
+
+    Args:
+    * src_cube:
+        A :class:`iris.cube.Cube` instance that defines the source
+        variable grid to be regridded.
+    * area_cube:
+        A :class:`iris.cube.Cube` instance that defines the weights
+        for the source variable grid cells.
+    * grid_cube:
+        A :class:`iris.cube.Cube` instance that defines the target
+        rectilinear grid.
+
+    Returns:
+        A :class:`iris.cube.Cube` instance.
+
+    """
+    def copy_coords(coords, add_coord):
+        for coord in coords:
+            if coord is not sx and coord is not sy:
+                # Restrict to scalar coordinates only.
+                if not src_cube.coord_dims(coord):
+                    add_coord(coord.copy())
+
+    if src_cube.shape != area_cube.shape:
+        msg = 'The source cube and area cube require the same data shape.'
+        raise ValueError(msg)
+
+    if src_cube.ndim != 2 or grid_cube.ndim != 2:
+        msg = 'The source cube and target grid cube must reference 2D data.'
+        raise ValueError(msg)
+
+    if src_cube.aux_factories:
+        msg = 'All source cube derived coordinates will be ignored.'
+        warnings.warn(msg)
+
+    # Get the source cube x and y 2D auxiliary coordinates.
+    sx, sy = src_cube.coord(axis='x'), src_cube.coord(axis='y')
+    # Get the target grid cube x and y dimension coordinates.
+    tx, ty = _get_xy_dim_coords(grid_cube)
+
+    if sx.ndim != sy.ndim:
+        msg = 'The source cube x ({!r}) and y ({!r}) coordinates must ' \
+            'have the same dimensionality.'
+        raise ValueError(msg.format(sx.name(), sy.name()))
+
+    if sx.ndim != 2:
+        msg = 'The source cube x ({!r}) and y ({!r}) coordinates must ' \
+            'be 2D auxiliary coordinates.'
+        raise ValueError(msg.format(sx.name(), sy.name()))
+
+    if sx.coord_system != sy.coord_system:
+        msg = 'The source cube x ({!r}) and y ({!r}) coordinates must ' \
+            'have the same coordinate system.'
+        raise ValueError(msg.format(sx.name(), sy.name()))
+
+    if sx.coord_system != tx.coord_system and \
+            sx.coord_system is not None and \
+            tx.coord_system is not None:
+        msg = 'The source cube and target grid cube must have the same ' \
+            'coordinate system.'
+        raise ValueError(msg)
+
+    if not tx.has_bounds() or not tx.is_contiguous():
+        msg = 'The target grid cube x ({!r})coordinate requires ' \
+            'contiguous bounds.'
+        raise ValueError(msg.format(tx.name()))
+
+    if not ty.has_bounds() or not ty.is_contiguous():
+        msg = 'The target grid cube y ({!r}) coordinate requires ' \
+            'contiguous bounds.'
+        raise ValueError(msg.format(ty.name()))
+
+    # Flatten the points of the source space.
+    sx_points = sx.points.flatten()
+    sy_points = sy.points.flatten()
+
+    # Align the source cube x coordinate range to the target grid
+    # cube x coordinate range.
+    min_sx, min_tx = np.min(sx.points), np.min(tx.points)
+    if min_sx < 0 and min_tx >= 0:
+        indices = np.where(sx_points < 0)
+        sx_points[indices] += 360
+    elif min_sx >= 0 and min_tx < 0:
+        indices = np.where(sx_points > 180)
+        sx_points[indices] -= 360
+
+    # Create target grid cube x and y cell boundaries.
+    tx_depth, ty_depth = tx.points.size, ty.points.size
+    tx_dim, = grid_cube.coord_dims(tx)
+    ty_dim, = grid_cube.coord_dims(ty)
+
+    tx_cells = np.concatenate((tx.bounds[:, 0],
+                               tx.bounds[-1, 1].reshape(1)))
+    ty_cells = np.concatenate((ty.bounds[:, 0],
+                               ty.bounds[-1, 1].reshape(1)))
+
+    # Determine the target grid cube x and y cells that bound
+    # the source cube x and y points.
+    x_indices = np.searchsorted(tx_cells, sx_points, side='right') - 1
+    y_indices = np.searchsorted(ty_cells, sy_points, side='right') - 1
+
+    # Now construct a sparse M x N matix, where M is the flattened target
+    # space, and N is the flattened source space. The sparse matrix will then
+    # be populated with those source cube points that contribute to a specific
+    # target cube cell.
+
+    # Determine the valid indices and their offsets in M x N space.
+    if ma.isMaskedArray(src_cube.data):
+        # Calculate the valid M offsets, accounting for the source cube mask.
+        mask = ~src_cube.data.mask.flatten()
+        cols = np.where((y_indices >= 0) & (y_indices < ty_depth) &
+                        (x_indices >= 0) & (x_indices < tx_depth) &
+                        mask)[0]
+    else:
+        # Calculate the valid M offsets.
+        cols = np.where((y_indices >= 0) & (y_indices < ty_depth) &
+                        (x_indices >= 0) & (x_indices < tx_depth))[0]
+
+    # Reduce the indices to only those that are valid.
+    x_indices = x_indices[cols]
+    y_indices = y_indices[cols]
+
+    # Calculate the valid N offsets.
+    if ty_dim < tx_dim:
+        rows = y_indices * tx.points.size + x_indices
+    else:
+        rows = x_indices * ty.points.size + y_indices
+
+    # Calculate the associated valid area weights.
+    area_flat = area_cube.data.flatten()
+    data = area_flat[cols]
+
+    # Build our sparse M x N matrix of area weights.
+    sparse_matrix = csc_matrix((data, (rows, cols)),
+                               shape=(grid_cube.data.size, src_cube.data.size))
+
+    # Performing a sparse sum to collapse the matrix to (M, 1).
+    sum_area = sparse_matrix.sum(axis=1).getA()
+
+    # Determine the offsets of the non-zero weight sums.
+    # Note that, a weighted sum of a target cube grid cell may only be
+    # zero iff there are no source cube point contributions.
+    indices = np.where(sum_area > 0)
+
+    # Calculate the numerator of the weighted mean (M, 1).
+    numerator = sparse_matrix * src_cube.data.reshape(-1, 1)
+
+    # Calculate the area weighted mean payload.
+    weighted_mean = np.zeros(numerator.shape, dtype=numerator.dtype)
+    weighted_mean[indices] = numerator[indices] / sum_area[indices]
+
+    # Construct the final regridded area weighted mean cube.
+    dim_coords_and_dims = zip((ty.copy(), tx.copy()),
+                              (ty_dim, tx_dim))
+
+    cube = iris.cube.Cube(weighted_mean.reshape(grid_cube.shape),
+                          dim_coords_and_dims=dim_coords_and_dims)
+
+    cube.metadata = copy.deepcopy(src_cube.metadata)
+    copy_coords(src_cube.aux_coords, cube.add_aux_coord)
+
+    return cube
