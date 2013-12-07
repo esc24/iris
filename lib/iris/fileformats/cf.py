@@ -788,7 +788,7 @@ class CFReader(object):
         # framework is implemented in the Iris data model.
         self._variable_types = (CFAncillaryDataVariable, CFAuxiliaryCoordinateVariable,
                                 CFBoundaryVariable, CFClimatologyVariable,
-                                CFGridMappingVariable, CFLabelVariable)
+                                CFGridMappingVariable, CFLabelVariable, CFMeasureVariable)
         
         #: Collection of CF-netCDF variables associated with this netCDF file
         self.cf_group = CFGroup()
