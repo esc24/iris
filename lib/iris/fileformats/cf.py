@@ -784,8 +784,6 @@ class CFReader(object):
         self._filename = os.path.expanduser(filename)
         # All CF variable types EXCEPT for the "special cases" of
         # CFDataVariable, CFCoordinateVariable and _CFFormulaTermsVariable.
-        # Temporarily remove reference to CFMeasureVariable until associated
-        # framework is implemented in the Iris data model.
         self._variable_types = (CFAncillaryDataVariable, CFAuxiliaryCoordinateVariable,
                                 CFBoundaryVariable, CFClimatologyVariable,
                                 CFGridMappingVariable, CFLabelVariable, CFMeasureVariable)
