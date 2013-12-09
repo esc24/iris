@@ -1119,11 +1119,18 @@ def regrid_weighted_curvilinear_to_rectilinear(src_cube, weights, grid_cube):
         raise ValueError(msg.format(sx.name(), sy.name()))
 
     def _src_align_and_flatten(coord):
-        # Ensure that the shape of the coordinate matches
-        # that of the source cube data.
+        # Ensure that the shape of the coordinate matches that of the
+        # source cube data. Assuming row major format.
         points = coord.points
-        if points.shape != src_cube.shape:
+        dims = src_cube.coord_dims(coord)
+        if points.shape != src_cube.shape or np.min(np.diff(dims)) != 1:
             points = points.T
+            if points.shape != src_cube.shape:
+                # The data really must be in column-major format!
+                points = points.T
+                msg = 'The source cube data appears to be in column major ' \
+                    'format. Please ensure that the weights array also has ' \
+                    'a similar format.'
         return np.asarray(points.flatten())
 
     # Align and flatten the coordinate points of the source space,
@@ -1206,7 +1213,7 @@ def regrid_weighted_curvilinear_to_rectilinear(src_cube, weights, grid_cube):
             # correct descending [upper, lower) interval cell, source to target
             # regrid behaviour.
             delta = np.where(left != right)[0]
-            if delta.any():
+            if delta.size:
                 indices[delta] = depth - left[delta]
         return indices
 
