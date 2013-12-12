@@ -1118,26 +1118,6 @@ def regrid_weighted_curvilinear_to_rectilinear(src_cube, weights, grid_cube):
             'be 2D auxiliary coordinates.'
         raise ValueError(msg.format(sx.name(), sy.name()))
 
-    def _src_align_and_flatten(coord):
-        # Ensure that the shape of the coordinate matches that of the
-        # source cube data. Assuming row major format.
-        points = coord.points
-        dims = src_cube.coord_dims(coord)
-        if points.shape != src_cube.shape or np.min(np.diff(dims)) != 1:
-            points = points.T
-            if points.shape != src_cube.shape:
-                # The data really must be in column-major format!
-                points = points.T
-                msg = 'The source cube data appears to be in column major ' \
-                    'format. Please ensure that the weights array also has ' \
-                    'a similar format.'
-        return np.asarray(points.flatten())
-
-    # Align and flatten the coordinate points of the source space,
-    # and ensure that they are unmasked!
-    sx_points = _src_align_and_flatten(sx)
-    sy_points = _src_align_and_flatten(sy)
-
     if sx.coord_system != sy.coord_system:
         msg = 'The source cube x ({!r}) and y ({!r}) coordinates must ' \
             'have the same coordinate system.'
@@ -1160,7 +1140,23 @@ def regrid_weighted_curvilinear_to_rectilinear(src_cube, weights, grid_cube):
             'contiguous bounds.'
         raise ValueError(msg.format(ty.name()))
 
-    # Align the source cube x coordinate range to the target grid
+    def _src_align_and_flatten(coord):
+        # Return a flattened, unmasked copy of a coordinate's points array that
+        # will align with a flattened version of the source cube's data.
+        points = coord.points
+        if src_cube.coord_dims(coord) == (1, 0):
+            points = points.T
+        if points.shape != src_cube.shape:
+            msg = 'The shape of the points array of !r is not compatible ' \
+                'with the shape of !r.'.format(coord.name(), src_cube.name())
+            raise ValueError(msg)
+        return np.asarray(points.flatten())
+
+    # Align and flatten the coordinate points of the source space.
+    sx_points = _src_align_and_flatten(sx)
+    sy_points = _src_align_and_flatten(sy)
+
+    # Match the source cube x coordinate range to the target grid
     # cube x coordinate range.
     min_sx, min_tx = np.min(sx.points), np.min(tx.points)
     modulus = sx.units.modulus
