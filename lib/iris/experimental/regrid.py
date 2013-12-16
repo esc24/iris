@@ -1254,8 +1254,9 @@ def regrid_weighted_curvilinear_to_rectilinear(src_cube, weights, grid_cube):
     # Performing a sparse sum to collapse the matrix to (M, 1).
     sum_weights = sparse_matrix.sum(axis=1).getA()
 
-    # Determine the unique rows to populate.
-    rows = np.array(sorted(set(rows)))
+    # Determine the rows (flattened target indices) that have a
+    # contribution from one or more source points.
+    rows = np.nonzero(sum_weights)
 
     # Calculate the numerator of the weighted mean (M, 1).
     numerator = sparse_matrix * src_cube.data.reshape(-1, 1)

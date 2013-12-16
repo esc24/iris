@@ -162,6 +162,20 @@ class Test(tests.IrisTest):
         mask = np.array([[True, False], [False, False]])
         self.assertArrayEqual(result.data.mask, mask)
 
+    def test_aligned_src_x_zero_weights(self):
+        self.src.add_aux_coord(self.src_y, (0, 1))
+        self.src.add_aux_coord(self.src_x_positive, (0, 1))
+        self.grid.add_dim_coord(self.grid_y_inc, 0)
+        self.grid.add_dim_coord(self.grid_x_inc, 1)
+        self.weights[:, 2] = 0
+        self.weights[1, :] = 0
+        result = regrid(self.src, self.weights, self.grid)
+        data = np.array([0, 0, 0, self._weighted_mean([9, 10])]).reshape(2, 2)
+        expected = self._expected_cube(data)
+        self.assertEqual(result, expected)
+        mask = np.array([[True, True], [True, False]])
+        self.assertArrayEqual(result.data.mask, mask)
+
     def test_aligned_src_x_transpose(self):
         self.src.add_aux_coord(self.src_y, (0, 1))
         self.src.add_aux_coord(self.src_x_transpose, (1, 0))
