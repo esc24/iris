@@ -750,6 +750,14 @@ class HybridPressureFactoryWithReferencePressure(AuxCoordFactory):
         """
         super(HybridPressureFactoryWithReferencePressure, self).__init__()
 
+        # Check for sufficient coordinates.
+        if (delta is None or reference_pressure is None) and \
+                surface_air_pressure is None:
+            msg = 'Unable to contruct hybrid pressure coordinate factory: ' \
+                  'no delta/reference_pressure or surface_air_pressure ' \
+                  'coordinates.'
+            raise ValueError(msg)
+
         # Check bounds.
         if delta and delta.nbounds not in (0, 2):
             raise ValueError('Invalid delta coordinate: must have either 0 or'
@@ -767,12 +775,6 @@ class HybridPressureFactoryWithReferencePressure(AuxCoordFactory):
             warnings.warn(msg, UserWarning, stacklevel=2)
 
         # Check units.
-        if (delta is None or reference_pressure is None) and \
-                surface_air_pressure is None:
-            msg = 'Unable to determine units: no delta/reference_pressure ' \
-                  'or surface_air_pressure available.'
-            raise ValueError(msg)
-
         if delta is not None and not delta.units.is_dimensionless():
             raise ValueError('Invalid units: delta must be dimensionless.')
 

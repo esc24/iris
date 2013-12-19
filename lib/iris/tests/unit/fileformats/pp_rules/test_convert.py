@@ -59,8 +59,7 @@ class TestLBVC(tests.IrisTest):
          aux_coords_and_dims) = convert(field)
 
         # Check for one and only one matching coordinate.    
-        coords_and_dims = dim_coords_and_dims + aux_coords_and_dims
-        matching_coords = [coord for coord, _ in coords_and_dims if
+        matching_coords = [coord for coord, _ in aux_coords_and_dims if
                            coord_predicate(coord)]
         self.assertEqual(len(matching_coords), 1)
         coord = matching_coords[0]
