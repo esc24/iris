@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Iris.  If not, see <http://www.gnu.org/licenses/>.
 """
-Unit tests for the 
+Unit tests for the
 `iris.aux_factory.HybridPressureFactoryWithReferencePressure` class.
 
 """
@@ -55,7 +55,7 @@ class Test___init__(tests.IrisTest):
                           reference_pressure=None,
                           sigma=None,
                           surface_air_pressure=self.reference_pressure)
-    
+
     def test_incompatible_delta_units(self):
         self.delta.units = iris.unit.Unit('m')
         with self.assertRaises(ValueError):
@@ -125,7 +125,7 @@ class Test___init__(tests.IrisTest):
         self.assertEqual(factory.units, self.surface_air_pressure.units)
         self.assertIsNone(factory.coord_system)
         self.assertEqual(factory.attributes, {})
-        
+
 
 class Test_dependencies(tests.IrisTest):
     def setUp(self):
@@ -156,7 +156,7 @@ class Test_make_coord(tests.IrisTest):
         surface_air_pressure = iris.coords.AuxCoord(
             np.arange(4).reshape(2, 2), 'surface_air_pressure',
             units='Pa')
-        
+
         def coords_dims_func(coord):
             mapping = dict(delta=(0,), p_zero=(), sigma=(0,),
                            surface_air_pressure=(1, 2))
@@ -188,7 +188,7 @@ class Test_make_coord(tests.IrisTest):
         surface_air_pressure = iris.coords.AuxCoord(
             np.arange(4).reshape(2, 2), 'surface_air_pressure',
             units='Pa')
-        
+
         def coords_dims_func(coord):
             mapping = dict(p_zero=(), sigma=(0,),
                            surface_air_pressure=(1, 2))
@@ -215,7 +215,7 @@ class Test_make_coord(tests.IrisTest):
         surface_air_pressure = iris.coords.AuxCoord(
             np.arange(4).reshape(2, 2), 'surface_air_pressure',
             units='Pa')
-        
+
         def coords_dims_func(coord):
             mapping = dict(delta=(0,), sigma=(0,),
                            surface_air_pressure=(1, 2))
@@ -236,7 +236,6 @@ class Test_make_coord(tests.IrisTest):
         derived_coord = factory.make_coord(coords_dims_func)
         self.assertEqual(expected_coord, derived_coord)
 
-
     def test_none_sigma(self):
         delta = iris.coords.DimCoord(
             [0.0, 1.0, 2.0], long_name='delta')
@@ -245,7 +244,7 @@ class Test_make_coord(tests.IrisTest):
         surface_air_pressure = iris.coords.AuxCoord(
             np.arange(4).reshape(2, 2), 'surface_air_pressure',
             units='Pa')
-        
+
         def coords_dims_func(coord):
             mapping = dict(delta=(0,), p_zero=(),
                            surface_air_pressure=(1, 2))
@@ -270,7 +269,7 @@ class Test_make_coord(tests.IrisTest):
             2.0, long_name='p_zero', units='Pa')
         sigma = iris.coords.DimCoord(
             [1.0, 0.9, 0.8], long_name='sigma')
-        
+
         def coords_dims_func(coord):
             mapping = dict(delta=(0,), p_zero=(), sigma=(0,))
             return mapping[coord.name()]
@@ -299,7 +298,7 @@ class Test_make_coord(tests.IrisTest):
         surface_air_pressure = iris.coords.AuxCoord(
             np.arange(4).reshape(2, 2), 'surface_air_pressure',
             units='Pa')
-        
+
         def coords_dims_func(coord):
             mapping = dict(delta=(0,), p_zero=(), sigma=(0,),
                            surface_air_pressure=(1, 2))
@@ -315,7 +314,7 @@ class Test_make_coord(tests.IrisTest):
         delta_vals = delta.bounds.reshape(3, 1, 1, 2)
         ref_p_vals = reference_pressure.points.reshape(1, 1, 1, 1)
         sigma_vals = sigma.bounds.reshape(3, 1, 1, 2)
-        surf_vals = surface_air_pressure.points.reshape(1, 2, 2 , 1)
+        surf_vals = surface_air_pressure.points.reshape(1, 2, 2, 1)
         expected_points = delta_pts * ref_p_pts + sigma_pts * surf_pts
         expected_bounds = delta_vals * ref_p_vals + sigma_vals * surf_vals
         expected_coord = iris.coords.AuxCoord(expected_points,

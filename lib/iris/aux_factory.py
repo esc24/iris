@@ -763,12 +763,12 @@ class HybridPressureFactoryWithReferencePressure(AuxCoordFactory):
         # Check that provided coords meet necessary conditions.
         self._check_dependencies(delta, reference_pressure, sigma,
                                  surface_air_pressure)
-        
+
         self.delta = delta
         self.reference_pressure = reference_pressure
         self.sigma = sigma
         self.surface_air_pressure = surface_air_pressure
-        
+
         self.standard_name = 'air_pressure'
         self.attributes = {}
 
