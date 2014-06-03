@@ -144,25 +144,14 @@ class Constraint(object):
         else return None.
 
         """
-        result = None
-        # Account for a scalar cube.  Make an indexable so that we can use a
-        # common code path as the non-scalar cubes.
-        reshaped = False
-        if cube.ndim == 0:
-            reshaped = True
-            orig_cube = cube
-            cube = orig_cube.copy()
-            cube.data = cube.data[None]
-
         resultant_CIM = self._CIM_extract(cube)
         slice_tuple = resultant_CIM.as_slice()
+        result = None
         if slice_tuple is not None:
             # Slicing the cube is an expensive operation.
             if all([item == slice(None) for item in slice_tuple]):
-                # Don't perform a full slice, just return the original cube.
+                # Don't perform a full slice, just return the cube.
                 result = cube
-                if reshaped:
-                    result = orig_cube
             else:
                 # Performing the partial slice.
                 result = cube[slice_tuple]
@@ -170,7 +159,10 @@ class Constraint(object):
 
     def _CIM_extract(self, cube):
         # Returns _ColumnIndexManager
-        resultant_CIM = _ColumnIndexManager(len(cube.shape))
+
+        # Cater for scalar cubes by setting the dimesionality to 1
+        # when cube.ndim is 0.
+        resultant_CIM = _ColumnIndexManager(cube.ndim or 1)
 
         if not self._coordless_match(cube):
             resultant_CIM.all_false()
@@ -246,7 +238,9 @@ class _CoordConstraint(object):
         match the constraint.
 
         """
-        cube_cim = _ColumnIndexManager(len(cube.shape))
+        # Cater for scalar cubes by setting the dimesionality to 1
+        # when cube.ndim is 0.
+        cube_cim = _ColumnIndexManager(cube.ndim or 1)
         try:
             coord = cube.coord(self.coord_name)
         except iris.exceptions.CoordinateNotFoundError:
