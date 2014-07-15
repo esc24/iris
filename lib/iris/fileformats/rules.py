@@ -650,11 +650,11 @@ def _dereference_args(factory, reference_targets, regrid_cache, cube):
                     cube.add_aux_coord(new_coord, dims)
                     args.append(new_coord)
                 else:
-                    raise _ReferenceError('Unable to regrid reference for'
-                                          ' {!r}'.format(arg.name))
+                    warnings.warn('Unable to regrid reference '
+                                  'for {!r}'.format(arg.name))
             else:
-                raise _ReferenceError("The file(s) {{filenames}} don't contain"
-                                      " field(s) for {!r}.".format(arg.name))
+                warnings.warn('The file does not contain '
+                              'field(s) for {!r}.'.format(arg.name))
         else:
             # If it wasn't a Reference, then arg is a dictionary
             # of keyword arguments for cube.coord(...).
@@ -812,15 +812,15 @@ def load_cubes(filenames, user_callback, loader):
     regrid_cache = {}
     for cube, factories in results_needing_reference:
         for factory in factories:
+            factory_name = factory.factory_class.__name__
+            args = _dereference_args(factory, concrete_reference_targets,
+                                     regrid_cache, cube)
             try:
-                args = _dereference_args(factory, concrete_reference_targets,
-                                         regrid_cache, cube)
-            except _ReferenceError as e:
-                msg = 'Unable to create instance of {factory}. ' + e.message
-                factory_name = factory.factory_class.__name__
-                warnings.warn(msg.format(filenames=filenames,
-                                         factory=factory_name))
-            else:
                 aux_factory = factory.factory_class(*args)
-                cube.add_aux_factory(aux_factory)
+            except ValueError as e:
+                msg = 'Unable to instantiate {factory}. {factory_msg}'
+                warnings.warn(msg.format(filenames=filenames,
+                                         factory=factory_name,
+                                         factor_msg=e.message))
+            cube.add_aux_factory(aux_factory)
         yield cube
