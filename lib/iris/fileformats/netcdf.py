@@ -93,23 +93,31 @@ _UKMO_DATA_ATTRS = ['STASH', 'um_stash_source', 'ukmo__process_flags']
 
 CF_CONVENTIONS_VERSION = 'CF-1.5'
 
-_FactoryDefn = collections.namedtuple('_FactoryDefn', ('primary', 'std_name',
-                                                       'formula_terms_format'))
+_FactoryDefn = collections.namedtuple('_FactoryDefn',
+                                      ('primary', 'std_name',
+                                       'formula_terms_mapping'))
 _FACTORY_DEFNS = {
     HybridHeightFactory: _FactoryDefn(
         primary='delta',
         std_name='atmosphere_hybrid_height_coordinate',
-        formula_terms_format='a: {delta} b: {sigma} orog: {orography}'),
+        formula_terms_mapping={'a': 'delta',
+                               'b': 'sigma',
+                               'orog': 'orography'}),
     HybridPressureFactory: _FactoryDefn(
         primary='delta',
         std_name='atmosphere_hybrid_sigma_pressure_coordinate',
-        formula_terms_format='ap: {delta} b: {sigma} '
-        'ps: {surface_air_pressure}'),
+        formula_terms_mapping={'ap': 'delta',
+                               'b': 'sigma',
+                               'ps': 'surface_air_pressure'}),
     OceanSigmaZFactory: _FactoryDefn(
         primary='zlev',
         std_name='ocean_sigma_z_coordinate',
-        formula_terms_format='sigma: {sigma} eta: {eta} depth: {depth} '
-        'depth_c: {depth_c} nsigma: {nsigma} zlev: {zlev}')
+        formula_terms_mapping={'sigma': 'sigma',
+                               'eta': 'eta',
+                               'depth': 'depth',
+                               'depth_c': 'depth_c',
+                               'nsigma': 'nsigma',
+                               'zlev': 'zlev'})
 }
 
 
@@ -416,15 +424,31 @@ def _load_aux_factory(engine, cube):
             raise ValueError('Unable to find coordinate for variable '
                              '{!r}'.format(name))
 
+        def build_factory(factory_type):
+            # Construct the specified type of factory using
+            # coordinates identified through the formula terms.
+            dependencies = {}
+            formula_terms_mapping = _FACTORY_DEFNS[
+                factory_type].formula_terms_mapping
+            for term, name in formula_terms_mapping.items():
+                try:
+                    coord = coord_from_term(term)
+                except (KeyError, ValueError):
+                    coord = None
+                dependencies[name] = coord
+            return factory_type(**dependencies)
+
         if formula_type == 'atmosphere_hybrid_height_coordinate':
-            delta = coord_from_term('a')
-            sigma = coord_from_term('b')
-            orography = coord_from_term('orog')
-            factory = HybridHeightFactory(delta, sigma, orography)
+            factory = build_factory(HybridHeightFactory)
+        elif formula_type == 'ocean_sigma_z_coordinate':
+            factory = build_factory(OceanSigmaZFactory)
         elif formula_type == 'atmosphere_hybrid_sigma_pressure_coordinate':
             # Hybrid pressure has two valid versions of its formula terms:
             # "p0: var1 a: var2 b: var3 ps: var4" or
             # "ap: var1 b: var2 ps: var3" where "ap = p0 * a"
+            formula_terms_mapping = _FACTORY_DEFNS[
+                HybridPressureFactory].formula_terms_mapping.copy()
+            name = formula_terms_mapping.pop('ap')
             try:
                 # Attempt to get the "ap" term.
                 delta = coord_from_term('ap')
@@ -447,19 +471,16 @@ def _load_aux_factory(engine, cube):
                 delta.rename('vertical pressure')
                 delta.var_name = 'ap'
                 cube.add_aux_coord(delta, cube.coord_dims(coord_a))
+            dependencies = {name: delta}
+            # Handle remaining terms.
+            for term, name in formula_terms_mapping.items():
+                try:
+                    coord = coord_from_term(term)
+                except (KeyError, ValueError):
+                    coord = None
+                dependencies[name] = coord
+            factory = HybridPressureFactory(**dependencies)
 
-            sigma = coord_from_term('b')
-            surface_air_pressure = coord_from_term('ps')
-            factory = HybridPressureFactory(delta, sigma, surface_air_pressure)
-        elif formula_type == 'ocean_sigma_z_coordinate':
-            sigma = coord_from_term('sigma')
-            eta = coord_from_term('eta')
-            depth = coord_from_term('depth')
-            depth_c = coord_from_term('depth_c')
-            nsigma = coord_from_term('nsigma')
-            zlev = coord_from_term('zlev')
-            factory = OceanSigmaZFactory(sigma, eta, depth,
-                                         depth_c, nsigma, zlev)
         cube.add_aux_factory(factory)
 
 
@@ -879,9 +900,14 @@ class Saver(object):
                 cf_var.standard_name = factory_defn.std_name
                 cf_var.axis = 'Z'
                 names = {key: self._name_coord_map.name(coord) for
-                         key, coord in factory.dependencies.iteritems()}
-                formula_terms = factory_defn.formula_terms_format.format(
-                    **names)
+                         key, coord in factory.dependencies.iteritems()
+                         if coord is not None}
+                # Construct formula terms string based on factory
+                # dependencies that are not None.
+                formula_terms = ' '.join(
+                    ['{}: {}'.format(term, names[key]) for term, key in
+                     factory_defn.formula_terms_mapping.items() if
+                     key in names])
                 cf_var.formula_terms = formula_terms
 
     def _get_dim_names(self, cube):
