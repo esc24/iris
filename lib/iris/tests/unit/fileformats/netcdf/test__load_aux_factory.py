@@ -26,7 +26,7 @@ import warnings
 
 from iris.coords import DimCoord
 from iris.cube import Cube
-from iris.aux_factory import HybridPressureFactory
+from iris.unit import Unit
 from iris.fileformats.netcdf import _load_aux_factory
 
 
@@ -106,6 +106,128 @@ class TestAtmosphereHybridSigmaPressureCoordinate(tests.IrisTest):
             msg = 'Ignoring atmosphere hybrid sigma pressure scalar ' \
                 'coordinate {!r} bounds.'.format(coord_p0.name())
             self.assertEqual(msg, warn[0].message.message)
+
+    def test_formula_terms_ps_missing(self):
+        self.provides['coordinates'].append((mock.sentinel.ap, 'ap'))
+        self.provides['coordinates'].remove((mock.sentinel.ps, 'ps'))
+        self.requires['formula_terms'] = dict(ap='ap', b='b')
+        _load_aux_factory(self.engine, self.cube)
+        # Check cube.add_aux_coord method.
+        self.assertEqual(self.cube.add_aux_coord.call_count, 0)
+        # Check cube.add_aux_factory method.
+        self.assertEqual(self.cube.add_aux_factory.call_count, 1)
+        args, _ = self.cube.add_aux_factory.call_args
+        self.assertEqual(len(args), 1)
+        factory = args[0]
+        self.assertEqual(factory.delta, mock.sentinel.ap)
+        self.assertEqual(factory.sigma, mock.sentinel.b)
+        self.assertEqual(factory.surface_air_pressure, None)
+
+
+class TestAtmosphereHybridHeightCoordinate(tests.IrisTest):
+    def setUp(self):
+        self.requires = dict(formula_type='atmosphere_hybrid_height_coordinate')
+        self.provides = dict(coordinates=[(mock.sentinel.a, 'a'),
+                                          (mock.sentinel.b, 'b'),
+                                          (mock.sentinel.orog, 'orog')])
+        # Add necessary attributes to mocked coords to pass dependency checks.
+        attrs = dict(nbounds=0, units=Unit('m'))
+        for key, val in attrs.items():
+            for coord, _ in self.provides['coordinates']:
+                setattr(coord, key, val)
+        self.engine = mock.Mock(requires=self.requires, provides=self.provides)
+        self.cube = mock.create_autospec(Cube, spec_set=True, instance=True)
+
+    def test_formula_terms(self):
+        self.requires['formula_terms'] = dict(a='a', b='b', orog='orog')
+        _load_aux_factory(self.engine, self.cube)
+        # Check cube.add_aux_coord method.
+        self.assertEqual(self.cube.add_aux_coord.call_count, 0)
+        # Check cube.add_aux_factory method.
+        self.assertEqual(self.cube.add_aux_factory.call_count, 1)
+        args, _ = self.cube.add_aux_factory.call_args
+        self.assertEqual(len(args), 1)
+        factory = args[0]
+        self.assertEqual(factory.delta, mock.sentinel.a)
+        self.assertEqual(factory.sigma, mock.sentinel.b)
+        self.assertEqual(factory.orography, mock.sentinel.orog)
+
+    def test_formula_terms_orog_missing(self):
+        self.requires['formula_terms'] = dict(a='a', b='b')
+        self.provides['coordinates'].remove((mock.sentinel.orog, 'orog'))
+        _load_aux_factory(self.engine, self.cube)
+        # Check cube.add_aux_coord method.
+        self.assertEqual(self.cube.add_aux_coord.call_count, 0)
+        # Check cube.add_aux_factory method.
+        self.assertEqual(self.cube.add_aux_factory.call_count, 1)
+        args, _ = self.cube.add_aux_factory.call_args
+        self.assertEqual(len(args), 1)
+        factory = args[0]
+        self.assertEqual(factory.delta, mock.sentinel.a)
+        self.assertEqual(factory.sigma, mock.sentinel.b)
+        self.assertEqual(factory.orography, None)
+
+
+class TestOceanSigmaZCoordinate(tests.IrisTest):
+    def setUp(self):
+        self.requires = dict(formula_type='ocean_sigma_z_coordinate')
+        self.provides = dict(coordinates=[(mock.sentinel.sigma, 'sigma'),
+                                          (mock.sentinel.eta, 'eta'),
+                                          (mock.sentinel.depth, 'depth'),
+                                          (mock.sentinel.depth_c, 'depth_c'),
+                                          (mock.sentinel.nsigma, 'nsigma'),
+                                          (mock.sentinel.zlev, 'zlev')])
+        self.engine = mock.Mock(requires=self.requires, provides=self.provides)
+        self.cube = mock.create_autospec(Cube, spec_set=True, instance=True)
+        # Patch out the check_dependencies functionality.
+        func = 'iris.aux_factory.OceanSigmaZFactory._check_dependencies'
+        patcher = mock.patch(func)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_formula_terms(self):
+        self.requires['formula_terms'] = dict(sigma='sigma',
+                                              eta='eta',
+                                              depth='depth',
+                                              depth_c='depth_c',
+                                              nsigma='nsigma',
+                                              zlev='zlev')
+        _load_aux_factory(self.engine, self.cube)
+        # Check cube.add_aux_coord method.
+        self.assertEqual(self.cube.add_aux_coord.call_count, 0)
+        # Check cube.add_aux_factory method.
+        self.assertEqual(self.cube.add_aux_factory.call_count, 1)
+        args, _ = self.cube.add_aux_factory.call_args
+        self.assertEqual(len(args), 1)
+        factory = args[0]
+        self.assertEqual(factory.sigma, mock.sentinel.sigma)
+        self.assertEqual(factory.eta, mock.sentinel.eta)
+        self.assertEqual(factory.depth, mock.sentinel.depth)
+        self.assertEqual(factory.depth_c, mock.sentinel.depth_c)
+        self.assertEqual(factory.nsigma, mock.sentinel.nsigma)
+        self.assertEqual(factory.zlev, mock.sentinel.zlev)
+
+    def test_formula_terms_depth_missing(self):
+        self.requires['formula_terms'] = dict(sigma='sigma',
+                                              eta='eta',
+                                              depth_c='depth_c',
+                                              nsigma='nsigma',
+                                              zlev='zlev')
+        self.provides['coordinates'].remove((mock.sentinel.depth, 'depth'))
+        _load_aux_factory(self.engine, self.cube)
+        # Check cube.add_aux_coord method.
+        self.assertEqual(self.cube.add_aux_coord.call_count, 0)
+        # Check cube.add_aux_factory method.
+        self.assertEqual(self.cube.add_aux_factory.call_count, 1)
+        args, _ = self.cube.add_aux_factory.call_args
+        self.assertEqual(len(args), 1)
+        factory = args[0]
+        self.assertEqual(factory.sigma, mock.sentinel.sigma)
+        self.assertEqual(factory.eta, mock.sentinel.eta)
+        self.assertEqual(factory.depth, None)
+        self.assertEqual(factory.depth_c, mock.sentinel.depth_c)
+        self.assertEqual(factory.nsigma, mock.sentinel.nsigma)
+        self.assertEqual(factory.zlev, mock.sentinel.zlev)
 
 
 if __name__ == '__main__':

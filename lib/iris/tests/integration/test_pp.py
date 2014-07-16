@@ -176,6 +176,73 @@ class TestVertical(tests.IrisTest):
         self.assertEqual(data_field.brlev, sigma_lower)
         self.assertEqual(data_field.brsvd, [sigma_upper, delta_upper])
 
+    def test_hybrid_pressure_round_trip_no_reference(self):
+        # Use pp.load_cubes() to convert fake PPFields into Cubes.
+        # NB. Use MagicMock so that SplittableInt header items, such as
+        # LBCODE, support len().
+        def field_with_data(scale=1):
+            x, y = 40, 30
+            field = mock.MagicMock(_data=np.arange(1200).reshape(y, x) * scale,
+                                   lbcode=[1], lbnpt=x, lbrow=y,
+                                   bzx=350, bdx=1.5, bzy=40, bdy=1.5,
+                                   lbuser=[0] * 7, lbrsvd=[0] * 4)
+            field._x_coord_name = lambda: 'longitude'
+            field._y_coord_name = lambda: 'latitude'
+            field.coord_system = lambda: None
+            return field
+
+        # Make a fake data field which needs the reference surface.
+        model_level = 5678
+        sigma_lower, sigma, sigma_upper = 0.85, 0.9, 0.95
+        delta_lower, delta, delta_upper = 0.05, 0.1, 0.15
+        data_field = field_with_data()
+        data_field.configure_mock(lbvc=9, lblev=model_level,
+                                  bhlev=delta, bhrlev=delta_lower,
+                                  blev=sigma, brlev=sigma_lower,
+                                  brsvd=[sigma_upper, delta_upper])
+
+        # Convert field to a cube.
+        load = mock.Mock(return_value=iter([data_field]))
+        with mock.patch('iris.fileformats.pp.load', new=load) as load, \
+                mock.patch('warnings.warn') as warn:
+            data_cube, = iris.fileformats.pp.load_cubes('DUMMY')
+
+        warn.assert_called_once_with("The file does not contain field(s) "
+                                     "for 'surface_air_pressure'.")
+
+        # Check the data cube is set up to use hybrid-pressure.
+        self._test_coord(data_cube, model_level,
+                         standard_name='model_level_number')
+        self._test_coord(data_cube, delta, [delta_lower, delta_upper],
+                         long_name='level_pressure')
+        self._test_coord(data_cube, sigma, [sigma_lower, sigma_upper],
+                         long_name='sigma')
+        aux_factories = data_cube.aux_factories
+        self.assertEqual(len(aux_factories), 1)
+        # Check the surface_air_pressure coordinate that would be
+        # produced from the reference is None.
+        surface_coord = aux_factories[0].dependencies['surface_air_pressure']
+        self.assertIsNone(surface_coord)
+
+        # Now use the save rules to convert the Cube back into a PPField.
+        data_field = iris.fileformats.pp.PPField3()
+        data_field.lbfc = 0
+        data_field.lbvc = 0
+        data_field.brsvd = [None, None]
+        data_field.lbuser = [None] * 7
+        iris.fileformats.pp._ensure_save_rules_loaded()
+        iris.fileformats.pp._save_rules.verify(data_cube, data_field)
+
+        # Check the data field has the vertical coordinate as originally
+        # specified.
+        self.assertEqual(data_field.lbvc, 9)
+        self.assertEqual(data_field.lblev, model_level)
+        self.assertEqual(data_field.bhlev, delta)
+        self.assertEqual(data_field.bhrlev, delta_lower)
+        self.assertEqual(data_field.blev, sigma)
+        self.assertEqual(data_field.brlev, sigma_lower)
+        self.assertEqual(data_field.brsvd, [sigma_upper, delta_upper])
+
     def test_hybrid_pressure_with_duplicate_references(self):
         def field_with_data(scale=1):
             x, y = 40, 30
