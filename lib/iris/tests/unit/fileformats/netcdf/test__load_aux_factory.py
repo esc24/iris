@@ -126,7 +126,8 @@ class TestAtmosphereHybridSigmaPressureCoordinate(tests.IrisTest):
 
 class TestAtmosphereHybridHeightCoordinate(tests.IrisTest):
     def setUp(self):
-        self.requires = dict(formula_type='atmosphere_hybrid_height_coordinate')
+        self.requires = dict(
+            formula_type='atmosphere_hybrid_height_coordinate')
         self.provides = dict(coordinates=[(mock.sentinel.a, 'a'),
                                           (mock.sentinel.b, 'b'),
                                           (mock.sentinel.orog, 'orog')])

@@ -8,6 +8,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[0.0, 20.0003]]" id="c56f646c" points="[9.99821]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -59,6 +66,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[20.0003, 80.0014]]" id="c56f646c" points="[49.9989]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -112,6 +126,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[80.0014, 179.999]]" id="c56f646c" points="[130.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -163,6 +184,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[179.999, 320.001]]" id="c56f646c" points="[249.998]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -216,6 +244,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[320.001, 500.001]]" id="c56f646c" points="[410.001]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -267,6 +302,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[500.001, 720.0]]" id="c56f646c" points="[610.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -320,6 +362,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[720.0, 980.001]]" id="c56f646c" points="[850.001]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -371,6 +420,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[980.001, 1280.0]]" id="c56f646c" points="[1130.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -424,6 +480,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[1280.0, 1620.0]]" id="c56f646c" points="[1450.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -475,6 +538,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[1620.0, 2000.0]]" id="c56f646c" points="[1810.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -528,6 +598,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[2000.0, 2420.0]]" id="c56f646c" points="[2210.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -579,6 +656,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[2420.0, 2880.0]]" id="c56f646c" points="[2650.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -632,6 +716,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[2880.0, 3380.0]]" id="c56f646c" points="[3130.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -683,6 +774,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[3380.0, 3920.0]]" id="c56f646c" points="[3650.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -736,6 +834,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[3920.0, 4500.0]]" id="c56f646c" points="[4210.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -787,6 +892,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[4500.0, 5120.0]]" id="c56f646c" points="[4810.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -840,6 +952,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[5120.0, 5780.0]]" id="c56f646c" points="[5450.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -891,6 +1010,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[5780.0, 6480.0]]" id="c56f646c" points="[6130.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -944,6 +1070,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[6480.0, 7220.0]]" id="c56f646c" points="[6850.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -995,6 +1128,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[7220.0, 8000.0]]" id="c56f646c" points="[7610.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -1048,6 +1188,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[8000.0, 8820.0]]" id="c56f646c" points="[8410.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -1099,6 +1246,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[8820.0, 9680.0]]" id="c56f646c" points="[9250.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -1152,6 +1306,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[9680.0, 10580.0]]" id="c56f646c" points="[10130.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -1203,6 +1364,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[10580.0, 11520.0]]" id="c56f646c" points="[11050.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -1256,6 +1424,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[11520.0, 12500.0]]" id="c56f646c" points="[12010.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -1307,6 +1482,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[12500.0, 13520.0]]" id="c56f646c" points="[13010.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -1360,6 +1542,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[13520.0, 14580.8]]" id="c56f646c" points="[14050.4]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -1411,6 +1600,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[14580.8, 15694.6]]" id="c56f646c" points="[15137.7]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -1464,6 +1660,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[15694.6, 16875.3]]" id="c56f646c" points="[16285.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -1515,6 +1718,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[16875.3, 18138.6]]" id="c56f646c" points="[17507.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -1568,6 +1778,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[18138.6, 19503.0]]" id="c56f646c" points="[18820.8]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -1619,6 +1836,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[19503.0, 20990.2]]" id="c56f646c" points="[20246.6]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -1672,6 +1896,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[20990.2, 22626.1]]" id="c56f646c" points="[21808.1]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -1723,6 +1954,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[22626.1, 24458.3]]" id="c56f646c" points="[23542.2]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -1776,6 +2014,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[24458.3, 26583.6]]" id="c56f646c" points="[25521.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -1827,6 +2072,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[26583.6, 29219.1]]" id="c56f646c" points="[27901.4]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -1880,6 +2132,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[29219.1, 32908.7]]" id="c56f646c" points="[31063.9]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -1931,6 +2190,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[32908.7, 39254.8]]" id="c56f646c" points="[36081.8]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -1984,6 +2250,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[0.0, 20.0003]]" id="c56f646c" points="[9.99821]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -2035,6 +2308,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[20.0003, 80.0014]]" id="c56f646c" points="[49.9989]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -2088,6 +2368,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[80.0014, 179.999]]" id="c56f646c" points="[130.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -2139,6 +2426,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[179.999, 320.001]]" id="c56f646c" points="[249.998]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -2192,6 +2486,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[320.001, 500.001]]" id="c56f646c" points="[410.001]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -2243,6 +2544,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[500.001, 720.0]]" id="c56f646c" points="[610.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -2296,6 +2604,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[720.0, 980.001]]" id="c56f646c" points="[850.001]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -2347,6 +2662,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[980.001, 1280.0]]" id="c56f646c" points="[1130.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -2400,6 +2722,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[1280.0, 1620.0]]" id="c56f646c" points="[1450.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -2451,6 +2780,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[1620.0, 2000.0]]" id="c56f646c" points="[1810.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -2504,6 +2840,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[2000.0, 2420.0]]" id="c56f646c" points="[2210.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -2555,6 +2898,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[2420.0, 2880.0]]" id="c56f646c" points="[2650.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -2608,6 +2958,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[2880.0, 3380.0]]" id="c56f646c" points="[3130.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -2659,6 +3016,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[3380.0, 3920.0]]" id="c56f646c" points="[3650.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -2712,6 +3076,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[3920.0, 4500.0]]" id="c56f646c" points="[4210.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -2763,6 +3134,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[4500.0, 5120.0]]" id="c56f646c" points="[4810.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -2816,6 +3194,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[5120.0, 5780.0]]" id="c56f646c" points="[5450.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -2867,6 +3252,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[5780.0, 6480.0]]" id="c56f646c" points="[6130.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -2920,6 +3312,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[6480.0, 7220.0]]" id="c56f646c" points="[6850.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -2971,6 +3370,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[7220.0, 8000.0]]" id="c56f646c" points="[7610.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -3024,6 +3430,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[8000.0, 8820.0]]" id="c56f646c" points="[8410.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -3075,6 +3488,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[8820.0, 9680.0]]" id="c56f646c" points="[9250.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -3128,6 +3548,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[9680.0, 10580.0]]" id="c56f646c" points="[10130.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -3179,6 +3606,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[10580.0, 11520.0]]" id="c56f646c" points="[11050.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -3232,6 +3666,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[11520.0, 12500.0]]" id="c56f646c" points="[12010.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -3283,6 +3724,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[12500.0, 13520.0]]" id="c56f646c" points="[13010.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -3336,6 +3784,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[13520.0, 14580.8]]" id="c56f646c" points="[14050.4]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -3387,6 +3842,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[14580.8, 15694.6]]" id="c56f646c" points="[15137.7]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -3440,6 +3902,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[15694.6, 16875.3]]" id="c56f646c" points="[16285.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -3491,6 +3960,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[16875.3, 18138.6]]" id="c56f646c" points="[17507.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -3544,6 +4020,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[18138.6, 19503.0]]" id="c56f646c" points="[18820.8]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -3595,6 +4078,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[19503.0, 20990.2]]" id="c56f646c" points="[20246.6]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -3648,6 +4138,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[20990.2, 22626.1]]" id="c56f646c" points="[21808.1]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -3699,6 +4196,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[22626.1, 24458.3]]" id="c56f646c" points="[23542.2]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -3752,6 +4256,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[24458.3, 26583.6]]" id="c56f646c" points="[25521.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -3803,6 +4314,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[26583.6, 29219.1]]" id="c56f646c" points="[27901.4]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
@@ -3856,6 +4374,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[29219.1, 32908.7]]" id="c56f646c" points="[31063.9]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -3907,6 +4432,13 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord>
+        <auxCoord bounds="[[32908.7, 39254.8]]" id="c56f646c" points="[36081.8]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>

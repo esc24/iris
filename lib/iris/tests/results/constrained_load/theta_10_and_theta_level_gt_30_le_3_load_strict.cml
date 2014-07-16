@@ -8,6 +8,13 @@
     </attributes>
     <coords>
       <coord>
+        <auxCoord bounds="[[1810.0, 2210.0]]" id="c56f646c" points="[2000.0]" shape="(1,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
+      <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
       <coord>
@@ -58,6 +65,25 @@
       <attribute name="um_version" value="6.6"/>
     </attributes>
     <coords>
+      <coord datadims="[0]">
+        <auxCoord bounds="[[0.0, 49.9989],
+		[49.9989, 130.0],
+		[130.0, 249.998],
+		[18820.8, 20246.6],
+		[20246.6, 21808.1],
+		[21808.1, 23542.2],
+		[23542.2, 25521.0],
+		[25521.0, 27901.4],
+		[27901.4, 31063.9],
+		[31063.9, 36081.8],
+		[36081.8, 42427.9]]" id="c56f646c" points="[20.0003, 80.0014, 179.999, 19503.0, 20990.2,
+		22626.1, 24458.3, 26583.6, 29219.1, 32908.7,
+		39254.8]" shape="(11,)" standard_name="altitude" units="Unit('m')" value_type="float32">
+          <attributes>
+            <attribute name="positive" value="up"/>
+          </attributes>
+        </auxCoord>
+      </coord>
       <coord>
         <dimCoord bounds="[[25536.0, 26280.0]]" id="73141289" points="[25908.0]" shape="(1,)" standard_name="forecast_period" units="Unit('hours')" value_type="float64"/>
       </coord>
