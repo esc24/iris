@@ -536,7 +536,7 @@ THEN
 #single height level
 IF
     scalar_coord(cm, 'height') is not None
-    not scalar_coord(cm, 'height').bounds
+    not scalar_coord(cm, 'height').has_bounds()
     scalar_coord(cm, 'height').points[0] == 1.5
     cm.name() == 'air_temperature'
 THEN
@@ -546,7 +546,7 @@ THEN
 IF
     pp.lbvc == 0
     scalar_coord(cm, 'height') is not None
-    not scalar_coord(cm, 'height').bounds
+    not scalar_coord(cm, 'height').has_bounds()
 THEN
     pp.lbvc = 1
     pp.blev = cm.coord('height').points[0]
@@ -555,7 +555,7 @@ THEN
 #single air_pressure level
 IF
     scalar_coord(cm, 'air_pressure') is not None
-    not scalar_coord(cm, 'air_pressure').bounds
+    not scalar_coord(cm, 'air_pressure').has_bounds()
 THEN
     pp.lbvc = 8
     pp.blev = scalar_coord(cm, 'air_pressure').points[0]
@@ -564,7 +564,7 @@ THEN
 #TODO: "pressure" is in the PP load rules awaiting more info 
 IF
     scalar_coord(cm, 'pressure') is not None
-    not scalar_coord(cm, 'pressure').bounds
+    not scalar_coord(cm, 'pressure').has_bounds()
 THEN
     pp.lbvc = 8
     pp.blev = scalar_coord(cm, 'pressure').points[0]
@@ -573,9 +573,9 @@ THEN
 # single depth level (non cross section)
 IF
     scalar_coord(cm, 'model_level_number') is not None
-    not scalar_coord(cm, 'model_level_number').bounds
+    not scalar_coord(cm, 'model_level_number').has_bounds()
     scalar_coord(cm, 'depth') is not None
-    not scalar_coord(cm, 'depth').bounds
+    not scalar_coord(cm, 'depth').has_bounds()
 THEN
     pp.lbvc = 2
     pp.lblev = scalar_coord(cm, 'model_level_number').points[0]
@@ -584,7 +584,7 @@ THEN
 # single depth level (Non-dimensional soil model level)
 IF
     scalar_coord(cm, 'soil_model_level_number') is not None
-    not scalar_coord(cm, 'soil_model_level_number').bounds
+    not scalar_coord(cm, 'soil_model_level_number').has_bounds()
     # The following `is None` checks ensure this rule does not get run
     # if any of the previous LBVC setting rules have run. It gives these
     # rules something of an IF-THEN-ELSE structure.
@@ -602,7 +602,7 @@ THEN
 # single potential-temperature level
 IF
     scalar_coord(cm, 'air_potential_temperature') is not None
-    not scalar_coord(cm, 'air_potential_temperature').bounds
+    not scalar_coord(cm, 'air_potential_temperature').has_bounds()
     # The following `is None` checks ensure this rule does not get run
     # if any of the previous LBVC setting rules have run. It gives these
     # rules something of an IF-THEN-ELSE structure.
