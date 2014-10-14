@@ -177,7 +177,7 @@ class BuildPyWithExtras(build_py.build_py):
 
 setup(
     name='Iris',
-    version='1.8.0-DEV',
+    version='1.7.3-DEV',
     url='http://scitools.org.uk/iris/',
     author='UK Met Office',
 
