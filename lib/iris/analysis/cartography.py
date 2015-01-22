@@ -713,3 +713,146 @@ def project(cube, target_proj, nx=None, ny=None):
     new_cube.metadata = cube.metadata
 
     return new_cube, extent
+
+
+def change_vector_basis(u_cube, v_cube, target_cs):
+    """
+    Calculate the components of the a vector field using the provided
+    coordinate system as the basis.
+
+    The returned u and v components are calculated based on source and target
+    coordinate systems, such that the magnitute and physical direction of
+    the vector at each location remains unchanged by this operation.
+
+    ..note ::
+
+        In the case of changing from a rotated pole to a non-rotated pole
+        this is equivalent to a rotation, but in the case of other coordinate
+        systems the transform may not be expressed in this form. In both cases
+        a numerical approach is used.
+
+
+    Args:
+
+    * u_cube
+        An instance of :class:`iris.cube.Cube` that contains the x-component
+        of the vector.
+    * v_cube
+        An instance of :class:`iris.cube.Cube` that contains the y-component
+        of the vector.
+    * target_cs
+        An instance of :class:`iris.coord_systems.CoordSystem`, that specifies
+        the new basis.
+
+    Returns:
+        A (u', v') tuple of :class:`iris.cube.Cube` instances that are the u
+        and v components in the requested target coordinate system.
+
+    """
+    # Check the u_cube and v_cube have the same x and y coords.
+    msg = 'Coordinates differ between u and v cubes. Coordinate {!r} from ' \
+          'u cube does not equal coordinate {!r} from v cube.'
+    if u_cube.coord(axis='x') != v_cube.coord(axis='x'):
+        raise ValueError(msg.format(u_cube.coord(axis='x'),
+                                    v_cube.coord(axis='x')))
+    if u_cube.coord(axis='y') != v_cube.coord(axis='y'):
+        raise ValueError(msg.format(u_cube.coord(axis='y'),
+                                    v_cube.coord(axis='y')))
+
+    # Check x and y coords have the same coordinate system.
+    x_coord = u_cube.coord(axis='x')
+    y_coord = u_cube.coord(axis='y')
+    if x_coord.coord_system != y_coord.coord_system:
+        msg = "Coordinate systems of 'x' and 'y' coordinates differ. " \
+              "Coordinate {!r} has a coord system of {!r}, but coordinate " \
+              "{!r} has a coord system of {!r}."
+        raise ValueError(msg.format(x_coord, x_coord.coord_system,
+                                    y_coord, y_coord.coord_system))
+
+    # Convert from iris coord systems to cartopy CRSs to access
+    # transform functionality. Use projection as cartopy
+    # transform_vectors relies on x_limits and y_limits.
+    if x_coord.coord_system is not None:
+        src_crs = x_coord.coord_system.as_cartopy_projection()
+    else:
+        # Default to Geodetic (but actually use PlateCarree as a
+        # projection is needed).
+        src_crs = ccrs.PlateCarree()
+    target_crs = target_cs.as_cartopy_crs()
+
+    # Check the number of dimensions of the x and y coords is the same.
+    # Subsequent logic assumes either both 1d or both 2d.
+    x = x_coord.points
+    y = y_coord.points
+    if x.ndim != y.ndim or x.ndim > 2 or y.ndim > 2:
+        msg = 'X and Y coordinates must has the same number of dimensions' \
+              'and be either 1D or 2D. The number of dimensions are {} and ' \
+              '{}, respectively.'.format(x.ndim, y.ndim)
+        raise ValueError(msg)
+
+    # Check the dimension mappings match between u_cube and v_cube.
+    if u_cube.coord_dims(x_coord) != v_cube.coord_dims(x_coord):
+        raise ValueError('Dimension mapping of x coordinate differs '
+                         'between u and v cubes.')
+    if u_cube.coord_dims(y_coord) != v_cube.coord_dims(y_coord):
+        raise ValueError('Dimension mapping of y coordinate differs '
+                         'between u and v cubes.')
+    x_dims = u_cube.coord_dims(x_coord)
+    y_dims = u_cube.coord_dims(y_coord)
+
+    # Convert points to 2D, if not already, and determine dims.
+    if x.ndim == y.ndim == 1:
+        x, y = np.meshgrid(x, y)
+        dims = (y_dims[0], x_dims[0])
+    else:
+        dims = x_dims
+
+    # TODO consider checking u_cube and v_cube coords all match.
+    # e.g. height/pressure/...
+
+    # Create resulting cubes.
+    ut_cube = u_cube.copy()
+    vt_cube = v_cube.copy()
+    ut_cube.rename('transformed_{}'.format(u_cube.name()))
+    vt_cube.rename('transformed_{}'.format(v_cube.name()))
+
+    # Project vectors with u, v components one horiz slice at a time and
+    # insert into the resulting cubes.
+    shape = list(u_cube.shape)
+    for dim in dims:
+        shape[dim] = 1
+    ndindex = np.ndindex(*shape)
+    for index in ndindex:
+        index = list(index)
+        for dim in dims:
+            index[dim] = slice(None, None)
+        index = tuple(index)
+        u = u_cube.data[index]
+        v = v_cube.data[index]
+        ut, vt = target_crs.transform_vectors(src_crs, x, y, u, v)
+        ut_cube.data[index] = ut
+        vt_cube.data[index] = vt
+
+    # Calculate new coords of locations in target coordinate system.
+    xyz_tran = target_crs.transform_points(src_crs, x, y)
+    xt = xyz_tran[..., 0].reshape(x.shape)
+    yt = xyz_tran[..., 1].reshape(y.shape)
+    xt_coord = iris.coords.AuxCoord(xt,
+                                    standard_name='projection_x_coordinate',
+                                    coord_system=target_cs)
+    yt_coord = iris.coords.AuxCoord(yt,
+                                    standard_name='projection_y_coordinate',
+                                    coord_system=target_cs)
+    # Set units based on coord_system.
+    if isinstance(target_cs, (iris.coord_systems.GeogCS,
+                              iris.coord_systems.RotatedGeogCS)):
+        xt_coord.units = yt_coord.units = 'degrees'
+    else:
+        xt_coord.units = yt_coord.units = 'm'
+
+    ut_cube.add_aux_coord(xt_coord, dims)
+    ut_cube.add_aux_coord(yt_coord, dims)
+    vt_cube.add_aux_coord(xt_coord.copy(), dims)
+    vt_cube.add_aux_coord(yt_coord.copy(), dims)
+
+    return ut_cube, vt_cube
