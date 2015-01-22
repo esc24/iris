@@ -741,7 +741,7 @@ def change_vector_basis(u_cube, v_cube, target_cs):
         An instance of :class:`iris.cube.Cube` that contains the y-component
         of the vector.
     * target_cs
-        An instance of :class:`iris.coord_systems.CoordSystem`, that specifies
+        An instance of :class:`iris.coord_systems.CoordSystem` that specifies
         the new basis.
 
     Returns:
