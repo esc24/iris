@@ -749,25 +749,32 @@ def change_vector_basis(u_cube, v_cube, target_cs):
         and v components in the requested target coordinate system.
 
     """
+    # Check u_cube and v_cube have the same shape. We iterate through
+    # slices whcih relies on the shape matching.
+    if u_cube.shape != v_cube.shape:
+        msg = 'Expected u and v cubes to have the same shape. ' \
+              'u cube has shape {}, v cube has shape {}.'
+        raise ValueError(msg.format(u_cube.shape, v_cube.shape))
+
     # Check the u_cube and v_cube have the same x and y coords.
     msg = 'Coordinates differ between u and v cubes. Coordinate {!r} from ' \
           'u cube does not equal coordinate {!r} from v cube.'
     if u_cube.coord(axis='x') != v_cube.coord(axis='x'):
-        raise ValueError(msg.format(u_cube.coord(axis='x'),
-                                    v_cube.coord(axis='x')))
+        raise ValueError(msg.format(u_cube.coord(axis='x').name(),
+                                    v_cube.coord(axis='x').name()))
     if u_cube.coord(axis='y') != v_cube.coord(axis='y'):
-        raise ValueError(msg.format(u_cube.coord(axis='y'),
-                                    v_cube.coord(axis='y')))
+        raise ValueError(msg.format(u_cube.coord(axis='y').name(),
+                                    v_cube.coord(axis='y').name()))
 
     # Check x and y coords have the same coordinate system.
     x_coord = u_cube.coord(axis='x')
     y_coord = u_cube.coord(axis='y')
     if x_coord.coord_system != y_coord.coord_system:
-        msg = "Coordinate systems of 'x' and 'y' coordinates differ. " \
+        msg = "Coordinate systems of x and y coordinates differ. " \
               "Coordinate {!r} has a coord system of {!r}, but coordinate " \
               "{!r} has a coord system of {!r}."
-        raise ValueError(msg.format(x_coord, x_coord.coord_system,
-                                    y_coord, y_coord.coord_system))
+        raise ValueError(msg.format(x_coord.name(), x_coord.coord_system,
+                                    y_coord.name(), y_coord.coord_system))
 
     # Convert from iris coord systems to cartopy CRSs to access
     # transform functionality. Use projection as cartopy
@@ -785,7 +792,7 @@ def change_vector_basis(u_cube, v_cube, target_cs):
     x = x_coord.points
     y = y_coord.points
     if x.ndim != y.ndim or x.ndim > 2 or y.ndim > 2:
-        msg = 'X and Y coordinates must has the same number of dimensions' \
+        msg = 'x and y coordinates must have the same number of dimensions ' \
               'and be either 1D or 2D. The number of dimensions are {} and ' \
               '{}, respectively.'.format(x.ndim, y.ndim)
         raise ValueError(msg)
