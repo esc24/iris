@@ -25,7 +25,7 @@ import iris.tests as tests
 import numpy as np
 
 import cartopy.crs as ccrs
-from iris.analysis.cartography import change_vector_basis
+from iris.analysis.cartography import change_vector_basis, unrotate_pole
 from iris.cube import Cube
 from iris.coords import DimCoord, AuxCoord
 import iris.coord_systems
@@ -126,7 +126,53 @@ class TestPrerequisites(tests.IrisTest):
 
 
 class TestAnalyticalComparison(tests.IrisTest):
-    pass
+    def setUp(self):
+        self.test_uv = uv_cubes()
+        self.test_cs = iris.coord_systems.GeogCS(1.0)
+
+    def test_rotated_to_true(self):
+        u_rot, v_rot = self.test_uv
+        u_true, v_true = change_vector_basis(u_rot, v_rot, self.test_cs)
+
+        # Calculate "exact" results to compare.
+        # (equations for rotated-pole transformation : cf. UMDP015)
+        cs_rot = u_rot.coord(axis='x').coord_system
+        pole_lat = cs_rot.grid_north_pole_latitude
+        pole_lon = cs_rot.grid_north_pole_longitude
+
+        # Work out the rotation angles.
+        lambda_angle = np.radians(pole_lon - 180.0)
+        phi_angle = np.radians(90.0 - pole_lat)
+
+        # Get the locations in true lats+lons.
+        rotated_lons = u_rot.coord(axis='x').points
+        rotated_lats = u_rot.coord(axis='y').points
+        rotated_lons_2d, rotated_lats_2d = np.meshgrid(
+            rotated_lons, rotated_lats)
+        trueLongitude, trueLatitude = unrotate_pole(rotated_lons_2d,
+                                                    rotated_lats_2d,
+                                                    pole_lon,
+                                                    pole_lat)
+
+        # Calculate inter-coordinate transform coefficients.
+        cos_rot = (np.cos(np.radians(rotated_lons_2d)) *
+                   np.cos(np.radians(trueLongitude) - lambda_angle) +
+                   np.sin(np.radians(rotated_lons_2d)) *
+                   np.sin(np.radians(trueLongitude) - lambda_angle) *
+                   np.cos(phi_angle))
+        sin_rot = -((np.sin(np.radians(trueLongitude) - lambda_angle) *
+                     np.sin(phi_angle))
+                    / np.cos(np.radians(rotated_lats_2d)))
+
+        # Matrix-multiply to rotate the vectors.
+        u_ref = u_rot.data * cos_rot - v_rot.data * sin_rot
+        v_ref = v_rot.data * cos_rot + u_rot.data * sin_rot
+
+        # Check that all the numerical results are fairly close to these.
+        self.assertArrayAllClose(u_true.data, u_ref,
+                                 rtol=1e-6, atol=1e-4)
+        self.assertArrayAllClose(v_true.data, v_ref,
+                                 rtol=1e-6, atol=1e-4)
 
 
 class TestRotatedToOSGB(tests.IrisTest):
