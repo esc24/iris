@@ -24,11 +24,11 @@ import iris.tests as tests
 
 import numpy as np
 
+import cartopy.crs as ccrs
 from iris.analysis.cartography import change_vector_basis
 from iris.cube import Cube
 from iris.coords import DimCoord, AuxCoord
 import iris.coord_systems
-
 
 
 def uv_cubes(shape=(5, 6)):
@@ -37,22 +37,46 @@ def uv_cubes(shape=(5, 6)):
                                           grid_north_pole_longitude=177.5)
     x = np.linspace(311.9, 391.1, shape[1])
     y = np.linspace(-23.6, 24.8, shape[0])
-
     x2d, y2d = np.meshgrid(x, y)
     u = 10 * (2 * np.cos(2 * np.deg2rad(x2d) + 3 * np.deg2rad(y2d + 30)) ** 2)
     v = 20 * np.cos(6 * np.deg2rad(x2d))
-
     lon = DimCoord(x, standard_name='grid_longitude', units='degrees',
                    coord_system=cs)
     lat = DimCoord(y, standard_name='grid_latitude', units='degrees',
                    coord_system=cs)
-
     u_cube = Cube(u, standard_name='x_wind', units='m/s')
     v_cube = Cube(v, standard_name='y_wind', units='m/s')
     for cube in (u_cube, v_cube):
         cube.add_dim_coord(lat.copy(), 0)
         cube.add_dim_coord(lon.copy(), 1)
+    return u_cube, v_cube
 
+
+def uv_cubes_3d(shape=(3, 5, 6)):
+    """Return 3d u, v cubes with a grid in a rotated pole CRS."""
+    cs = iris.coord_systems.RotatedGeogCS(grid_north_pole_latitude=37.5,
+                                          grid_north_pole_longitude=177.5)
+    n_realization = shape[0]
+    x = np.linspace(311.9, 391.1, shape[2])
+    y = np.linspace(-23.6, 24.8, shape[1])
+    x2d, y2d = np.meshgrid(x, y)
+    u = 10 * (2 * np.cos(2 * np.deg2rad(x2d) + 3 * np.deg2rad(y2d + 30)) ** 2)
+    v = 20 * np.cos(6 * np.deg2rad(x2d))
+    # Multiply slices by factor to give variation over 0th dim.
+    factor = np.arange(1, n_realization + 1).reshape(n_realization, 1, 1)
+    u = factor * u
+    v = factor * v
+    lon = DimCoord(x, standard_name='grid_longitude', units='degrees',
+                   coord_system=cs)
+    lat = DimCoord(y, standard_name='grid_latitude', units='degrees',
+                   coord_system=cs)
+    realization = DimCoord(np.arange(n_realization), 'realization')
+    u_cube = Cube(u, standard_name='x_wind', units='m/s')
+    v_cube = Cube(v, standard_name='y_wind', units='m/s')
+    for cube in (u_cube, v_cube):
+        cube.add_dim_coord(realization.copy(), 0)
+        cube.add_dim_coord(lat.copy(), 1)
+        cube.add_dim_coord(lon.copy(), 2)
     return u_cube, v_cube
 
 
@@ -107,25 +131,122 @@ class TestAnalyticalComparison(tests.IrisTest):
 
 class TestRotatedToOSGB(tests.IrisTest):
     def test_name(self):
-        pass
+        u, v = uv_cubes()
+        u.rename('bob')
+        v.rename('alice')
+        ut, vt = change_vector_basis(u, v, iris.coord_systems.OSGB())
+        self.assertEqual(ut.name(), 'transformed_' + u.name())
+        self.assertEqual(vt.name(), 'transformed_' + v.name())
 
     def test_new_coords(self):
-        pass
+        nx = 6
+        ny = 5
+        u, v = uv_cubes((ny, nx))
+        ut, vt = change_vector_basis(u, v, iris.coord_systems.OSGB())
+        # x, y values taken from uv_cubes().
+        x = np.linspace(311.9, 391.1, nx)
+        y = np.linspace(-23.6, 24.8, ny)
+        x2d, y2d = np.meshgrid(x, y)
+        src_crs = ccrs.RotatedPole(pole_longitude=177.5, pole_latitude=37.5)
+        tgt_crs = ccrs.OSGB()
+        xyz_tran = tgt_crs.transform_points(src_crs, x2d, y2d)
+
+        points = xyz_tran[..., 0].reshape(x2d.shape)
+        expected_x = AuxCoord(points,
+                              standard_name='projection_x_coordinate',
+                              units='m',
+                              coord_system=iris.coord_systems.OSGB())
+        self.assertEqual(ut.coord('projection_x_coordinate'), expected_x)
+        self.assertEqual(vt.coord('projection_x_coordinate'), expected_x)
+
+        points = xyz_tran[..., 1].reshape(y2d.shape)
+        expected_y = AuxCoord(points,
+                              standard_name='projection_y_coordinate',
+                              units='m',
+                              coord_system=iris.coord_systems.OSGB())
+        self.assertEqual(ut.coord('projection_y_coordinate'), expected_y)
+        self.assertEqual(vt.coord('projection_y_coordinate'), expected_y)
 
     def test_orig_coords(self):
-        pass
+        u, v = uv_cubes()
+        ut, vt = change_vector_basis(u, v, iris.coord_systems.OSGB())
+        self.assertEqual(u.coord('grid_latitude'), ut.coord('grid_latitude'))
+        self.assertEqual(v.coord('grid_latitude'), vt.coord('grid_latitude'))
+        self.assertEqual(u.coord('grid_longitude'), ut.coord('grid_longitude'))
+        self.assertEqual(v.coord('grid_longitude'), vt.coord('grid_longitude'))
 
     def test_magnitude_preservation(self):
-        pass
+        u, v = uv_cubes()
+        ut, vt = change_vector_basis(u, v, iris.coord_systems.OSGB())
+        orig_sq_mag = u.data**2 + v.data**2
+        res_sq_mag = ut.data**2 + vt.data**2
+        self.assertArrayAlmostEqual(orig_sq_mag, res_sq_mag)
 
-    def test_u_values(self):
-        pass
+    def test_data_values(self):
+        # Slice out 4 points that lie in and outside OSGB extent.
+        u, v = uv_cubes()
+        u = u[1:3, 2:4]
+        v = v[1:3, 2:4]
+        ut, vt = change_vector_basis(u, v, iris.coord_systems.OSGB())
+        # Values precalculated using cartopy.transform_vectors().
+        expected_ut_data = np.array([[17.15565333, 6.77094137],
+                                     [5.28747914, 0.14330255]])
+        expected_vt_data = np.array([[-2.12938771, 19.97203449],
+                                     [-3.01654362, 19.96260676]])
+        # Compare u and v data values against previously calculated values.
+        self.assertArrayAlmostEqual(ut.data, expected_ut_data)
+        self.assertArrayAlmostEqual(vt.data, expected_vt_data)
 
-    def test_v_values(self):
-        pass
+    def test_nd_data(self):
+        u, v = uv_cubes_3d()
+        u = u[:, 1:3, 2:4]
+        v = v[:, 1:3, 2:4]
+        ut, vt = change_vector_basis(u, v, iris.coord_systems.OSGB())
+        # Values precalculated using cartopy.transform_vectors() and
+        # then scaled by factor [1, 2, 3] along 0th dim (see uv_cubes_3d()).
+        factor = np.array([1, 2, 3]).reshape(3, 1, 1)
+        expected_ut_data = factor * np.array([[17.15565333, 6.77094137],
+                                              [5.28747914, 0.14330255]])
+        expected_vt_data = factor * np.array([[-2.12938771, 19.97203449],
+                                              [-3.01654362, 19.96260676]])
+        # Compare u and v data values against previously calculated values.
+        self.assertArrayAlmostEqual(ut.data, expected_ut_data)
+        self.assertArrayAlmostEqual(vt.data, expected_vt_data)
 
-    def test_2d_coords(self):
-        pass
+
+class TestRoundTrip(tests.IrisTest):
+    def test_rotated_to_unrotated(self):
+        # Check ability to use 2d coords as input.
+        u, v = uv_cubes()
+        ut, vt = change_vector_basis(u, v, iris.coord_systems.GeogCS(6371229))
+        # Remove  grid lat and lon, leaving 2d projection coords.
+        ut.remove_coord('grid_latitude')
+        vt.remove_coord('grid_latitude')
+        ut.remove_coord('grid_longitude')
+        vt.remove_coord('grid_longitude')
+        # Change back.
+        orig_cs = u.coord('grid_latitude').coord_system
+        res_u, res_v = change_vector_basis(ut, vt, orig_cs)
+        # Check data values - limited accuracy due to numerical approx.
+        self.assertArrayAlmostEqual(res_u.data, u.data, decimal=3)
+        self.assertArrayAlmostEqual(res_v.data, v.data, decimal=3)
+        # Check coords locations.
+        x2d, y2d = np.meshgrid(u.coord('grid_longitude').points,
+                               u.coord('grid_latitude').points)
+        # Shift longitude from 0 to 360 -> -180 to 180.
+        x2d = np.where(x2d > 180, x2d - 360, x2d)
+        res_x = res_u.coord('projection_x_coordinate',
+                            coord_system=orig_cs).points
+        res_y = res_u.coord('projection_y_coordinate',
+                            coord_system=orig_cs).points
+        self.assertArrayAlmostEqual(res_x, x2d)
+        self.assertArrayAlmostEqual(res_y, y2d)
+        res_x = res_v.coord('projection_x_coordinate',
+                            coord_system=orig_cs).points
+        res_y = res_v.coord('projection_y_coordinate',
+                            coord_system=orig_cs).points
+        self.assertArrayAlmostEqual(res_x, x2d)
+        self.assertArrayAlmostEqual(res_y, y2d)
 
 
 if __name__ == "__main__":
