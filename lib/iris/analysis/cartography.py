@@ -715,25 +715,25 @@ def project(cube, target_proj, nx=None, ny=None):
     return new_cube, extent
 
 
-def _transform_xy(cs_from, x, y, cs_to):
+def _transform_xy(crs_from, x, y, crs_to):
     """
     Shorthand function to translate 2d points between crs-s.
 
-    Returns x2, y2 in "cs_to", for x1, y1 in "cs_from".
+    Returns x2, y2 in "crs_to", for x1, y1 in "crs_from".
 
     Args:
 
-    * cs_from, cs_to (`cartopy.crs.Projection`):
+    * crs_from, crs_to (:class:`cartopy.crs.Projection`):
         The coordinate systems.
     * x, y (array):
-        point locations, as coordinates in 'cs_from'.
+        point locations, as coordinates in 'crs_from'.
 
     Returns:
 
-        x, y :  Arrays of equivalent coordinates in 'cs_to'.
+        x, y :  Arrays of equivalent coordinates in 'crs_to'.
 
     """
-    pts = cs_to.transform_points(cs_from, x, y)
+    pts = crs_to.transform_points(crs_from, x, y)
     return pts[..., 0], pts[..., 1]
 
 
@@ -741,18 +741,18 @@ def _transform_xy(cs_from, x, y, cs_to):
 _VECTOR_DELTAS_FACTOR = 360000.0
 
 
-def _inter_cs_differentials(cs, x, y, cs2, factor=None):
+def _inter_cs_differentials(crs1, x, y, crs2):
     """
-    Calculate coordinate partial differentials from cs to cs2.
+    Calculate coordinate partial differentials from crs1 to crs2.
 
     Returns dx2/dx1, dy2/dx1, dx2/dy1 and dy2/dy1, at given locations.
 
     Args:
 
-    * cs, cs2 (`cartopy.crs.Projection`):
+    * crs1, crs2 (`cartopy.crs.Projection`):
         The coordinate systems, "from" and "to".
     * x, y (array):
-        point locations, as coordinates in 'cs'.
+        point locations, as coordinates in 'crs1'.
 
     Returns:
 
@@ -760,38 +760,38 @@ def _inter_cs_differentials(cs, x, y, cs2, factor=None):
         Approximate partial differentials between the two systems.
 
     """
-    # Get locations in target cs.
-    cs2_x, cs2_y = _transform_xy(cs, x, y, cs2)
+    # Get locations in target crs.
+    crs2_x, crs2_y = _transform_xy(crs1, x, y, crs2)
 
     # Define small x-deltas in the source crs.
-    delta_x = (cs.x_limits[1] - cs.x_limits[0]) / _VECTOR_DELTAS_FACTOR
+    delta_x = (crs1.x_limits[1] - crs1.x_limits[0]) / _VECTOR_DELTAS_FACTOR
     delta_x = delta_x * np.ones(x.shape)
     eps = 1e-9
     # Reverse deltas where we would otherwise step outside the valid range.
-    invalid_dx = x + delta_x > cs.x_limits[1] - eps
+    invalid_dx = x + delta_x > crs1.x_limits[1] - eps
     delta_x[invalid_dx] = -delta_x[invalid_dx]
     # Calculate the transformed point with x = x + dx.
-    cs2_x2, cs2_y2 = _transform_xy(cs, x + delta_x, y, cs2)
+    crs2_x2, crs2_y2 = _transform_xy(crs1, x + delta_x, y, crs2)
     # Form differentials wrt dx.
-    dx2_dx = (cs2_x2 - cs2_x) / delta_x
-    dy2_dx = (cs2_y2 - cs2_y) / delta_x
+    dx2_dx = (crs2_x2 - crs2_x) / delta_x
+    dy2_dx = (crs2_y2 - crs2_y) / delta_x
 
     # Define small y-deltas in the source crs.
-    delta_y = (cs.y_limits[1] - cs.y_limits[0]) / _VECTOR_DELTAS_FACTOR
+    delta_y = (crs1.y_limits[1] - crs1.y_limits[0]) / _VECTOR_DELTAS_FACTOR
     delta_y = delta_y * np.ones(y.shape)
     # Reverse deltas where we would otherwise step outside the valid range.
-    invalid_dy = y + delta_y > cs.y_limits[1] - eps
+    invalid_dy = y + delta_y > crs1.y_limits[1] - eps
     delta_y[invalid_dy] = -delta_y[invalid_dy]
-    # Calculate the transformed point with y= y + dy.
-    cs2_x2, cs2_y2 = _transform_xy(cs, x, y + delta_y, cs2)
+    # Calculate the transformed point with y = y + dy.
+    crs2_x2, crs2_y2 = _transform_xy(crs1, x, y + delta_y, crs2)
     # Form differentials wrt dy.
-    dx2_dy = (cs2_x2 - cs2_x) / delta_y
-    dy2_dy = (cs2_y2 - cs2_y) / delta_y
+    dx2_dy = (crs2_x2 - crs2_x) / delta_y
+    dy2_dy = (crs2_y2 - crs2_y) / delta_y
 
     return dx2_dx, dy2_dx, dx2_dy, dy2_dy
 
 
-def _cs_distance_differentials(cs, x, y, factor=None):
+def _crs_distance_differentials(crs, x, y):
     """
         Calculate d(distance) / d(x) and ... / d(y) for a crs.
 
@@ -799,24 +799,25 @@ def _cs_distance_differentials(cs, x, y, factor=None):
 
         Args:
 
-        * cs (`cartopy.crs.Projection`):
+        * crs (:class:`cartopy.crs.Projection`):
             The coordinate system.
         * x, y (array):
-            Locations to calculate differentials at (in 'cs' coordinates).
+            Locations to calculate differentials at (in 'crs' coordinates).
 
         Returns:
 
             (abs(ds/dx), abs(ds/dy)).
-            Approximate partial differentials, i.e. scaling factors.
+            Numerically approximated "partial differentials",
+            i.e. scaling factors.
 
     """
     # Make a true-latlon coordinate system for distance calculations.
     crs_pc = ccrs.PlateCarree()
     # Transform points to true-latlon (just to get the true latitudes).
-    _, true_lat = _transform_xy(cs, x, y, crs_pc)
+    _, true_lat = _transform_xy(crs, x, y, crs_pc)
     # Get coordinate differentials w.r.t. true-latlon.
     dlon_dx, dlat_dx, dlon_dy, dlat_dy = \
-        _inter_cs_differentials(cs, x, y, crs_pc)
+        _inter_cs_differentials(crs, x, y, crs_pc)
     # Calculate effective scalings of X and Y coordinates.
     lat_factor = np.cos(np.deg2rad(true_lat))**2
     ds_dx = np.sqrt(dlat_dx * dlat_dx + dlon_dx * dlon_dx * lat_factor)
@@ -824,9 +825,9 @@ def _cs_distance_differentials(cs, x, y, factor=None):
     return ds_dx, ds_dy
 
 
-def _transform_distance_vectors(tgt_crs, src_crs, x, y, u_dist, v_dist):
+def _transform_distance_vectors(src_crs, x, y, u_dist, v_dist, tgt_crs):
     """
-        Transform distance vectors.
+        Transform distance vectors from one crs to another.
 
         Args:
 
@@ -843,10 +844,10 @@ def _transform_distance_vectors(tgt_crs, src_crs, x, y, u_dist, v_dist):
 
     """
     # Get distance scalings for source crs.
-    ds_dx1, ds_dy1 = _cs_distance_differentials(src_crs, x, y)
-    x2, y2 = _transform_xy(src_crs, x, y, tgt_crs)
+    ds_dx1, ds_dy1 = _crs_distance_differentials(src_crs, x, y)
     # Get distance scalings for target crs.
-    ds_dx2, ds_dy2 = _cs_distance_differentials(tgt_crs, x2, y2)
+    x2, y2 = _transform_xy(src_crs, x, y, tgt_crs)
+    ds_dx2, ds_dy2 = _crs_distance_differentials(tgt_crs, x2, y2)
     # Scale input distance vectors --> source-coordinate differentials.
     u1, v1 = u_dist / ds_dx1, v_dist / ds_dy1
     # Transform vectors into the target system.
@@ -981,7 +982,7 @@ def change_vector_basis(u_cube, v_cube, target_cs):
         index = tuple(index)
         u = u_cube.data[index]
         v = v_cube.data[index]
-        ut, vt = _transform_distance_vectors(target_crs, src_crs, x, y, u, v)
+        ut, vt = _transform_distance_vectors(src_crs, x, y, u, v, target_crs)
         ut_cube.data[index] = ut
         vt_cube.data[index] = vt
 
