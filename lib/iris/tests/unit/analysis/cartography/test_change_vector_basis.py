@@ -171,10 +171,8 @@ class TestAnalyticalComparison(tests.IrisTest):
         v_ref = v_rot.data * cos_rot + u_rot.data * sin_rot
 
         # Check that all the numerical results are fairly close to these.
-        self.assertArrayAllClose(u_true.data, u_ref,
-                                 rtol=1e-6, atol=1e-4)
-        self.assertArrayAllClose(v_true.data, v_ref,
-                                 rtol=1e-6, atol=1e-4)
+        self.assertArrayAllClose(u_true.data, u_ref, rtol=1e-5, atol=0.0005)
+        self.assertArrayAllClose(v_true.data, v_ref, rtol=1e-5, atol=0.0005)
 
 
 class TestRotatedToOSGB(tests.IrisTest):
