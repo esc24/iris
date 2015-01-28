@@ -84,16 +84,17 @@ class TestPrerequisites(tests.IrisTest):
     def test_different_coord_systems(self):
         u, v = uv_cubes()
         v.coord('grid_latitude').coord_system = iris.coord_systems.GeogCS(1)
-        with self.assertRaisesRegexp(ValueError, 'Coordinates differ between '
-                'u and v cubes'):
+        with self.assertRaisesRegexp(
+                ValueError, 'Coordinates differ between u and v cubes'):
             change_vector_basis(u, v, iris.coord_systems.OSGB())
 
     def test_different_xy_coord_systems(self):
         u, v = uv_cubes()
         u.coord('grid_latitude').coord_system = iris.coord_systems.GeogCS(1)
         v.coord('grid_latitude').coord_system = iris.coord_systems.GeogCS(1)
-        with self.assertRaisesRegexp(ValueError, 'Coordinate systems of x '
-                'and y coordinates differ'):
+        with self.assertRaisesRegexp(
+                ValueError,
+                'Coordinate systems of x and y coordinates differ'):
             change_vector_basis(u, v, iris.coord_systems.OSGB())
 
     def test_different_shape(self):
@@ -114,12 +115,13 @@ class TestPrerequisites(tests.IrisTest):
             cube.remove_coord('grid_latitude')
             cube.add_aux_coord(lat_2d.copy(), (0, 1))
 
-        with self.assertRaisesRegexp(ValueError, 'x and y coordinates must have '
-                'the same number of dimensions'):
+        with self.assertRaisesRegexp(
+                ValueError,
+                'x and y coordinates must have the same number of dimensions'):
             change_vector_basis(u, v, iris.coord_systems.OSGB())
 
     def test_dim_mapping(self):
-        u, v = uv_cubes(shape=(3,3))
+        u, v = uv_cubes(shape=(3, 3))
         v.transpose()
         with self.assertRaisesRegexp(ValueError, 'Dimension mapping'):
             change_vector_basis(u, v, iris.coord_systems.OSGB())

@@ -850,11 +850,13 @@ def _transform_distance_vectors(tgt_crs, src_crs, x, y, u_dist, v_dist):
     # Scale input distance vectors --> source-coordinate differentials.
     u1, v1 = u_dist / ds_dx1, v_dist / ds_dy1
     # Transform vectors into the target system.
-    # NOTE: this is numeric, using a fudge-factor akin to _VECTOR_DELTAS_FACTOR.
+    # NOTE: a numeric calculation, using an arbitrary fudge-factor for deltas
+    # scaling, akin to our _VECTOR_DELTAS_FACTOR.
     u2, v2 = tgt_crs.transform_vectors(src_crs, x, y, u1, v1)
     # Rescale output coordinate vectors --> target distance vectors.
     u2_dist, v2_dist = u2 * ds_dx2, v2 * ds_dy2
     # Renormalise, making output magnitudes the same as the inputs.
+    # NOTE: needed because 'transform_vectors' rescales the magnitudes.
     tgt_angles = np.arctan2(v2_dist, u2_dist)
     magnitudes = np.sqrt(u_dist * u_dist + v_dist * v_dist)
     u2_dist = magnitudes * np.cos(tgt_angles)
