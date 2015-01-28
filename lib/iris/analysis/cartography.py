@@ -735,7 +735,7 @@ def _transform_xy(crs_from, x, y, crs_to):
     return pts[..., 0], pts[..., 1]
 
 
-def _inter_cs_differentials(crs1, x, y, crs2):
+def _inter_crs_differentials(crs1, x, y, crs2):
     """
     Calculate coordinate partial differentials from crs1 to crs2.
 
@@ -812,7 +812,7 @@ def _crs_distance_differentials(crs, x, y):
     _, true_lat = _transform_xy(crs, x, y, crs_pc)
     # Get coordinate differentials w.r.t. true-latlon.
     dlon_dx, dlat_dx, dlon_dy, dlat_dy = \
-        _inter_cs_differentials(crs, x, y, crs_pc)
+        _inter_crs_differentials(crs, x, y, crs_pc)
     # Calculate effective scalings of X and Y coordinates.
     lat_factor = np.cos(np.deg2rad(true_lat))**2
     ds_dx = np.sqrt(dlat_dx * dlat_dx + dlon_dx * dlon_dx * lat_factor)
@@ -848,7 +848,7 @@ def _transform_distance_vectors(src_crs, x, y, u_dist, v_dist, tgt_crs):
     # Scale input distance vectors --> source-coordinate differentials.
     u1, v1 = u_dist / ds_dx1, v_dist / ds_dy1
     # Transform vectors into the target system.
-    dx2_x1, dy2_x1, dx2_y1, dy2_y1 = _inter_cs_differentials(
+    dx2_x1, dy2_x1, dx2_y1, dy2_y1 = _inter_crs_differentials(
         src_crs, x, y, tgt_crs)
     u2 = dx2_x1 * u1 + dx2_y1 * v1
     v2 = dy2_x1 * u1 + dy2_y1 * v1
