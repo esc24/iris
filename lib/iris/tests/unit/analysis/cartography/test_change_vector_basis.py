@@ -14,8 +14,11 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Iris.  If not, see <http://www.gnu.org/licenses/>.
-"""Unit tests for the :func:`iris.analysis.cartography.project` function."""
+"""
+Unit tests for the function
+:func:`iris.analysis.cartography.change_vector+basis`.
 
+"""
 from __future__ import (absolute_import, division, print_function)
 
 # Import iris.tests first so that some things can be initialised before
@@ -133,48 +136,81 @@ class TestPrerequisites(tests.IrisTest):
 
 
 class TestAnalyticComparison(tests.IrisTest):
-    def test_rotated_to_true(self):
-        u_rot, v_rot = uv_cubes()
-        test_cs = iris.coord_systems.GeogCS(1.0)
-        u_true, v_true = change_vector_basis(u_rot, v_rot, test_cs)
-
-        # Calculate "exact" results to compare.
-        # (equations for rotated-pole transformation : cf. UMDP015)
-        cs_rot = u_rot.coord(axis='x').coord_system
-        pole_lat = cs_rot.grid_north_pole_latitude
-        pole_lon = cs_rot.grid_north_pole_longitude
+    @staticmethod
+    def _unrotate_equation(rotated_lons, rotated_lats,
+                           rotated_us, rotated_vs, pole_lon, pole_lat):
+        # Perform a rotated-pole 'unrotate winds' transformation on arrays of
+        # rotated-lat, rotated-lon, u and v.
+        # This can be defined as an analytic function : cf. UMDP015
 
         # Work out the rotation angles.
         lambda_angle = np.radians(pole_lon - 180.0)
         phi_angle = np.radians(90.0 - pole_lat)
 
         # Get the locations in true lats+lons.
-        rotated_lons = u_rot.coord(axis='x').points
-        rotated_lats = u_rot.coord(axis='y').points
-        rotated_lons_2d, rotated_lats_2d = np.meshgrid(
-            rotated_lons, rotated_lats)
-        trueLongitude, trueLatitude = unrotate_pole(rotated_lons_2d,
-                                                    rotated_lats_2d,
+        trueLongitude, trueLatitude = unrotate_pole(rotated_lons,
+                                                    rotated_lats,
                                                     pole_lon,
                                                     pole_lat)
 
-        # Calculate inter-coordinate transform coefficients.
-        cos_rot = (np.cos(np.radians(rotated_lons_2d)) *
+        # Calculate inter-coordinate rotation coefficients.
+        cos_rot = (np.cos(np.radians(rotated_lons)) *
                    np.cos(np.radians(trueLongitude) - lambda_angle) +
-                   np.sin(np.radians(rotated_lons_2d)) *
+                   np.sin(np.radians(rotated_lons)) *
                    np.sin(np.radians(trueLongitude) - lambda_angle) *
                    np.cos(phi_angle))
         sin_rot = -((np.sin(np.radians(trueLongitude) - lambda_angle) *
                      np.sin(phi_angle))
-                    / np.cos(np.radians(rotated_lats_2d)))
+                    / np.cos(np.radians(rotated_lats)))
 
         # Matrix-multiply to rotate the vectors.
-        u_ref = u_rot.data * cos_rot - v_rot.data * sin_rot
-        v_ref = v_rot.data * cos_rot + u_rot.data * sin_rot
+        u_true = rotated_us * cos_rot - rotated_vs * sin_rot
+        v_true = rotated_vs * cos_rot + rotated_us * sin_rot
 
-        # Check that all the numerical results are fairly close to these.
-        self.assertArrayAllClose(u_true.data, u_ref, rtol=1e-5, atol=0.0005)
-        self.assertArrayAllClose(v_true.data, v_ref, rtol=1e-5, atol=0.0005)
+        return u_true, v_true
+
+    def _check_rotated_to_true(self, u_rot, v_rot, target_cs, **kwds):
+        # Run test calculation (numeric).
+        u_true, v_true = change_vector_basis(u_rot, v_rot, target_cs)
+
+        # Perform same calculation via the reference method (equations).
+        cs_rot = u_rot.coord(axis='x').coord_system
+        pole_lat = cs_rot.grid_north_pole_latitude
+        pole_lon = cs_rot.grid_north_pole_longitude
+        rotated_lons = u_rot.coord(axis='x').points
+        rotated_lats = u_rot.coord(axis='y').points
+        rotated_lons_2d, rotated_lats_2d = np.meshgrid(
+            rotated_lons, rotated_lats)
+        rotated_u, rotated_v = u_rot.data, v_rot.data
+        u_ref, v_ref = self._unrotate_equation(rotated_lons_2d,
+                                               rotated_lats_2d,
+                                               rotated_u, rotated_v,
+                                               pole_lon, pole_lat)
+
+        # Check that all the numerical results are within given tolerances.
+        self.assertArrayAllClose(u_true.data, u_ref, **kwds)
+        self.assertArrayAllClose(v_true.data, v_ref, **kwds)
+
+    def test_rotated_to_true__small(self):
+        # Check for a small field with varying data.
+        target_cs = iris.coord_systems.GeogCS(1.0)
+        u_rot, v_rot = uv_cubes()
+        self._check_rotated_to_true(u_rot, v_rot, target_cs,
+                                    rtol=1e-5, atol=0.0005)
+
+    def test_rotated_to_true_global(self):
+        # Check for global fields with various constant wind values
+        # - constant in the rotated pole system, that is.
+        # We expect less accuracy where this gets close to the true poles.
+        target_cs = iris.coord_systems.GeogCS(1.0)
+        u_rot, v_rot = uv_cubes(x=np.arange(0, 360.0, 15),
+                                y=np.arange(-89, 89, 10))
+        for vector in ((1, 0), (0, 1), (1, 1), (-3, -1.5)):
+            u_rot.data[...] = vector[0]
+            v_rot.data[...] = vector[1]
+            self._check_rotated_to_true(u_rot, v_rot, target_cs,
+                                        rtol=5e-4, atol=5e-4,
+                                        err_msg='vector={}'.format(vector))
 
 
 class TestRotatedToOSGB(tests.IrisTest):
