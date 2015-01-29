@@ -807,12 +807,12 @@ def _crs_distance_differentials(crs, x, y):
 
     """
     # Make a true-latlon coordinate system for distance calculations.
-    crs_pc = ccrs.PlateCarree()
+    crs_latlon = ccrs.Geodetic(globe=ccrs.Globe(ellipse='sphere'))
     # Transform points to true-latlon (just to get the true latitudes).
-    _, true_lat = _transform_xy(crs, x, y, crs_pc)
+    _, true_lat = _transform_xy(crs, x, y, crs_latlon)
     # Get coordinate differentials w.r.t. true-latlon.
     dlon_dx, dlat_dx, dlon_dy, dlat_dy = \
-        _inter_crs_differentials(crs, x, y, crs_pc)
+        _inter_crs_differentials(crs, x, y, crs_latlon)
     # Calculate effective scalings of X and Y coordinates.
     lat_factor = np.cos(np.deg2rad(true_lat))**2
     ds_dx = np.sqrt(dlat_dx * dlat_dx + dlon_dx * dlon_dx * lat_factor)
