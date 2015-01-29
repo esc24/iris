@@ -16,7 +16,7 @@
 # along with Iris.  If not, see <http://www.gnu.org/licenses/>.
 """
 Unit tests for the function
-:func:`iris.analysis.cartography.change_vector+basis`.
+:func:`iris.analysis.cartography.change_vector_basis`.
 
 """
 from __future__ import (absolute_import, division, print_function)
@@ -215,7 +215,7 @@ class TestAnalyticComparison(tests.IrisTest):
 
 class TestRotatedToOSGB(tests.IrisTest):
     # Define some coordinate ranges for the uv_cubes 'standard' RotatedPole
-    # system, that exceed the OSBG margins, but not by "too much".
+    # system, that exceed the OSGB margins, but not by "too much".
     _rp_x_min, _rp_x_max = -5.0, 5.0
     _rp_y_min, _rp_y_max = -5.0, 15.0
 
