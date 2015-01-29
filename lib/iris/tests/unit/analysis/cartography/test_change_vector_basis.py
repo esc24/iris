@@ -174,11 +174,11 @@ class TestAnalyticComparison(tests.IrisTest):
         u_true, v_true = change_vector_basis(u_rot, v_rot, target_cs)
 
         # Perform same calculation via the reference method (equations).
-        cs_rot = u_rot.coord(axis='x').coord_system
+        cs_rot = u_rot.coord('grid_longitude').coord_system
         pole_lat = cs_rot.grid_north_pole_latitude
         pole_lon = cs_rot.grid_north_pole_longitude
-        rotated_lons = u_rot.coord(axis='x').points
-        rotated_lats = u_rot.coord(axis='y').points
+        rotated_lons = u_rot.coord('grid_longitude').points
+        rotated_lats = u_rot.coord('grid_latitude').points
         rotated_lons_2d, rotated_lats_2d = np.meshgrid(
             rotated_lons, rotated_lats)
         rotated_u, rotated_v = u_rot.data, v_rot.data
